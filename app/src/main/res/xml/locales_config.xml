@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The languages the app speaks. Declaring them puts Ravel in the system's per-app language
+    picker on Android 13 and later.
+
+    Kept now that the options tab has a picker of its own, because the two do not fight: the game's
+    own setting has a "phone language" option and that is what it ships on, and while the player is
+    on it nothing is forced - so whatever locale the system hands the activity, including one chosen
+    in that picker, is the one it keeps. Choosing a language in the game overrides it from then on,
+    which is what choosing it means. The system picker cannot be the only way in regardless: it is
+    Android 13 and later, and this ships to 24.
+-->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="en" />
+    <locale android:name="pl" />
+</locale-config>

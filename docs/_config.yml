@@ -1,0 +1,9 @@
+# Configuration for the GitHub Pages site served from this directory.
+#
+# Without a theme, Jekyll converts the Markdown here into HTML with no layout around it: a valid
+# page, but an unstyled one. Primer is the plainest of the supported themes, which is what a legal
+# document wants - the page has to be readable and unambiguous, not branded.
+theme: jekyll-theme-primer
+
+title: Ravel
+description: Privacy policy for the Ravel mobile app.

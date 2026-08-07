@@ -1,0 +1,46 @@
+# Stems excluded from the English game dictionary.
+#
+# Matched from the START of a word, not as a substring. Substring matching is tempting and wrong:
+# it throws out "classic" and "grass" for "ass", "peacock" for "cock". The Scunthorpe problem is
+# the textbook case. English derives by suffixing far more than prefixing, so an anchored stem
+# also catches the inflections that matter.
+#
+# buildDictionary writes EVERY removed form to build/removed-en.txt. Review that file after any
+# change here.
+#
+# Deliberately absent, each because anchoring alone still catches ordinary words:
+#   ass    — assassin, assembly, assess, asset, assign, assist
+#   arse   — arsenal, arsenic, arsenate
+#   cock   — cockpit, cockatoo, cocktail, cockle, cockroach
+#   tit    — title, titan, tithe, titter, titanium
+#   prick  — prickle, prickly
+#   spic   — spice, spicy, spick
+#   dick   — dicker, dickens, dicky
+#   fag    — fagot (a bundle; also a bassoon spelling)
+#   chink  — a narrow opening, an ordinary word
+#   hell   — hello, hellenic
+#   crap   — crape, scrape; and the word itself is mild
+#   damn   — condemn and damnation are ordinary
+#   retard — retardant, retardation are technical terms
+
+fuck
+shit
+cunt
+bitch
+whore
+wank
+bollock
+bugger
+pussy
+twat
+slut
+turd
+piss
+faggot
+nigg
+jizz
+dildo
+skank
+motherf
+rape
+rapist

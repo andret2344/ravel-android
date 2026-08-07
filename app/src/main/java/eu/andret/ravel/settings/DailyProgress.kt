@@ -1,0 +1,204 @@
+package eu.andret.ravel.settings
+
+import eu.andret.ravel.game.DailyDate
+import eu.andret.ravel.game.Hint
+import eu.andret.ravel.generator.Language
+import kotlinx.coroutines.flow.StateFlow
+
+/**
+ * How a day went: what it cost the player to finish it, and how long they were looking at it.
+ *
+ * The two hint counts are kept apart rather than summed into "hints used", because they are not the
+ * same admission: a letter is a nudge and a word is the answer, and a player looking back at a
+ * month wants to know which of the two they have been reaching for.
+ *
+ * Both are named for the buying and not for the thing bought. There are two kinds of "words" in this
+ * file - the ones the player paid to be shown, and the ones a board contains - and they were both
+ * called `words` until a total was added that mixed them. The names say which is which now.
+ *
+ * @param seconds time with the board actually on screen, summed across every visit, or null for a
+ *   day recorded before anything was timing them. Foreground time and not wall-clock: a board left
+ *   open overnight took ten minutes and a night's sleep, and only one of those is the answer to
+ *   "how long did it take you".
+ */
+data class DayResult(
+    val boughtLetters: Int = 0,
+    val boughtWords: Int = 0,
+    val seconds: Int? = null,
+    /**
+     * How many words the day's board held, written down when it was solved.
+     *
+     * Zero on an unfinished day and on every day recorded before this was counted. It is here rather
+     * than derived because deriving it means regenerating the board - seconds of work and a
+     * dictionary in memory - to answer "how many words have I found", and a total that costs a
+     * second per day of history is a total no screen can show.
+     *
+     * On a solved day this is also the count of words *found*, since a day is only solved when the
+     * board is empty of them. That is what lets [DailyProgressState.totalWordsFound] sum it.
+     */
+    val wordCount: Int = 0,
+)
+
+/**
+ * A board part-way through, reduced to the least that has to be written down.
+ *
+ * The grid itself is not here. A [eu.andret.ravel.game.PuzzleId] regenerates it exactly, so saving
+ * it would be saving a derived thing - and a large one, since the letters, the walls and the
+ * solution together are most of a board. What cannot be derived is what the player did to it.
+ *
+ * Everything here indexes into the regenerated board, which is why [eu.andret.ravel.game.PuzzleId]
+ * documents board identity as (id, generator version): a generator change reissues the board, and a
+ * saved path would then point at cells that have moved. See the checks where this is restored.
+ *
+ * @param language the language the grid was generated from, which is part of that identity and was
+ *   the one piece of it missing. An id and a generator version name a board only once the dictionary
+ *   is fixed: the same day in Polish and in English is two unrelated grids, so a Polish board's found
+ *   words and revealed cells laid over an English one mark the wrong words and point at the wrong
+ *   cells. Nothing throws - the indices are all in range - which is why it has to be checked rather
+ *   than caught.
+ */
+data class SavedBoard(
+    val ordinal: Long,
+    val language: Language,
+    val found: Set<Int>,
+    val path: List<Int>,
+    val hints: Map<Int, Int>,
+    /**
+     * How many words the board holds in total.
+     *
+     * The only field here that is not the player's doing. It is stored because the menu wants to
+     * say "two of five" on a tile, and the alternative is running the generator - seconds of work
+     * and a dictionary in memory - to answer a question about a screen the player is not on.
+     */
+    val wordCount: Int,
+)
+
+/**
+ * Which days have been solved, how each of them went, and how many run up to today without a gap.
+ *
+ * All of it is one history across every language, unlike the main mode's ladder - see
+ * [LevelProgressState]. A calendar is a calendar: a day is solved or it is not, and letting it be
+ * solved once per language would pay for the same date twice out of one wallet and split a streak
+ * that only means anything as a single run.
+ *
+ * @param solved every solved day by [DailyDate] ordinal, each with what it cost. The calendar draws
+ *   from this directly, so it is the whole history and not a window: a month the player scrolls
+ *   back to has to know what happened in it.
+ * @param pending days started and not yet finished, with what they have cost so far. Kept apart
+ *   from [solved] because an unfinished day is not a day the streak counts, and merging the two
+ *   would make every board the player ever opened look like a board they beat.
+ * @param board the day in progress, always in the language being played now. A board saved in
+ *   another one is dropped on the way in rather than handed over - see [StoredDailyProgress] - so
+ *   nothing above this line has to know the language exists.
+ * @param streak days solved consecutively, ending today or yesterday. Yesterday still counts,
+ *   because a streak the player has not yet had a chance to break today is not broken - it is
+ *   waiting. It reaches zero only when the day before today was missed too.
+ * @param longest the best run so far, kept because it is the one number a player who has just lost
+ *   a streak still owns.
+ */
+data class DailyProgressState(
+    val solved: Map<Long, DayResult> = emptyMap(),
+    val pending: Map<Long, DayResult> = emptyMap(),
+    val board: SavedBoard? = null,
+    val streak: Int = 0,
+    val longest: Int = 0,
+) {
+    fun isSolved(ordinal: Long): Boolean = ordinal in solved
+
+    /**
+     * The board [ordinal] was left in the middle of, or null when there is none to go back to.
+     *
+     * Part of the observed state rather than something to be fetched, because the menu has to know:
+     * a tile that said "Play" over a board with three words already on it would be inviting the
+     * player to start something they are in the middle of.
+     *
+     * One slot, so a board belonging to any other day is no board at all here. Boards are only ever
+     * saved for the day being played, and that day stops being playable at midnight.
+     */
+    fun boardFor(ordinal: Long): SavedBoard? = board?.takeIf { it.ordinal == ordinal }
+
+    /** Whether [ordinal] has a board part-way through: started, touched, and not finished. */
+    fun isStarted(ordinal: Long): Boolean = !isSolved(ordinal) && boardFor(ordinal) != null
+
+    /** How [ordinal] went, or null when it was never finished. */
+    fun resultOf(ordinal: Long): DayResult? = solved[ordinal]
+
+    /**
+     * What [ordinal] has cost so far, finished or not.
+     *
+     * The count belongs to the day and not to the board, because the board is thrown away every
+     * time its screen closes. A tally kept on the board would let a player buy a word, back out and
+     * come back to a counter at zero.
+     */
+    fun costOf(ordinal: Long): DayResult =
+        solved[ordinal] ?: pending[ordinal] ?: DayResult()
+
+    /**
+     * Lifetime totals, summed on demand rather than kept as counters.
+     *
+     * A running total is a second copy of a number that is already in [solved], and the two can
+     * disagree - which is the same argument that keeps the streak derived. Summing a few thousand
+     * days costs nothing next to a frame.
+     */
+    val totalSolved: Int get() = solved.size
+    val totalBoughtLetters: Int get() = solved.values.sumOf(DayResult::boughtLetters)
+    val totalBoughtWords: Int get() = solved.values.sumOf(DayResult::boughtWords)
+    val totalSeconds: Int get() = solved.values.sumOf { it.seconds ?: 0 }
+
+    /** Words found across every day finished, which is every word those boards held. */
+    val totalWordsFound: Int get() = solved.values.sumOf(DayResult::wordCount)
+}
+
+/**
+ * The player's history with the daily challenge, and whatever board they are in the middle of.
+ *
+ * An interface because there is exactly one thing every screen here needs and several ways to store
+ * it, and because the storage is the part most likely to be replaced - a file today, an account
+ * later. Nothing above this line knows which.
+ *
+ * The streak is derived from [DailyProgressState.solved] rather than stored beside it, because two
+ * numbers that can disagree eventually will: a crash between writing "solved today" and writing
+ * "streak is now four" would leave a player permanently one short, and there is no way to notice.
+ * Counting backwards from today costs one map lookup per day of the streak, which is nothing.
+ */
+interface DailyProgress {
+    val state: StateFlow<DailyProgressState>
+
+    /**
+     * Adds one bought [hint] to [ordinal]'s running cost.
+     *
+     * Recorded when it is paid for rather than when the board is finished, because a board that is
+     * never finished still cost the player something. Days already solved are ignored: their cost
+     * is settled, and a second visit cannot add to it.
+     */
+    fun recordHint(ordinal: Long, hint: Hint)
+
+    /**
+     * Adds [seconds] of screen time to [ordinal]'s running cost.
+     *
+     * Called with a chunk of time that has already elapsed, not with a clock to start, so the store
+     * never has to know whether the app is in the foreground. Days already solved are ignored.
+     */
+    fun recordTime(ordinal: Long, seconds: Int)
+
+    /**
+     * Records [ordinal] as solved, at whatever it has cost so far, and forgets its saved board.
+     *
+     * @param wordCount how many words the board held, which is how many the player has just finished
+     *   finding. Passed in rather than looked up because only the screen that solved the board has
+     *   it - see [DayResult.wordCount].
+     * @return false when it was already recorded, which is how the caller knows not to pay for it
+     *   twice - a board can be finished, left and finished again, and the streak only ever buys the
+     *   first time. The first finish is the one that happened, and a second pass with hints already
+     *   revealed would only ever flatter it.
+     */
+    fun complete(ordinal: Long, wordCount: Int): Boolean
+
+    /**
+     * Writes down where the player has got to, so closing the screen is not losing the board.
+     *
+     * There is no matching load: what was saved is in [DailyProgressState.board] from the moment
+     * the store is built, because the menu needs it as much as the board screen does.
+     */
+    fun saveBoard(board: SavedBoard)
+}

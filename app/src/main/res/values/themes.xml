@@ -1,0 +1,10 @@
+<resources>
+    <!--
+        Only the window shell lives here - every pixel inside the activity is drawn by Compose,
+        so this theme exists to keep the system from flashing a light window before the first
+        frame and to declare a translucent status bar for edge-to-edge.
+    -->
+    <style name="Theme.Ravel" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
+</resources>

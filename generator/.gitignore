@@ -1,0 +1,5 @@
+/build
+
+# Raw source corpora, 63 MB. Not redistributed: the build task derives slownik.txt from them,
+# and that derived file is what ships. See DICTIONARY.md for where to fetch these.
+/data

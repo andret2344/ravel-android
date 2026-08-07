@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application
+        android:name=".RavelApplication"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:localeConfig="@xml/locales_config"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Ravel">
+        <!--
+            Portrait either way up, and no landscape.
+
+            Every screen here is a column that must not scroll - a board is dragged across with a
+            finger, and a grid that moves under that finger loses the drag - so the layout spends
+            height it does not have on a phone lying on its side: the board is squeezed to a few
+            pixels and the daily menu is cut off mid-card. This is a stopgap over that, not a design
+            decision; a landscape layout would replace it.
+
+            userPortrait rather than sensorPortrait, so a player who has turned auto-rotate off keeps
+            it off. The half-turn is worth allowing on its own: a tablet or a phone on a charger is
+            often upside down, and refusing it there is refusing the only orientation the device is
+            in.
+        -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:screenOrientation="userPortrait"
+            android:windowSoftInputMode="adjustResize"
+            tools:ignore="LockedOrientationActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

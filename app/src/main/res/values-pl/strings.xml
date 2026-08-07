@@ -1,0 +1,158 @@
+<resources>
+    <string name="tab_stats">Postępy</string>
+    <string name="tab_daily">Dzień</string>
+    <string name="tab_main">Gra</string>
+    <string name="tab_shop">Sklep</string>
+    <string name="tab_settings">Opcje</string>
+
+    <string name="board_generating">Układam planszę…</string>
+    <string name="board_failed">Nie udało się wygenerować planszy.</string>
+    <string name="board_retry">Spróbuj ponownie</string>
+    <string name="board_description">Plansza %1$d na %2$d</string>
+    <string name="board_close">Zamknij planszę</string>
+
+    <string name="daily_title">Wyzwanie dnia</string>
+    <string name="daily_play">Zagraj dzisiejszą planszę</string>
+    <string name="daily_review">Zobacz dzisiejszą planszę</string>
+    <string name="daily_reviewing">Rozwiązane</string>
+
+    <string name="daily_prompt_title">Dzisiejsza plansza czeka</string>
+    <string name="daily_prompt_body">Dzisiejsze wyzwanie dnia jest jeszcze nierozwiązane. Zagrać teraz?</string>
+    <string name="daily_prompt_play">Zagraj</string>
+    <string name="daily_prompt_resume_title">Dzisiejsza plansza jest zaczęta</string>
+    <string name="daily_prompt_resume_body">Dzisiejsze wyzwanie dnia zostało przerwane w połowie. Dokończyć teraz?</string>
+    <string name="daily_prompt_remind">Pytaj za każdym razem</string>
+    <string name="daily_prompt_later">Nie teraz</string>
+
+    <string name="main_title">Gra</string>
+    <string name="level_number">Poziom %1$d</string>
+    <string name="level_size">%1$d × %2$d</string>
+    <string name="level_play">Zagraj</string>
+    <string name="level_resume">Kontynuuj</string>
+    <plurals name="levels_done">
+        <item quantity="one">%1$d ukończony poziom</item>
+        <item quantity="few">%1$d ukończone poziomy</item>
+        <item quantity="many">%1$d ukończonych poziomów</item>
+        <item quantity="other">%1$d ukończonego poziomu</item>
+    </plurals>
+    <string name="level_rung_done">Poziom %1$d, ukończony</string>
+    <string name="level_rung_current">Poziom %1$d, teraz</string>
+    <string name="level_rung_locked">Poziom %1$d, zablokowany</string>
+
+    <string name="level_done_title">Poziom %1$d ukończony!</string>
+    <string name="level_next">Dalej: %1$d</string>
+    <string name="level_menu">Menu</string>
+
+    <string name="done_title">Rozwiązane!</string>
+    <string name="done_gained">+%1$d</string>
+    <string name="done_for_board">Plansza</string>
+    <string name="done_streak">%1$d %2$s</string>
+    <string name="done_exit">Gotowe</string>
+
+    <string name="streak_title">Seria tygodniowa</string>
+    <string name="streak_none">Brak serii</string>
+    <plurals name="streak_days">
+        <item quantity="one">dzień z rzędu</item>
+        <item quantity="few">dni z rzędu</item>
+        <item quantity="many">dni z rzędu</item>
+        <item quantity="other">dnia z rzędu</item>
+    </plurals>
+    <string name="streak_day">Dzień %1$d</string>
+    <string name="streak_rung_taken">Dzień %1$d, %2$s, odebrane</string>
+    <string name="streak_rung_offered">Dzień %1$d, %2$s, dzisiaj</string>
+    <string name="streak_rung_ahead">Dzień %1$d, %2$s</string>
+
+    <string name="calendar_previous">Poprzedni miesiąc</string>
+    <string name="calendar_next">Następny miesiąc</string>
+    <string name="calendar_day_solved">%1$d, rozwiązane</string>
+    <string name="calendar_day_today">%1$d, dzisiaj, jeszcze nierozwiązane</string>
+    <string name="calendar_day_missed">%1$d, pominięte</string>
+    <string name="calendar_day_future">%1$d</string>
+
+    <string name="day_pick">Wybierz dzień, żeby zobaczyć, jak poszło.</string>
+    <plurals name="day_stat_letters">
+        <item quantity="one">litera</item>
+        <item quantity="few">litery</item>
+        <item quantity="many">liter</item>
+        <item quantity="other">litery</item>
+    </plurals>
+    <plurals name="day_stat_words">
+        <item quantity="one">słowo</item>
+        <item quantity="few">słowa</item>
+        <item quantity="many">słów</item>
+        <item quantity="other">słowa</item>
+    </plurals>
+    <string name="day_stat_time">czas</string>
+    <string name="day_open_solved">Zobacz planszę</string>
+
+    <string name="tile_play">Zagraj</string>
+    <string name="tile_play_caption">dzisiaj</string>
+    <string name="tile_play_resume">Kontynuuj</string>
+    <string name="tile_play_done">Podejrzyj</string>
+    <string name="tile_play_done_caption">zrobione</string>
+    <string name="tile_calendar">Kalendarz</string>
+    <string name="tile_leaderboards">Ranking</string>
+    <string name="tile_locked_caption">wkrótce</string>
+
+    <string name="stats_section_daily">Wyzwanie dnia</string>
+    <string name="stats_section_hints">Kupione podpowiedzi</string>
+    <string name="stats_section_total">Codzienne i gra razem</string>
+
+    <string name="stats_solved">rozwiązane dni</string>
+    <string name="stats_longest">najlepsza seria</string>
+    <string name="stats_letters">litery</string>
+    <string name="stats_words">słowa</string>
+    <string name="stats_boards">rozwiązane plansze</string>
+    <string name="stats_found">znalezione słowa</string>
+    <string name="stats_total_time">czas nad planszami</string>
+    <string name="stats_all_languages">Liczone ze wszystkich języków.</string>
+
+    <string name="dialog_close">Zamknij</string>
+
+    <string name="hint_letter">Litera</string>
+    <string name="hint_word">Słowo</string>
+    <string name="hint_with_cost">%1$s · %2$d</string>
+
+    <string name="hints_used">%1$s · %2$s</string>
+    <plurals name="hints_letters">
+        <item quantity="one">%1$d litera</item>
+        <item quantity="few">%1$d litery</item>
+        <item quantity="many">%1$d liter</item>
+        <item quantity="other">%1$d litery</item>
+    </plurals>
+    <plurals name="hints_words">
+        <item quantity="one">%1$d słowo</item>
+        <item quantity="few">%1$d słowa</item>
+        <item quantity="many">%1$d słów</item>
+        <item quantity="other">%1$d słowa</item>
+    </plurals>
+
+    <plurals name="coins_balance">
+        <item quantity="one">%1$d moneta</item>
+        <item quantity="few">%1$d monety</item>
+        <item quantity="many">%1$d monet</item>
+        <item quantity="other">%1$d monety</item>
+    </plurals>
+
+    <string name="shop_title">Sklep</string>
+    <string name="shop_earn_solving">Rozwiązuj łamigłówki</string>
+    <plurals name="shop_earn_solving_detail">
+        <item quantity="one">%1$d moneta za każdą ukończoną planszę, w dowolnym trybie.</item>
+        <item quantity="few">%1$d monety za każdą ukończoną planszę, w dowolnym trybie.</item>
+        <item quantity="many">%1$d monet za każdą ukończoną planszę, w dowolnym trybie.</item>
+        <item quantity="other">%1$d monety za każdą ukończoną planszę, w dowolnym trybie.</item>
+    </plurals>
+    <string name="shop_earn_ads">Obejrzyj reklamę</string>
+    <string name="shop_buy">Kup monety</string>
+    <string name="shop_coming_soon">Wkrótce.</string>
+    <string name="shop_prices">Litera kosztuje %1$d, całe słowo %2$d.</string>
+
+    <string name="settings_language">Język</string>
+    <string name="settings_language_system">Język telefonu</string>
+    <string name="settings_language_note">Ustawia słowa na planszach i język gry.</string>
+
+    <string name="settings_switch_title">Zmienić język?</string>
+    <string name="settings_switch_body">Rozpoczęta plansza jest w języku, w którym teraz grasz, więc zostanie ułożona od nowa. Poziom, passa i monety zostają — podpowiedzi opłacone na tej planszy nie.</string>
+    <string name="settings_switch_confirm">Zmień</string>
+    <string name="settings_switch_cancel">Zostaw</string>
+</resources>

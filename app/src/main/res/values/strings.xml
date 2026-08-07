@@ -1,0 +1,220 @@
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="en">
+    <!--
+        The default locale, and English. Every other language is a values-<code> beside this one,
+        never a string added here: a phone whose language the app does not speak falls back to this
+        file, so a Polish string left in it would surface in the middle of an English screen - which
+        is exactly how this file came to be half Polish once.
+    -->
+    <string name="app_name" translatable="false">Ravel</string>
+
+    <!--
+        Five labels across a phone, so every one of them is a short word. A label that ellipsises is
+        not a label, and the shortest true word beats the exact one: "Options" is what the tab is
+        for, and it fits where "Settings" starts losing its last letters on a narrow screen.
+    -->
+    <string name="tab_stats">Stats</string>
+    <string name="tab_daily">Daily</string>
+    <string name="tab_main">Game</string>
+    <string name="tab_shop">Shop</string>
+    <string name="tab_settings">Options</string>
+
+    <!-- The board screen itself, which is the same screen in both game modes. -->
+    <string name="board_generating">Building the board…</string>
+    <string name="board_failed">Could not build a board.</string>
+    <string name="board_retry">Try again</string>
+    <string name="board_description">Board %1$d by %2$d</string>
+    <string name="board_close">Close the board</string>
+
+    <string name="daily_title">Daily challenge</string>
+    <string name="daily_play">Play today\'s board</string>
+    <string name="daily_review">See today\'s board</string>
+    <string name="daily_reviewing">Already solved</string>
+
+    <!--
+        The question the game opens with while today's board is still unsolved, in its two forms:
+        an untouched board is an invitation, a half-finished one is a reminder, and the second is
+        the stronger of the two because something is already owed.
+    -->
+    <string name="daily_prompt_title">Today\'s board is waiting</string>
+    <string name="daily_prompt_body">You have not solved today\'s daily challenge yet. Play it now?</string>
+    <string name="daily_prompt_play">Play</string>
+    <string name="daily_prompt_resume_title">Today\'s board is half done</string>
+    <string name="daily_prompt_resume_body">You left today\'s daily challenge part-way through. Finish it now?</string>
+    <string name="daily_prompt_remind">Ask me every time</string>
+    <string name="daily_prompt_later">Not now</string>
+
+    <!--
+        The main mode: one level at a time, in order. The number is always formatted in rather than
+        appended, because "Level 7" is a name and the word in front of it moves in other languages.
+    -->
+    <string name="main_title">Game</string>
+    <string name="level_number">Level %1$d</string>
+    <!-- The board's shape, under its number: "6 × 6". -->
+    <string name="level_size">%1$d × %2$d</string>
+    <string name="level_play">Play</string>
+    <string name="level_resume">Continue</string>
+    <plurals name="levels_done">
+        <item quantity="one">%1$d level completed</item>
+        <item quantity="other">%1$d levels completed</item>
+    </plurals>
+    <!-- Spoken descriptions for the strip of levels, which on screen are numbers alone. -->
+    <string name="level_rung_done">Level %1$d, completed</string>
+    <string name="level_rung_current">Level %1$d, now playing</string>
+    <string name="level_rung_locked">Level %1$d, locked</string>
+
+    <!-- Shown the moment a level is beaten, with the two ways on. -->
+    <string name="level_done_title">Level %1$d solved!</string>
+    <!-- The button names where it goes, because on a ladder that is the whole offer. -->
+    <string name="level_next">Next: %1$d</string>
+    <string name="level_menu">Menu</string>
+
+    <!-- Shown the moment the last word is found, with what the board paid. -->
+    <string name="done_title">Solved!</string>
+    <!-- A gain, so it carries its sign: "+20". -->
+    <string name="done_gained">+%1$d</string>
+    <string name="done_for_board">Board</string>
+    <!-- The count and its noun, which are separate everywhere else and one sentence here. -->
+    <string name="done_streak">%1$d %2$s</string>
+    <string name="done_exit">Done</string>
+
+    <!--
+        The streak. Amounts are never formatted in as bare numbers: they go through
+        coins_balance first and arrive here as text, because the noun after the number is declined
+        by it in Polish and in most of the languages after it.
+    -->
+    <string name="streak_title">Weekly streak</string>
+    <string name="streak_none">No streak yet</string>
+    <!-- The noun under the big count, so it carries no number of its own. -->
+    <plurals name="streak_days">
+        <item quantity="one">day in a row</item>
+        <item quantity="other">days in a row</item>
+    </plurals>
+    <!-- The name on every rung of the ladder. -->
+    <string name="streak_day">Day %1$d</string>
+    <!-- Spoken descriptions for the seven rungs, which on screen are numbers alone. -->
+    <string name="streak_rung_taken">Day %1$d, %2$s, collected</string>
+    <string name="streak_rung_offered">Day %1$d, %2$s, today</string>
+    <string name="streak_rung_ahead">Day %1$d, %2$s</string>
+
+    <string name="calendar_previous">Previous month</string>
+    <string name="calendar_next">Next month</string>
+    <string name="calendar_day_solved">%1$d, solved</string>
+    <string name="calendar_day_today">%1$d, today, not solved yet</string>
+    <string name="calendar_day_missed">%1$d, missed</string>
+    <string name="calendar_day_future">%1$d</string>
+
+    <!-- The card under the calendar: one day, spelled out. -->
+    <string name="day_pick">Pick a day to see how it went.</string>
+    <plurals name="day_stat_letters">
+        <item quantity="one">letter</item>
+        <item quantity="other">letters</item>
+    </plurals>
+    <plurals name="day_stat_words">
+        <item quantity="one">word</item>
+        <item quantity="other">words</item>
+    </plurals>
+    <string name="day_stat_time">time</string>
+    <string name="day_open_solved">See the board</string>
+
+    <!-- The three tiles under the streak. Labels are one word: they sit in a square a third of the
+         screen wide, and a wrapped label reads as two lines of nothing in particular. -->
+    <string name="tile_play">Play</string>
+    <string name="tile_play_caption">today</string>
+    <string name="tile_play_resume">Continue</string>
+    <string name="tile_play_done">Review</string>
+    <string name="tile_play_done_caption">done</string>
+    <string name="tile_calendar">Calendar</string>
+    <!-- Not built yet, and locked rather than hidden: see LockedTile. -->
+    <string name="tile_leaderboards">Ranking</string>
+    <string name="tile_locked_caption">soon</string>
+
+    <!--
+        The three groups of tiles. The first two are about the daily challenge alone; the third
+        counts both modes, which is why it says so rather than being left to be assumed.
+    -->
+    <string name="stats_section_daily">Daily challenge</string>
+    <string name="stats_section_hints">Hints bought</string>
+    <string name="stats_section_total">Daily and game together</string>
+
+    <!-- Labels under the numbers, so none of them carries a number of its own. -->
+    <string name="stats_solved">days solved</string>
+    <!-- The best run ever made, not the one being made now: that lives on the daily tab. -->
+    <string name="stats_longest">best streak</string>
+    <string name="stats_letters">letters</string>
+    <string name="stats_words">words</string>
+    <string name="stats_boards">boards solved</string>
+    <string name="stats_found">words found</string>
+    <string name="stats_total_time">time on boards</string>
+    <!--
+        Under the last tile, because the main mode keeps a separate ladder per language and these
+        numbers do not. Without it "boards solved" reads as the count for whichever language is being
+        played, which is a smaller number and the one the game tab is already showing.
+    -->
+    <string name="stats_all_languages">Counted across every language.</string>
+
+    <string name="dialog_close">Close</string>
+
+    <string name="hint_letter">Letter</string>
+    <string name="hint_word">Word</string>
+    <!-- What a hint gives away, then what it costs: "Letter · 100". -->
+    <string name="hint_with_cost">%1$s · %2$d</string>
+
+    <!--
+        The running tally under the board, and the same two counts on the day card afterwards. The
+        counts are plurals with the number in them; the labels under the big numbers on the card are
+        plurals without it, because the number is already above them.
+    -->
+    <string name="hints_used">%1$s · %2$s</string>
+    <plurals name="hints_letters">
+        <item quantity="one">%1$d letter</item>
+        <item quantity="other">%1$d letters</item>
+    </plurals>
+    <plurals name="hints_words">
+        <item quantity="one">%1$d word</item>
+        <item quantity="other">%1$d words</item>
+    </plurals>
+
+    <!--
+        The player's coins, shown beside prices and in the shop. Plurals rather than a format
+        string: English needs two forms and Polish four, and a balance is a number the player reads
+        constantly.
+    -->
+    <plurals name="coins_balance">
+        <item quantity="one">%1$d coin</item>
+        <item quantity="other">%1$d coins</item>
+    </plurals>
+
+    <string name="shop_title">Shop</string>
+    <string name="shop_earn_solving">Solve puzzles</string>
+    <plurals name="shop_earn_solving_detail">
+        <item quantity="one">%1$d coin for every board you finish, in any mode.</item>
+        <item quantity="other">%1$d coins for every board you finish, in any mode.</item>
+    </plurals>
+    <string name="shop_earn_ads">Watch an ad</string>
+    <string name="shop_buy">Buy coins</string>
+    <string name="shop_coming_soon">Coming soon.</string>
+    <string name="shop_prices">A letter costs %1$d, a whole word %2$d.</string>
+
+    <!--
+        The options tab. One setting, so the group heading carries the whole screen.
+
+        The languages themselves are never listed here: each is named in its own language, taken from
+        the platform, because a player hunting for English on a Polish screen is hunting for the word
+        "English" - see SettingsScreen.
+    -->
+    <string name="settings_language">Language</string>
+    <string name="settings_language_system">Phone language</string>
+    <!-- What the setting reaches, said once, because it reaches further than a player would guess. -->
+    <string name="settings_language_note">Sets the words on the boards and the language of the game.</string>
+
+    <!--
+        Asked only when there is a board part-way through, which is the only time switching costs
+        anything. It says what is lost and does not offer to undo it: the coins spent on hints are
+        spent, and a language switch that refunded them would be a way to buy a word and take it
+        back.
+    -->
+    <string name="settings_switch_title">Change the language?</string>
+    <string name="settings_switch_body">The board you have started is in the language you are playing now, so it will be set up again from the beginning. Your level, your streak and your coins stay - the hints you have already paid for on this board do not.</string>
+    <string name="settings_switch_confirm">Change</string>
+    <string name="settings_switch_cancel">Keep it</string>
+</resources>

@@ -1,0 +1,57 @@
+# Rdzenie wykluczające słowo ze słownika gry.
+#
+# Dopasowanie od POCZĄTKU słowa (dodatkowo po przedrostku "nie"), nie po podciągu.
+# Podciąg był pierwszą wersją i wycinał niewinnych: "cechuje", "wymachuje", "zakochuje",
+# "nasłuchuj" zawierają "chuj", a "dowcipach" zawiera "cipa". Polska derywacja jest
+# przedrostkowa, więc formy pochodne i tak zaczynają się od przedrostka z rdzeniem —
+# wystarczy je tu wymienić.
+#
+# buildDictionary zapisuje KAŻDĄ usuniętą formę do build/usuniete-slowa.txt.
+# Po każdej zmianie tej listy przejrzeć ten plik.
+#
+# Świadomie NIE ma tu:
+#   dup     — duplikat, dupleks
+#   ruch    — ruch, ruchomy
+#   pierd   — pierdzieć jest dziecinne, nie wulgarne; blokowane są dopiero formy z przedrostkiem
+#   upierd  — upierdliwy znaczy "męczący" i jest zwyczajnym słowem
+#   gnoj    — gnojówka, nawóz
+
+# rdzenie
+chuj
+cipa
+cipk
+jeb
+kurw
+kutas
+pizd
+pierdol
+pierdal
+
+# formy przedrostkowe
+dojeb
+najeb
+objeb
+odjeb
+podjeb
+pojeb
+przejeb
+rozjeb
+ujeb
+wjeb
+wyjeb
+zajeb
+zjeb
+nakurw
+ochuj
+skurw
+wkurw
+zakurw
+napierd
+odpierd
+opierd
+przypierd
+rozpierd
+spierd
+wpierd
+wypierd
+zapierd

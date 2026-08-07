@@ -1,0 +1,67 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # So a run can be started by hand against any branch without pushing an empty commit.
+  workflow_dispatch:
+
+# A second push to the same branch makes the first run pointless - stop it and keep the minutes.
+# Never cancel on main: those runs are the record of what was green when it was merged.
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # AGP 9 and Gradle 9 both want a modern JDK; the modules themselves still target Java 11
+      # through `options.release`, so this only decides what the compiler runs on.
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # The generator's own suite: dictionaries, solver, board shapes, interruption. It carries the
+      # slowest tests in the project because several of them generate real boards.
+      - name: Generator tests
+        run: ./gradlew :generator:test
+
+      # The game rules - puzzle state, path matching, puzzle identity - which run in milliseconds
+      # because none of them touch Android.
+      - name: App unit tests
+        run: ./gradlew :app:testDebugUnitTest
+
+      # Catches what the tests cannot: resource errors, manifest merging, anything that only breaks
+      # when the APK is actually assembled.
+      - name: Assemble debug APK
+        run: ./gradlew :app:assembleDebug
+
+      # Lint is here for one check above all: a string added to one language and not the other is
+      # an error to it, and a half-translated screen is not something a unit test can see.
+      - name: Lint
+        run: ./gradlew :app:lintDebug
+
+      # Uploaded on failure only, since a green run's reports say nothing anyone will read.
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            generator/build/reports/tests/
+            app/build/reports/tests/
+            app/build/reports/lint-results-debug.html
+            generator/build/test-results/
+            app/build/test-results/
+          retention-days: 14
