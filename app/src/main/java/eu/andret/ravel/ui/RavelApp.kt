@@ -35,6 +35,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import eu.andret.ravel.R
+import eu.andret.ravel.ui.about.LicenceRoute
+import eu.andret.ravel.ui.about.LicenceScreen
 import eu.andret.ravel.ui.daily.DailyMenuScreen
 import eu.andret.ravel.ui.daily.DailyRoute
 import eu.andret.ravel.ui.daily.DailyScreen
@@ -180,7 +182,24 @@ fun RavelApp(
             }
             composable(SHOP_ROUTE) { ShopScreen(modifier = content) }
             composable(STATS_ROUTE) { StatsScreen(modifier = content) }
-            composable(SETTINGS_ROUTE) { SettingsScreen(modifier = content) }
+            composable(SETTINGS_ROUTE) {
+                SettingsScreen(
+                    onLicence = { navController.navigate(LicenceRoute.of(it)) },
+                    modifier = content,
+                )
+            }
+            composable(
+                route = LicenceRoute.DETAIL,
+                arguments = listOf(
+                    navArgument(LicenceRoute.ARG_LICENCE) { type = NavType.StringType },
+                ),
+            ) { entry ->
+                LicenceScreen(
+                    licence = LicenceRoute.from(entry),
+                    onBack = { navController.popBackStack() },
+                    modifier = content,
+                )
+            }
         }
     }
 

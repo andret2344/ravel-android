@@ -54,7 +54,7 @@ fun registerDictionaryTask(
     maxHeapSize = "3g"
     args = listOf(
         language,
-        "$projectDir/src/main/resources/slownik-$language.txt",
+        "$projectDir/src/main/resources/dictionary-$language.txt",
         "$projectDir/blocklist-$language.txt",
         "${layout.buildDirectory.get()}/removed-$language.txt",
         "$projectDir/data/$admissibility",
@@ -65,7 +65,7 @@ fun registerDictionaryTask(
 
 registerDictionaryTask(
     "pl",
-    admissibility = "sjp-slowa.txt",
+    admissibility = "sjp-words.txt",
     frequency = "kwjp100-orth_lc-all.csv",
     inflection = "polimorf.tab.gz",
 )

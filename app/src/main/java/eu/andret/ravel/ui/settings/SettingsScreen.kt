@@ -1,5 +1,6 @@
 package eu.andret.ravel.ui.settings
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,6 +31,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import eu.andret.ravel.R
 import eu.andret.ravel.generator.Language
+import eu.andret.ravel.ui.about.Licence
 import java.util.Locale
 
 /**
@@ -43,9 +45,21 @@ import java.util.Locale
  * The language is one setting and not two. It picks the dictionary boards are built from and the
  * language the interface is read in, because a player who wants English puzzles wants English
  * buttons - see [eu.andret.ravel.settings.LanguageSettings].
+ *
+ * The word sources sit under it rather than on an "About" screen of their own. Three of them carry
+ * attribution the game is required to show, and a screen holding one setting has room; a second
+ * screen reached from this one would be a tap in front of a list that is already short.
+ *
+ * @param onLicence opens one source. The names are on this screen and the licences are a page
+ *   deeper, because a player who came here to change the language should not have to scroll past a
+ *   Princeton disclaimer to find out they have already passed it.
  */
 @Composable
-fun SettingsScreen(modifier: Modifier = Modifier, viewModel: SettingsViewModel = viewModel()) {
+fun SettingsScreen(
+    onLicence: (Licence) -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: SettingsViewModel = viewModel(),
+) {
     val choice by viewModel.choice.collectAsStateWithLifecycle()
     val unfinished by viewModel.unfinished.collectAsStateWithLifecycle()
 
@@ -97,6 +111,26 @@ fun SettingsScreen(modifier: Modifier = Modifier, viewModel: SettingsViewModel =
             }
             Text(
                 text = stringResource(R.string.settings_language_note),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = stringResource(R.string.settings_sources),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column {
+                    Licence.entries.forEach { licence ->
+                        SourceRow(licence = licence, onOpen = { onLicence(licence) })
+                    }
+                }
+            }
+            Text(
+                text = stringResource(R.string.settings_sources_note),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -162,6 +196,33 @@ private inline fun select(
 private fun nameOf(language: Language): String {
     val locale = Locale.forLanguageTag(language.code)
     return locale.getDisplayLanguage(locale).replaceFirstChar { it.titlecase(locale) }
+}
+
+/**
+ * One source: what it is called, and what it is used under.
+ *
+ * The licence label is on the row rather than only on the page behind it, because it is the part a
+ * reader is checking. Somebody who opens this list is asking "what is in here and what does it
+ * oblige you to", and answering the second half only after a tap makes them open six pages to find
+ * out there was nothing to worry about.
+ */
+@Composable
+private fun SourceRow(licence: Licence, onOpen: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onOpen)
+            .padding(horizontal = 12.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(text = stringResource(licence.source), style = MaterialTheme.typography.bodyLarge)
+        Text(
+            text = stringResource(licence.licence),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
 }
 
 @Composable

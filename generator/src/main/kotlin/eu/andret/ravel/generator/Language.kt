@@ -10,8 +10,8 @@ enum class Language(
     val dictionaryResource: String,
     val blocklistFile: String,
 ) {
-    POLISH("pl", Alphabet.POLISH, "/slownik-pl.txt", "blocklist-pl.txt"),
-    ENGLISH("en", Alphabet.ENGLISH, "/slownik-en.txt", "blocklist-en.txt"),
+    POLISH("pl", Alphabet.POLISH, "/dictionary-pl.txt", "blocklist-pl.txt"),
+    ENGLISH("en", Alphabet.ENGLISH, "/dictionary-en.txt", "blocklist-en.txt"),
     ;
 
     companion object {

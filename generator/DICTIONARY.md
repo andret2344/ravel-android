@@ -62,11 +62,15 @@ adjective and not only as the past tense of `stress`. So do `greatest`, `longest
 `latest` — all adverb lemmas. `largest`, `highest`, `smallest` and `strongest` are not, and were
 folded away. It is the same principle that kept `leżąca` on the Polish side.
 
-## Attribution obligations — to be placed in the app
+## Attribution obligations — placed in the app
+
+Carried by the settings tab, under "Word sources": every source below is a row, and each row opens a
+page with its notice and, for the two that require it, the licence text itself. The strings live in
+`app/src/main/res/values/strings.xml` as `licence_*`, the list in `app/.../ui/about/Licences.kt`.
 
 ### Polish sources
 
-Required. The "About" screen must contain the following (the wording may be reworked, the elements
+Required. The notice must contain the following (the wording may be reworked, the elements
 may not disappear):
 
 > Polish dictionary based on the **SJP.PL Dictionary** (https://sjp.pl) and on the **KWJP100**
@@ -142,7 +146,7 @@ mkdir -p generator/data
 # --- Polish ---
 # The file name changes with each release; check https://sjp.pl/sl/growy/ for the current one.
 curl -L -o /tmp/sjp.zip https://sjp.pl/slownik/growy/sjp-20260803.zip
-unzip -p /tmp/sjp.zip slowa.txt > generator/data/sjp-slowa.txt
+unzip -p /tmp/sjp.zip slowa.txt > generator/data/sjp-words.txt
 
 curl -L https://raw.githubusercontent.com/ipipan/kwjp100-varia/main/freqlists/kwjp100-slowa-orth_lc-all.csv.gz \
   | gunzip > generator/data/kwjp100-orth_lc-all.csv

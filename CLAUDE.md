@@ -192,14 +192,26 @@ the same breath — the two must never disagree, in either direction.
 - **Firebase Analytics retention must be set to 14 months** in the console, which is what the policy
   states; the project default is 2 months.
 
-## Outstanding obligation
+## Attribution
 
 `generator/DICTIONARY.md` records the dictionary sources and licences. Three of them require a
-notice, and there is still no "About" screen to carry any of it. Do not ship a release without one.
+notice, and the app carries all of them: the settings tab lists every source under "Word sources"
+(`ui/about/Licences.kt`), and each name opens `LicenceScreen`.
 
 - **SJP.PL word list and KWJP100 frequency data** — CC BY 4.0, attribution **plus** a statement that
-  the material was modified.
+  the material was modified. Both notices carry that sentence; deleting it breaks the licence.
 - **PoliMorf** (Polish lemmatisation) — BSD 2-clause, copyright notice retained on redistribution.
 - **WordNet 3.0** (English lemmatisation) — Princeton copyright notice retained.
 
-`DICTIONARY.md` carries the exact wording for each. ENABLE and OANC need nothing.
+ENABLE and OANC need nothing and are listed anyway.
+
+The notices and the source names are `translatable="false"` on purpose: a required notice is
+required in its own wording, and these are proper names. **Adding a dictionary source means adding
+an entry here in the same commit** — the licence obligation starts when the data ships, not when
+somebody remembers.
+
+The two licences that ask for their text to travel with the work are bundled verbatim in
+`res/raw/`, and PoliMorf's was reconstructed from the standard BSD 2-clause template plus the
+copyright line on `morfeusz.sgjp.pl` — that host has a **revoked** TLS certificate, so it cannot be
+re-fetched to check without working around the revocation. CC BY 4.0 is linked rather than bundled,
+which is what that licence asks for.

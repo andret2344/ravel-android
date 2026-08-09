@@ -217,4 +217,43 @@
     <string name="settings_switch_body">The board you have started is in the language you are playing now, so it will be set up again from the beginning. Your level, your streak and your coins stay - the hints you have already paid for on this board do not.</string>
     <string name="settings_switch_confirm">Change</string>
     <string name="settings_switch_cancel">Keep it</string>
+
+    <!--
+        Where the words come from, listed on the settings tab and opened one at a time.
+
+        Everything below marked translatable="false" is either a proper name or a licence notice.
+        The names are not translated because they are what the resources are called; the notices are
+        not translated because CC BY 4.0 and the WordNet licence both say what has to appear, and an
+        unofficial rendering of a required notice is not the notice. The two Creative Commons entries
+        carry the statement that the material was modified, which that licence requires and which is
+        the one part of these paragraphs that is about this game rather than about the source.
+    -->
+    <string name="settings_sources">Word sources</string>
+    <string name="settings_sources_note">The dictionaries are built from public word lists and corpora. Tap a source to see its licence.</string>
+    <string name="licence_open">Open the licence</string>
+    <string name="licence_back">Back</string>
+
+    <string name="licence_name_cc_by" translatable="false">CC BY 4.0</string>
+    <string name="licence_name_bsd" translatable="false">BSD 2-clause</string>
+    <string name="licence_name_wordnet" translatable="false">WordNet licence</string>
+    <string name="licence_name_public_domain" translatable="false">Public domain</string>
+    <string name="licence_name_unrestricted" translatable="false">No restrictions</string>
+
+    <string name="licence_sjp_source" translatable="false">SJP.PL word list</string>
+    <string name="licence_sjp_notice" translatable="false">The Polish dictionary is based on the SJP.PL Dictionary (https://sjp.pl), made available under the Creative Commons Attribution 4.0 International licence. The material has been modified: a subset of words was selected and ordered by frequency.</string>
+
+    <string name="licence_kwjp_source" translatable="false">KWJP100</string>
+    <string name="licence_kwjp_notice" translatable="false">Polish word frequencies come from the KWJP100 frequency lists — Corpus of Contemporary Polish, Institute of Computer Science, Polish Academy of Sciences (https://kwjp.pl), made available under the Creative Commons Attribution 4.0 International licence. The material has been modified: a subset of words was selected and ordered by frequency.</string>
+
+    <string name="licence_polimorf_source" translatable="false">PoliMorf</string>
+    <string name="licence_polimorf_notice" translatable="false">Polish lemmatisation is based on PoliMorf (Linguistic Engineering Group, Institute of Computer Science PAS, and the Grammatical Dictionary of Polish team), licensed under the BSD 2-clause licence.</string>
+
+    <string name="licence_wordnet_source" translatable="false">WordNet 3.0</string>
+    <string name="licence_wordnet_notice" translatable="false">English lemmatisation is based on WordNet 3.0, Princeton University (https://wordnet.princeton.edu). WordNet 3.0 Copyright 2006 by Princeton University. All rights reserved. Used under the terms of the WordNet licence.</string>
+
+    <string name="licence_enable_source" translatable="false">ENABLE word list</string>
+    <string name="licence_enable_notice" translatable="false">The English word list is ENABLE, released by its author into the public domain: “The ENABLE master word list, WORD.LST, is herewith formally released into the Public Domain.”</string>
+
+    <string name="licence_oanc_source" translatable="false">Open American National Corpus</string>
+    <string name="licence_oanc_notice" translatable="false">English word frequencies are computed from the Open American National Corpus (https://anc.org), which is distributed with no restrictions on use, commercial or otherwise.</string>
 </resources>

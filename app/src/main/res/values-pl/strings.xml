@@ -155,4 +155,9 @@
     <string name="settings_switch_body">Rozpoczęta plansza jest w języku, w którym teraz grasz, więc zostanie ułożona od nowa. Poziom, passa i monety zostają — podpowiedzi opłacone na tej planszy nie.</string>
     <string name="settings_switch_confirm">Zmień</string>
     <string name="settings_switch_cancel">Zostaw</string>
+
+    <string name="settings_sources">Źródła słów</string>
+    <string name="settings_sources_note">Słowniki powstają z publicznych list słów i korpusów. Dotknij źródła, aby zobaczyć jego licencję.</string>
+    <string name="licence_open">Otwórz licencję</string>
+    <string name="licence_back">Wstecz</string>
 </resources>
