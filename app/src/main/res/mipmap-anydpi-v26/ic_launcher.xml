@@ -2,5 +2,10 @@
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
     <background android:drawable="@drawable/ic_launcher_background" />
     <foreground android:drawable="@drawable/ic_launcher_foreground" />
-    <monochrome android:drawable="@drawable/ic_launcher_foreground" />
+    <!--
+        A separate monochrome drawable rather than the foreground reused: themed icons are tinted a
+        single colour, so a two-tone foreground would flatten into one silhouette and the ribbon
+        would stop being readable. Here the unsolved cells are held back with fillAlpha instead.
+    -->
+    <monochrome android:drawable="@drawable/ic_launcher_monochrome" />
 </adaptive-icon>

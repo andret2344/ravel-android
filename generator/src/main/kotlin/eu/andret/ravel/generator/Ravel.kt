@@ -43,8 +43,12 @@ object Ravel {
      * @param width columns.
      * @param height rows, square by default.
      * @param language which dictionary the hidden words come from.
-     * @param difficulty how obscure the words may be and how much the paths wind.
+     * @param difficulty how much the paths wind, and how much of the dictionary is loaded at all.
      * @param seed fix it to get the same board every time, for a daily puzzle or a bug report.
+     * @param maxWordRank how deep into the frequency-ranked dictionary this board's words may
+     *   reach. Lower means words a player is more likely to know, without touching path shape;
+     *   leave it alone for everything [difficulty] loaded. The board is still proved unique against
+     *   the full dictionary either way.
      * @throws IllegalArgumentException when the grid is too small to hold a single word.
      * @throws InterruptedException when the calling thread is interrupted mid-search.
      */
@@ -56,8 +60,9 @@ object Ravel {
         height: Int = width,
         language: Language = Language.POLISH,
         difficulty: Difficulty = Difficulty.HARD,
-        seed: Long = Random.Default.nextLong(),
-    ): Board = requireNotNull(generate(width, height, language, difficulty, seed, null)) {
+        seed: Long = Random.nextLong(),
+        maxWordRank: Int = difficulty.maxRank,
+    ): Board = requireNotNull(generate(width, height, language, difficulty, seed, null, maxWordRank)) {
         // Only a deadline can make the generator give up, and this overload sets none.
         "Generation returned nothing without a deadline, which should not be possible"
     }
@@ -79,9 +84,10 @@ object Ravel {
         height: Int = width,
         language: Language = Language.POLISH,
         difficulty: Difficulty = Difficulty.HARD,
-        seed: Long = Random.Default.nextLong(),
+        seed: Long = Random.nextLong(),
         timeoutMillis: Long,
-    ): Board? = generate(width, height, language, difficulty, seed, timeoutMillis)
+        maxWordRank: Int = difficulty.maxRank,
+    ): Board? = generate(width, height, language, difficulty, seed, timeoutMillis, maxWordRank)
 
     /**
      * Loads and caches a dictionary now rather than during the first [board] call.
@@ -113,8 +119,9 @@ object Ravel {
         difficulty: Difficulty,
         seed: Long,
         timeoutMillis: Long?,
+        maxWordRank: Int,
     ): Board? {
-        val spec = BoardSpec.forDifficulty(width, height, difficulty)
+        val spec = BoardSpec.forDifficulty(width, height, difficulty, maxWordRank)
         // Before the dictionary, so an impossible grid fails immediately instead of after a load.
         spec.validate()
         val generator = BoardGenerator(dictionaryFor(language, difficulty), Random(seed))

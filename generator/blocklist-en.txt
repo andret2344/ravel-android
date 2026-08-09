@@ -8,6 +8,12 @@
 # buildDictionary writes EVERY removed form to build/removed-en.txt. Review that file after any
 # change here.
 #
+# Anchoring has a blind spot Polish does not: English compounds. Polish derives by PREFIXING, so a
+# derived vulgarity still begins with the stem and an anchored entry catches it. English builds
+# noun+noun, so the stem lands at the END and anchoring walks straight past. Those compounds have to
+# be named one by one, below. A scan for words ENDING in a listed stem finds them; everything else
+# it turns up is innocent (grape, drape, scrape, swank, serape, therapist).
+#
 # Deliberately absent, each because anchoring alone still catches ordinary words:
 #   ass    — assassin, assembly, assess, asset, assign, assist
 #   arse   — arsenal, arsenic, arsenate
@@ -44,3 +50,12 @@ skank
 motherf
 rape
 rapist
+
+# Compounds, where the stem sits at the end and anchoring cannot reach it. bullshit ranked 11 358
+# and horseshit 33 925 - both inside the loaded dictionary, so both were reachable on a board.
+bullshit
+horseshit
+chickenshit
+dipshit
+batshit
+bullcrap

@@ -46,6 +46,9 @@ CI (`.github/workflows/tests.yml`) runs exactly those four, in that order, on JD
 ./gradlew :generator:buildDictionaries        # or buildDictionaryPl / buildDictionaryEn
 ```
 
+`buildDictionaryPl` prints a per-length histogram at each rank tier. Read it before moving any cap
+in `PuzzleSpec.rankFor`: the binding constraint is always the *shortest* words, not the longest.
+
 `printPuzzle` lives in `:app`'s **test** source set (`app/src/test/.../tools/PrintPuzzle.kt`) so a
 developer tool is never packaged into the APK. Gradle's own `--quiet` would silence the board along
 with Gradle — pass `--quiet` inside `--args` instead.
@@ -56,14 +59,19 @@ with Gradle — pass `--quiet` inside `--args` instead.
 
 `Ravel` (Ravel.kt) is the entire public surface; everything else is machinery.
 
-1. `BoardSpec.forDifficulty` turns a `Difficulty` into the dials: how deep into the frequency-ranked
-   dictionary words may reach, and the bands on path shape.
+1. `BoardSpec.forDifficulty` turns a `Difficulty` into the dials: the bands on path shape, and how
+   much of the frequency-ranked dictionary gets loaded. **How obscure a board's own words may be is
+   a separate axis**, `BoardSpec.maxWordRank`, whose curve lives in `PuzzleSpec.rankFor`. Narrowing
+   that pool is not the same as loading less: every word the dictionary holds is one `Solver` must
+   rule out before calling a board unique, so a smaller load weakens the uniqueness claim rather
+   than easing the board.
 2. Walls are placed as whole orbits under a `WallSymmetry`, so the pattern holds by construction.
 3. `Partitioner` splits the free cells into disjoint paths of the chosen lengths — **shape first,
    words second**. Choosing words first means backtracking over a dictionary instead of over a
    handful of shapes, and does not scale.
-4. Words are drawn from `Dictionary`, whose trie holds every word **and its reverse** (a path is
-   traceable from either end).
+4. Words are drawn from `Dictionary.poolTo(maxWordRank)`, while its trie holds every loaded word
+   **and its reverse** (a path is traceable from either end). Pool and trie are deliberately
+   different sets — see step 1.
 5. `Solver` counts tilings; the board is rejected unless exactly one exists.
 
 Path shape is governed by three independent measures, all in `Board.kt` — `turnRatio` (how much
@@ -72,9 +80,23 @@ alongside itself). They are enforced **per word during enumeration**, not on the
 against the worst word rather than the average. Both choices are load-bearing: the comments in
 `Board.kt` and `Language.kt` explain what averaging and post-hoc checking each produced.
 
-Generation blocks (long tail: 9x9 ≈ 1.3 s, 12x12 ≈ 4.5 s) and is interruptible — call it inside
-`runInterruptible` so leaving a screen cancels the search. Dictionaries are cached per
-(language, difficulty) and cost 5–17 MB; `RavelApplication.onTrimMemory` calls `Ravel.forget()`.
+Generation blocks (long tail: 10x10 ≈ 0.8 s median, 2.3 s worst) and is interruptible — call it
+inside `runInterruptible` so leaving a screen cancels the search. Dictionaries are cached per
+(language, difficulty) and cost 23–33 MB at the shipped `HARD`; `RavelApplication.onTrimMemory`
+calls `Ravel.forget()`. `Difficulty.HARD.maxRank` is 35 000 for that reason as much as for what
+lies past it — `DictionaryFootprint` asserts the budget, `generator/DICTIONARY.md` explains it.
+
+Both dictionaries ship **base forms only**, and the two get there by opposite routes:
+
+- **Polish** (51 685, from PoliMorf) keeps the lemmas. Three quarters of the old 247 012-entry list
+  were oblique cases, which is not what a player recognises when the only clue is a length.
+- **English** (42 554, from WordNet) folds regular inflections into a base *that is itself in the
+  dictionary*. It cannot ask "is this a lemma?" — WordNet indexes only nouns, verbs, adjectives and
+  adverbs, so that question deletes `the`, `and`, `for` and `with`. Asking about inflection instead
+  lets function words through with nobody maintaining a list of them.
+
+Both builds also sum a folded form's frequency into its base; ranking a survivor by its own form's
+frequency alone is what buries `robić` under `robi`.
 
 ### Puzzle identity (`:app`, `game/`)
 
@@ -84,9 +106,17 @@ This is the part most easily broken by an innocent-looking change.
   hash mixed with a per-mode salt, so `ENDLESS 5` and `SPECIAL 5` are unrelated boards.
 - **`PuzzleMode` salts must never change.** A salt is part of a board's identity; editing one
   silently replaces every puzzle that mode has ever produced.
-- `PuzzleSpec.of(id)` derives size and difficulty **from the id alone**. Never accept them from a
-  call site — a seed picks one board *for a given size*, so a caller-chosen size means the id no
-  longer names one board.
+- `PuzzleSpec.of(id)` derives size, difficulty and word-rank cap **from the id alone**. Never accept
+  them from a call site — a seed picks one board *for a given size*, so a caller-chosen size means
+  the id no longer names one board.
+- Two ramps, deliberately different lengths: `rampFor` (size) is measured in tens of levels and is
+  over by 25, `rankFor` (vocabulary, driven by the `RANK_TIERS` table) in thousands and runs to
+  2500. Size is a lesson the player finishes learning; vocabulary is not a skill playing confers.
+  Do not collapse them onto shared tiers.
+- **The vocabulary curve is exhausted at 2500 and cannot be extended by raising the cap** — the
+  dictionary ends at 35 000 for heap reasons and its last bands are near-indistinguishable. Making
+  later levels harder needs a second axis; the path-shape dials are the measured candidate, and
+  they trade against board size rather than composing with it. See `PuzzleSpec.rankFor`.
 - Board identity is really *(id, generator version)*. Changing the search order, a difficulty
   constant, or the dictionary reissues every puzzle in the game. Treat that as a deliberate decision
   each time, never a side effect.
@@ -164,6 +194,12 @@ the same breath — the two must never disagree, in either direction.
 
 ## Outstanding obligation
 
-`generator/DICTIONARY.md` (written in Polish) records the dictionary sources and licences. The Polish
-word list and frequency data are **CC BY 4.0 and require attribution**, including a note that the
-material was modified. There is no "About" screen yet to carry it. Do not ship a release without it.
+`generator/DICTIONARY.md` records the dictionary sources and licences. Three of them require a
+notice, and there is still no "About" screen to carry any of it. Do not ship a release without one.
+
+- **SJP.PL word list and KWJP100 frequency data** — CC BY 4.0, attribution **plus** a statement that
+  the material was modified.
+- **PoliMorf** (Polish lemmatisation) — BSD 2-clause, copyright notice retained on redistribution.
+- **WordNet 3.0** (English lemmatisation) — Princeton copyright notice retained.
+
+`DICTIONARY.md` carries the exact wording for each. ENABLE and OANC need nothing.

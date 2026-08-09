@@ -20,6 +20,11 @@ import kotlin.random.Random
  *   started, which is what separates a staircase from a coil.
  * @param maxFoldRatio ceiling on how much words may run alongside themselves, see [foldRatioOf].
  * @param foldAvoidance how strongly the search avoids creating folds in the first place.
+ * @param maxWordRank how deep into the frequency-ranked dictionary the board's own words may reach.
+ *   An axis of its own rather than part of [Difficulty], because the two are asking different
+ *   questions: difficulty shapes the paths, this shapes the vocabulary, and a board can want an
+ *   easy word on a hard path. Only the words written onto the board are held back - uniqueness is
+ *   still proved against the whole dictionary, see [Dictionary.poolTo].
  * @param targetWordLength overrides the length the generator aims at; normally left to scale with
  *   the grid.
  */
@@ -35,6 +40,7 @@ data class BoardSpec(
     val directnessBias: Double = 0.0,
     val maxFoldRatio: Double = 1.0,
     val foldAvoidance: Double = 0.0,
+    val maxWordRank: Int = NO_RANK_LIMIT,
     val targetWordLength: Double? = null,
 ) {
     val cellCount: Int get() = width * height
@@ -51,7 +57,7 @@ data class BoardSpec(
     internal fun wordCountFor(freeCount: Int, random: Random): Int {
         val fewest = ceilDiv(freeCount, MAX_WORD_LENGTH)
         val most = freeCount / MIN_WORD_LENGTH
-        val targeted = Math.round(freeCount / effectiveTargetWordLength).toInt()
+        val targeted = (freeCount / effectiveTargetWordLength).roundToInt()
         // The spread only goes down. Boards vary either way in practice, because [fewest] pushes
         // back on large grids, and an extra word is worse than one fewer: it is paid for out of
         // every other word's length, which is how a 6x6 ends up with three four-letter words.
@@ -117,7 +123,14 @@ data class BoardSpec(
 
         private fun ceilDiv(value: Int, divisor: Int) = (value + divisor - 1) / divisor
 
-        fun forDifficulty(width: Int, height: Int, difficulty: Difficulty) = BoardSpec(
+        fun forDifficulty(
+            width: Int,
+            height: Int,
+            difficulty: Difficulty,
+            // Defaults to everything the difficulty loaded, which is what a caller with no curve of
+            // its own means: hold nothing back beyond the dictionary it already asked for.
+            maxWordRank: Int = difficulty.maxRank,
+        ) = BoardSpec(
             width = width,
             height = height,
             minTurnRatio = difficulty.minTurnRatio,
@@ -127,6 +140,7 @@ data class BoardSpec(
             directnessBias = difficulty.directnessBias,
             maxFoldRatio = difficulty.maxFoldRatio,
             foldAvoidance = difficulty.foldAvoidance,
+            maxWordRank = maxWordRank,
         )
     }
 }
@@ -202,6 +216,7 @@ class BoardGenerator(
         val wallCounts = spec.wallCounts()
         val letters = CharArray(grid.cellCount)
         val solver = Solver(grid, letters, dictionary)
+        val pool = dictionary.poolTo(spec.maxWordRank)
         val deadline = limits.deadlineFrom(startedAt)
 
         try {
@@ -238,7 +253,7 @@ class BoardGenerator(
                     continue
                 }
 
-                val board = letterUntilUnique(spec, paths, walls, letters, solver, stats)
+                val board = letterUntilUnique(spec, paths, walls, letters, solver, pool, stats)
                 if (board != null) return board
             }
             return null
@@ -284,10 +299,11 @@ class BoardGenerator(
         walls: BooleanArray,
         letters: CharArray,
         solver: Solver,
+        pool: WordPool,
         stats: GenerationStats,
     ): Board? {
         repeat(LETTERING_ATTEMPTS) {
-            val words = drawWords(paths) ?: return null
+            val words = drawWords(paths, pool) ?: return null
             stats.wordAssignments++
             writeLetters(letters, walls, paths, words)
             stats.uniquenessChecks++
@@ -319,24 +335,39 @@ class BoardGenerator(
      */
     private fun symmetricWalls(grid: Grid, wallCount: Int): BooleanArray? {
         val walls = BooleanArray(grid.cellCount)
-        if (wallCount > 0) {
-            val symmetry = WallSymmetry.entries.random(random)
-            var placed = 0
-            var attempts = 0
-            while (placed < wallCount && attempts < grid.cellCount * ORBIT_ATTEMPTS_PER_CELL) {
-                attempts++
-                val orbit = dominoOrbit(grid, symmetry) ?: continue
-                if (orbit.any { walls[it] }) continue
-                if (placed + orbit.size > wallCount) continue
-                orbit.forEach { walls[it] = true }
-                placed += orbit.size
-            }
-            if (placed == 0) return null
-        }
+        if (wallCount > 0 && !placeWallOrbits(grid, walls, wallCount)) return null
         if (grid.cellCount - walls.count { it } < MIN_WORD_LENGTH) return null
         if (!spansEveryRowAndColumn(grid, walls)) return null
         if (longestWallRun(grid, walls) > maxWallRun(grid)) return null
         return if (freeRegionIsConnected(grid, walls)) walls else null
+    }
+
+    /**
+     * Fills [walls] with whole orbits of one randomly chosen symmetry, up to [wallCount] cells.
+     * Returns false when it could not place a single orbit, which is the one outcome the caller
+     * cannot work with: a board asked for walls and got none.
+     *
+     * Split out of [symmetricWalls] so that the drawing loop and the pattern's acceptance tests sit
+     * at one level each. They fail for unrelated reasons - this one runs out of attempts, the tests
+     * reject a pattern that was placed perfectly well - and reading either meant reading both.
+     *
+     * The attempt cap is needed because an orbit draw can keep colliding with what is already
+     * placed, most often on the last orbit, where the remaining budget is smaller than any orbit
+     * the symmetry produces. A capped loop that ends short is fine: the caller reads the achieved
+     * count off the result.
+     */
+    private fun placeWallOrbits(grid: Grid, walls: BooleanArray, wallCount: Int): Boolean {
+        val symmetry = WallSymmetry.entries.random(random)
+        var placed = 0
+        var attempts = 0
+        while (placed < wallCount && attempts < grid.cellCount * ORBIT_ATTEMPTS_PER_CELL) {
+            attempts++
+            val orbit = dominoOrbit(grid, symmetry) ?: continue
+            if (orbit.any { walls[it] } || placed + orbit.size > wallCount) continue
+            orbit.forEach { walls[it] = true }
+            placed += orbit.size
+        }
+        return placed > 0
     }
 
     /**
@@ -362,20 +393,29 @@ class BoardGenerator(
      */
     private fun maxWallRun(grid: Grid): Int = maxOf(2, minOf(grid.width, grid.height) / 3)
 
-    /** The longest unbroken line of walls along any row or column. */
-    private fun longestWallRun(grid: Grid, walls: BooleanArray): Int {
+    /**
+     * The longest unbroken line of walls along any row or column.
+     *
+     * Rows and columns are the same scan over a different pair of indices, so both go through
+     * [longestRun] rather than being written out twice: the duplicated version differed only in
+     * which loop was inner, which is exactly the kind of difference that survives a careless edit.
+     */
+    private fun longestWallRun(grid: Grid, walls: BooleanArray): Int = maxOf(
+        longestRun(grid.height, grid.width) { row, column -> walls[row * grid.width + column] },
+        longestRun(grid.width, grid.height) { column, row -> walls[row * grid.width + column] },
+    )
+
+    /**
+     * The longest unbroken run of cells [blocked] reports as walls, over [lines] lines of [length]
+     * cells each. The caller decides whether a line is a row or a column by how it reads its two
+     * arguments; nothing here knows the difference.
+     */
+    private inline fun longestRun(lines: Int, length: Int, blocked: (Int, Int) -> Boolean): Int {
         var longest = 0
-        for (row in 0 until grid.height) {
+        for (line in 0 until lines) {
             var run = 0
-            for (column in 0 until grid.width) {
-                run = if (walls[row * grid.width + column]) run + 1 else 0
-                if (run > longest) longest = run
-            }
-        }
-        for (column in 0 until grid.width) {
-            var run = 0
-            for (row in 0 until grid.height) {
-                run = if (walls[row * grid.width + column]) run + 1 else 0
+            for (position in 0 until length) {
+                run = if (blocked(line, position)) run + 1 else 0
                 if (run > longest) longest = run
             }
         }
@@ -469,10 +509,10 @@ class BoardGenerator(
     }
 
     /** One random word per path. Repeats are avoided but not forbidden - a short length may have few candidates. */
-    private fun drawWords(paths: List<IntArray>): List<String>? {
+    private fun drawWords(paths: List<IntArray>, pool: WordPool): List<String>? {
         val drawn = ArrayList<String>(paths.size)
         for (path in paths) {
-            val candidates = dictionary.wordsOfLength(path.size)
+            val candidates = pool.ofLength(path.size)
             if (candidates.isEmpty()) return null
             var word = candidates[random.nextInt(candidates.size)]
             var attempt = 0

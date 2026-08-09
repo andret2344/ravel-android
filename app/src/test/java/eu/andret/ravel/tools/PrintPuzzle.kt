@@ -39,7 +39,8 @@ fun main(args: Array<String>) {
     val spec = PuzzleSpec.of(options.id)
     println(
         "${options.name} · ${options.id.mode.name.lowercase()} · ${spec.size}x${spec.size} · " +
-            "${spec.difficulty.name.lowercase()} · ${options.language.code} · seed ${spec.seed}"
+            "${spec.difficulty.name.lowercase()} · rank ≤${spec.maxWordRank} · " +
+            "${options.language.code} · seed ${spec.seed}"
     )
 
     val startedAt = System.nanoTime()
@@ -49,6 +50,7 @@ fun main(args: Array<String>) {
         language = options.language,
         difficulty = spec.difficulty,
         seed = spec.seed,
+        maxWordRank = spec.maxWordRank,
     )
     val millis = (System.nanoTime() - startedAt) / 1_000_000
 

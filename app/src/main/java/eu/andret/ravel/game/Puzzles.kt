@@ -34,6 +34,7 @@ object Puzzles {
                 difficulty = spec.difficulty,
                 seed = spec.seed,
                 timeoutMillis = timeoutMillis,
+                maxWordRank = spec.maxWordRank,
             )
         }
         return board?.let(::Puzzle)

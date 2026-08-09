@@ -145,6 +145,45 @@ class BoardGeneratorTest {
     }
 
     @Test
+    fun `a rank cap holds for every word on the board`() {
+        val ranks = HashMap<String, Int>()
+        dictionary.words.forEachIndexed { rank, word -> ranks.putIfAbsent(word, rank) }
+        val pool = dictionary.poolTo(RANK_CAP)
+        // MIN_POOL can widen a length the cap starves, so the ceiling per length is the cap or that
+        // floor, whichever reaches further - never a word chosen from beyond both.
+        val allowed = (MIN_WORD_LENGTH..MAX_WORD_LENGTH).associateWith { length ->
+            maxOf(RANK_CAP, ranks.getValue(pool.ofLength(length).last()))
+        }
+        val generator = BoardGenerator(dictionary, Random(20260808))
+        val spec = BoardSpec.forDifficulty(6, 6, Difficulty.HARD, maxWordRank = RANK_CAP)
+        repeat(BOARD_SAMPLE) {
+            val board = assertNotNull(generator.generate(spec), "generation failed")
+            board.solution.forEach { placement ->
+                val rank = assertNotNull(ranks[placement.word], "'${placement.word}' is not in the dictionary")
+                assertTrue(
+                    rank <= allowed.getValue(placement.word.length),
+                    "'${placement.word}' ranks $rank, past the $RANK_CAP cap",
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `uniqueness is proved against the whole dictionary, not the capped pool`() {
+        // The point of separating the two: a board lettered from the commonest 1500 words is still
+        // only publishable when no second tiling exists among all 51 000. Were the solver reading
+        // the pool instead, this board would pass while a player who knows a rarer word could find
+        // an answer the game never considered.
+        val generator = BoardGenerator(dictionary, Random(31337))
+        val spec = BoardSpec.forDifficulty(6, 6, Difficulty.HARD, maxWordRank = RANK_CAP)
+        repeat(SMALL_SAMPLE) {
+            val board = assertNotNull(generator.generate(spec), "generation failed")
+            val solver = Solver(Grid(board.width, board.height), board.letters, dictionary)
+            assertEquals(1, solver.countSolutions(board.wordLengths, limit = 8), board.render())
+        }
+    }
+
+    @Test
     fun `every generated board is internally consistent`() {
         val generator = BoardGenerator(dictionary, Random(20260805))
         repeat(BOARD_SAMPLE) {
@@ -192,7 +231,22 @@ class BoardGeneratorTest {
 
     private companion object {
         const val BOARD_SAMPLE = 25
-        const val TURN_SAMPLE = 12
+        const val SMALL_SAMPLE = 8
+
+        /** The tightest cap `PuzzleSpec.rankFor` hands out, which is the one worth testing. */
+        const val RANK_CAP = 1_500
+
+        /**
+         * Enough boards for the difficulties to separate reliably rather than usually.
+         *
+         * This is the one test here making a statistical claim instead of a deterministic one, and
+         * the margin is thinner than it looks: measured over 200 boards the averages sit at 0.59
+         * and 0.63, while individual boards range across 0.45 to 0.77. At twelve boards - what this
+         * used to sample - the difference is about two standard errors, so the test passed most of
+         * the time and flipped whenever anything upstream reshuffled the search, which a dictionary
+         * rebuild does. Sixty puts it past four, and costs under a second.
+         */
+        const val TURN_SAMPLE = 60
         const val SHAPE_TIMEOUT_MILLIS = 60_000L
 
         /** Ratios are integer counts over integer lengths; the limits are the rounded decimals. */

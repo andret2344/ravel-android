@@ -1,5 +1,6 @@
 package eu.andret.ravel.game
 
+import eu.andret.ravel.generator.NO_RANK_LIMIT
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -87,6 +88,78 @@ class PuzzleSpecTest {
         val sizes = (100L..119L).map { level -> PuzzleSpec.of(PuzzleId(PuzzleMode.ENDLESS, level)).size }
         val changes = (1 until sizes.size).count { sizes[it] != sizes[it - 1] }
         assertTrue("sizes went $sizes", changes in 8..19)
+    }
+
+    @Test
+    fun `the vocabulary opens up far more slowly than the size does`() {
+        // The two curves are deliberately different lengths, and this is the assertion that says
+        // so: by the time the size ramp has finished entirely, the vocabulary is still on its
+        // second tier of five. Collapsing them onto shared tiers is the tempting simplification
+        // that would silently hand level twenty-six the whole dictionary.
+        val sizeRampOver = PuzzleSpec.of(PuzzleId(PuzzleMode.ENDLESS, PuzzleSpec.THIRD_TIER + 1))
+        assertEquals(4_000, sizeRampOver.maxWordRank)
+        // And it is still ramping thousands of levels later, where the size curve has nothing left
+        // to say at all.
+        val lastTier = PuzzleSpec.RANK_TIERS.last().first
+        assertTrue("the vocabulary curve stops before the size curve does", lastTier > PuzzleSpec.THIRD_TIER * 50)
+        assertTrue(
+            "still capped at $lastTier",
+            PuzzleSpec.of(PuzzleId(PuzzleMode.ENDLESS, lastTier)).maxWordRank < NO_RANK_LIMIT,
+        )
+    }
+
+    @Test
+    fun `each vocabulary tier holds for its whole span`() {
+        // Both ends of every tier, so a boundary that moved by one still gets caught.
+        var firstLevel = 1L
+        PuzzleSpec.RANK_TIERS.forEach { (lastLevel, cap) ->
+            listOf(firstLevel, lastLevel).forEach { level ->
+                assertEquals(
+                    "level $level should sit in the tier ending at $lastLevel",
+                    cap,
+                    PuzzleSpec.of(PuzzleId(PuzzleMode.ENDLESS, level)).maxWordRank,
+                )
+            }
+            firstLevel = lastLevel + 1
+        }
+        // Past the last tier the game stops holding anything back rather than inventing another
+        // number. Somebody will get here.
+        val past = PuzzleSpec.of(PuzzleId(PuzzleMode.ENDLESS, PuzzleSpec.RANK_TIERS.last().first + 1))
+        assertEquals(NO_RANK_LIMIT, past.maxWordRank)
+    }
+
+    @Test
+    fun `the vocabulary tiers are ordered, and get longer as they get less interesting`() {
+        // The table is read in order and short-circuits, so an out-of-order entry would silently
+        // make a tier unreachable rather than fail anywhere visible.
+        val levels = PuzzleSpec.RANK_TIERS.map { it.first }
+        val caps = PuzzleSpec.RANK_TIERS.map { it.second }
+        assertEquals("tier boundaries are not ascending", levels.sorted(), levels)
+        assertEquals("rank caps are not ascending", caps.sorted(), caps)
+
+        // Early tiers short, late tiers long: rank 1500 to 4000 changes what a board asks far more
+        // than 25 000 to 30 000 does, so the spans are not allowed to be uniform.
+        val spans = levels.mapIndexed { index, level -> level - (levels.getOrNull(index - 1) ?: 0L) }
+        assertTrue("spans went $spans", spans.first() < spans.last() / 10)
+    }
+
+    @Test
+    fun `the vocabulary ramp never goes backwards`() {
+        var previous = 0
+        for (level in 1L..(PuzzleSpec.RANK_TIERS.last().first + 100)) {
+            val cap = PuzzleSpec.of(PuzzleId(PuzzleMode.ENDLESS, level)).maxWordRank
+            assertTrue("level $level dropped from $previous to $cap", cap >= previous)
+            previous = cap
+        }
+    }
+
+    @Test
+    fun `the vocabulary ramp is the endless mode's alone`() {
+        // Same reasoning as the size ramp: a daily puzzle has no ordinal to ramp along, so nothing
+        // about a small one should hold its words back.
+        PuzzleMode.entries.filter { it != PuzzleMode.ENDLESS }.forEach { mode ->
+            assertEquals("$mode", NO_RANK_LIMIT, PuzzleSpec.of(PuzzleId(mode, 1)).maxWordRank)
+        }
     }
 
     @Test

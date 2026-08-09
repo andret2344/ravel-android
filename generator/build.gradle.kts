@@ -41,25 +41,40 @@ tasks.test {
  * Builds a ranked game dictionary from the raw corpora. Run after the sources or a blocklist
  * change; see DICTIONARY.md for where the inputs come from.
  */
-fun registerDictionaryTask(language: String, admissibility: String, frequency: String) =
-    tasks.register<JavaExec>("buildDictionary${language.replaceFirstChar(Char::uppercase)}") {
-        group = "ravel"
-        description = "Builds the $language game dictionary from its word list and frequency data."
-        classpath = sourceSets["main"].runtimeClasspath
-        mainClass = "eu.andret.ravel.generator.BuildDictionaryKt"
-        maxHeapSize = "3g"
-        args = listOf(
-            language,
-            "$projectDir/src/main/resources/slownik-$language.txt",
-            "$projectDir/blocklist-$language.txt",
-            "${layout.buildDirectory.get()}/removed-$language.txt",
-            "$projectDir/data/$admissibility",
-            "$projectDir/data/$frequency",
-        )
-    }
+fun registerDictionaryTask(
+    language: String,
+    admissibility: String,
+    frequency: String,
+    inflection: String,
+) = tasks.register<JavaExec>("buildDictionary${language.replaceFirstChar(Char::uppercase)}") {
+    group = "ravel"
+    description = "Builds the $language game dictionary from its word list and frequency data."
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass = "eu.andret.ravel.generator.BuildDictionaryKt"
+    maxHeapSize = "3g"
+    args = listOf(
+        language,
+        "$projectDir/src/main/resources/slownik-$language.txt",
+        "$projectDir/blocklist-$language.txt",
+        "${layout.buildDirectory.get()}/removed-$language.txt",
+        "$projectDir/data/$admissibility",
+        "$projectDir/data/$frequency",
+        "$projectDir/data/$inflection",
+    )
+}
 
-registerDictionaryTask("pl", admissibility = "sjp-slowa.txt", frequency = "kwjp100-orth_lc-all.csv")
-registerDictionaryTask("en", admissibility = "enable1.txt", frequency = "oanc")
+registerDictionaryTask(
+    "pl",
+    admissibility = "sjp-slowa.txt",
+    frequency = "kwjp100-orth_lc-all.csv",
+    inflection = "polimorf.tab.gz",
+)
+registerDictionaryTask(
+    "en",
+    admissibility = "enable1.txt",
+    frequency = "oanc",
+    inflection = "wordnet",
+)
 
 tasks.register("buildDictionaries") {
     group = "ravel"

@@ -1,6 +1,7 @@
 package eu.andret.ravel.game
 
 import eu.andret.ravel.generator.Difficulty
+import eu.andret.ravel.generator.NO_RANK_LIMIT
 
 /**
  * Everything about a puzzle that is not the player's own setting: how big it is, how hard, and
@@ -27,6 +28,7 @@ data class PuzzleSpec(
     val id: PuzzleId,
     val size: Int,
     val difficulty: Difficulty,
+    val maxWordRank: Int,
 ) {
     val seed: Long get() = id.seed
 
@@ -35,10 +37,11 @@ data class PuzzleSpec(
         fun of(id: PuzzleId): PuzzleSpec = PuzzleSpec(
             id = id,
             size = sizeFor(id),
-            // The one axis still fixed per mode. Difficulty decides how obscure the words may be
-            // and how much the paths are allowed to wind, which is a curve someone will want to
-            // shape per mode later; the size no longer competes with it for that job.
+            // The one axis still fixed per mode. Difficulty decides how much the paths are allowed
+            // to wind, which is a curve someone will want to shape per mode later; the size no
+            // longer competes with it for that job.
             difficulty = Difficulty.HARD,
+            maxWordRank = rankFor(id),
         )
 
         /**
@@ -52,6 +55,51 @@ data class PuzzleSpec(
         private fun sizeFor(id: PuzzleId): Int = when (id.mode) {
             PuzzleMode.ENDLESS -> sizeIn(id.seed, rampFor(id.ordinal))
             else -> sizeIn(id.seed, MIN_SIZE..MAX_SIZE)
+        }
+
+        /**
+         * How deep into the frequency-ranked dictionary [id]'s words may reach.
+         *
+         * Ramped for the same reason as the size and for the same mode only, but **not** on the same
+         * tiers, and the difference is the point. Size stops mattering early: by level twenty-six a
+         * player knows what a 10x10 costs them, so there is nothing left to teach and the range
+         * opens. Vocabulary never stops mattering, because it is not a skill the player acquires by
+         * playing - either they know *drogowiec* or they do not, and no number of boards changes
+         * that. So this curve is measured in thousands of levels where [rampFor] is measured in tens.
+         *
+         * The tiers are deliberately long and get longer, because the interesting part of the
+         * dictionary is its head. Going from rank 1500 to 4000 is a bigger change in what a board
+         * asks of a player than going from 25 000 to 30 000, so the early tiers are short and the
+         * late ones are not. Past the last one the cap comes off and the board draws from everything
+         * the dictionary holds - which is [Difficulty.HARD]'s own limit, not the whole word list.
+         * The deepest entries are cut at load time rather than here, because they are cut for heap
+         * as much as for taste; see [Difficulty].
+         *
+         * **This curve escalates to about level 2500 and then stops.** That is a property of the
+         * dictionary, not a number to raise: 35 000 words is what fits in the heap, and the steps up
+         * there are already thin - rank 25 000 is *czyściutki*, 30 000 is *rudzik*, 35 000 is
+         * *płaszczka*, and a player is unlikely to feel the difference. Making levels past 2500
+         * harder means a second axis, not a deeper cap. The path-shape dials are the obvious
+         * candidate and are measured: `minTurnRatio` can reach 0.62 with `maxDirectness` 0.68 on a
+         * 7x7 for about 470 ms, but the same band times out on a 9x9, so shape and size cannot both
+         * be pushed on the same board.
+         *
+         * The dictionary behind these numbers is lemmas rather than inflected forms, so they buy
+         * more than they look like they should: rank 4000 is *cierpienie* and *naprawa*, rank 10 000
+         * is *kredens* and *ślubny*, and even the 25 000 mark is still ordinary Polish. See
+         * `generator/DICTIONARY.md`, and the length histogram `buildDictionaryPl` prints - a cap is
+         * only movable as far as the pools behind the *shortest* words allow, which is always the
+         * binding constraint.
+         *
+         * Every mode but [PuzzleMode.ENDLESS] draws from the whole dictionary. A daily puzzle has no
+         * ordinal to ramp along: it is one board, and the player who solves it today is not the same
+         * player who started yesterday.
+         */
+        private fun rankFor(id: PuzzleId): Int = when (id.mode) {
+            PuzzleMode.ENDLESS ->
+                RANK_TIERS.firstOrNull { (lastLevel, _) -> id.ordinal <= lastLevel }?.second
+                    ?: NO_RANK_LIMIT
+            else -> NO_RANK_LIMIT
         }
 
         /**
@@ -102,6 +150,26 @@ data class PuzzleSpec(
         const val FIRST_TIER = 5L
         const val SECOND_TIER = 15L
         const val THIRD_TIER = 25L
+
+        /**
+         * The vocabulary curve of [rankFor]: the last level of each tier, and the rank cap that
+         * tier allows. Ordered, and read in order. A level past the last entry has no cap.
+         *
+         * A table rather than a chain of named constants because there are eight boundaries and
+         * they are only meaningful next to each other - the shape of the curve is the thing being
+         * decided, and nine `SEVENTH_RANK_TIER` constants hide it. Tests read this too, so moving a
+         * tier means moving one number in one place.
+         */
+        val RANK_TIERS: List<Pair<Long, Int>> = listOf(
+            15L to 1_500,
+            40L to 4_000,
+            100L to 8_000,
+            250L to 12_000,
+            500L to 16_000,
+            900L to 20_000,
+            1_500L to 25_000,
+            2_500L to 30_000,
+        )
 
         /** Leaves the top 16 bits, which `ushr` keeps non-negative without any sign fiddling. */
         private const val HIGH_BITS_SHIFT = 48

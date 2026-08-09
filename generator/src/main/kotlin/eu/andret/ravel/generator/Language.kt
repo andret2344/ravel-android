@@ -23,11 +23,29 @@ enum class Language(
 }
 
 /**
- * Difficulty turns two dials at once, because vocabulary alone does not make a board hard.
+ * Difficulty shapes how the words wind. What they *are* is a separate axis - see
+ * [BoardSpec.maxWordRank].
  *
- * [maxRank] is how deep into the frequency-ranked dictionary a board may reach. A word's position
- * in the dictionary is how common it is in a balanced corpus, so cutting the list short keeps
- * boards to words players actually know.
+ * [maxRank] is how much of the frequency-ranked dictionary gets **loaded**, which is not the same
+ * question as how obscure a board's own words may be, and the difference matters. Every word the
+ * dictionary holds is a word [Solver] must rule out before calling a board unique, so loading less
+ * does not make boards easier - it makes the uniqueness claim weaker. A board proved unique against
+ * 25 000 words can have a second solution spelled out of the 26 000th, and a player who happens to
+ * know that word finds a board the game insisted had one answer.
+ *
+ * [HARD] therefore loads far more than any board draws from, and the vocabulary curve is applied to
+ * the draw pool instead. It stops short of the whole file for two reasons that happen to agree:
+ *
+ * - **Heap.** Measured by `DictionaryFootprint`, Polish costs 24.1 MB at 25 000 words, 33.2 MB at
+ *   35 000 and 48.8 MB at all 51 685. This ships to API 24, where the last figure is not a number
+ *   to hold resident for a word game.
+ * - **What is down there.** Past about 35 000 the Polish list stops being words a board should
+ *   spell: surname-derived adjectives that PoliMorf tags as common (*ostaszewski*, *rylski*),
+ *   loanwords SJP admits but nobody plays (*steak*), and dialect (*czerecha*). Cutting for memory
+ *   removes exactly the entries that were the weakest argument for keeping them.
+ *
+ * [EASY] loads less again, because nothing that ships uses it - it is the CLI's and the tests'
+ * shorthand for "a smaller world", and it is cheaper to build.
  *
  * [minTurnRatio] and [maxTurnRatio] bracket how much the words wind - see [turnRatioOf]. A floor
  * alone was a mistake: a path that turns at every single cell is a staircase, and a board of
@@ -68,7 +86,7 @@ enum class Difficulty(
         // 0.20 lets a five-letter word double back once, and a ten-letter word twice.
     ),
     HARD(
-        maxRank = 25_000, minTurnRatio = 0.55, maxTurnRatio = 0.80, maxDirectness = 0.75,
+        maxRank = 35_000, minTurnRatio = 0.55, maxTurnRatio = 0.80, maxDirectness = 0.75,
         // 0.17 is one doubling-back per word up to eleven letters, which is what the reference does.
         turnBias = 0.2, directnessBias = 0.0, maxFoldRatio = 0.17, foldAvoidance = 0.95,
     ),
