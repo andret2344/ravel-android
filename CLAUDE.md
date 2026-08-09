@@ -131,9 +131,16 @@ frequency alone is what buries `robić` under `robi`.
 This is the part most easily broken by an innocent-looking change.
 
 - `PuzzleId(mode, ordinal)` names a board. The generator seed is derived from it via a SplitMix64
-  hash mixed with a per-mode salt, so `ENDLESS 5` and `SPECIAL 5` are unrelated boards.
+  hash mixed with a per-mode salt, so the same ordinal in two modes is two unrelated boards.
 - **`PuzzleMode` salts must never change.** A salt is part of a board's identity; editing one
   silently replaces every puzzle that mode has ever produced.
+- **There are two modes, `DAILY` and `ENDLESS`, and `PuzzleSpec`'s `when`s over them are exhaustive
+  on purpose.** A third mode is a compile error until somebody chooses its size range and its rank
+  cap. That is the replacement for a `SPECIAL` entry that existed, had no screen and no call site
+  outside the tests, and whose only live effect was keeping an `else` branch open — a branch that
+  handed anything unnamed the full size range and no rank cap, which is the end-game spec the daily
+  had to be rescued from. Adding the mode back is one line; keeping the `when`s exhaustive when you
+  do is the point.
 - `PuzzleSpec.of(id)` derives size, difficulty and word-rank cap **from the id alone**. Never accept
   them from a call site — a seed picks one board *for a given size*, so a caller-chosen size means
   the id no longer names one board.
@@ -166,15 +173,21 @@ This is the part most easily broken by an innocent-looking change.
   it. 8000 sits just under `kredens` at rank 10 000. Measured when the daily was narrowed: fourteen
   consecutive dailies built in 194–615 ms, the 8x8 among them, against 0.8 s median for the 10x10 it
   replaced. Re-measured after the length band opened: 8x8 is 77 ms median, 450 ms worst over thirty.
-  **`SPECIAL` still takes the whole range on both axes** — it is opted into and no streak rides on it.
 - Board identity is really *(id, generator version)*. Changing the search order, a difficulty
   constant, the length band, or the dictionary reissues every puzzle in the game — the length band
   did exactly that, in **every mode at once**, which is wider than the size-ramp change below.
   Treat that as a deliberate decision
   each time, never a side effect. Narrowing the daily's spec above did exactly that to every daily
   ever issued: `DailyViewModel.restored` drops saved marks that no longer fit, so nothing crashes,
-  but reviewing an old day now shows a different board than was solved, and `DayResult.wordCount`
-  for days already banked is stale in `totalWordsFound`.
+  but reviewing an old day now shows a different board than was solved.
+- **`DayResult.wordCount` is deliberately a record and not a derivation, and it is `Int?`.** A count
+  written down at the moment of solving stays true across a generator change; a count derived later
+  describes today's board wearing an old date, which is not what the player found. Null is "nobody
+  counted" — a day still running, or one banked before boards counted their words — and `null` is
+  load-bearing rather than tidy: the field used to default to `0`, which is a number a solved day can
+  never legitimately hold, so it joined `totalWordsFound` and shortened a lifetime total by exactly
+  as much as it did not know, undetectably. `StoredDailyProgress.complete` now requires a positive
+  count, so null can only ever mean unknown.
 - Language is deliberately **not** part of a puzzle's identity — level 40 is the same level in both
   languages — but progress *is* per-language, so the two ladders are walked independently.
 

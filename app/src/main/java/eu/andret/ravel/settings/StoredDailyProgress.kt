@@ -86,6 +86,10 @@ class StoredDailyProgress(
     }
 
     override fun complete(ordinal: Long, wordCount: Int): Boolean {
+        // The one thing that makes null mean "nobody counted" rather than "somebody passed zero".
+        // A board with no words in it cannot be solved, so a zero arriving here is a caller that has
+        // lost its board, and writing it down would put an indistinguishable hole in the history.
+        require(wordCount > 0) { "A solved board holds at least one word, not $wordCount" }
         val current = _state.value
         if (current.isSolved(ordinal)) return false
         // The running cost stops running and becomes the record; nothing can be added to it after.
@@ -209,9 +213,10 @@ class StoredDailyProgress(
                     boughtWords = day.optInt(WORDS),
                     // Absent rather than zero for a day nothing timed, which is what null means.
                     seconds = if (day.has(SECONDS)) day.getInt(SECONDS) else null,
-                    // Absent on every day solved before boards started counting their words, which
-                    // reads as zero and undercounts the total rather than refusing to show one.
-                    wordCount = day.optInt(FOUND),
+                    // Absent while a day is running, and on every day solved before boards started
+                    // counting their words. Null and not zero, for the same reason as the seconds
+                    // above and rather more sharply - see DayResult.wordCount.
+                    wordCount = if (day.has(FOUND)) day.getInt(FOUND) else null,
                 )
                 if (day.optBoolean(DONE)) solved[ordinal] = result else pending[ordinal] = result
             }
@@ -224,7 +229,9 @@ class StoredDailyProgress(
             seconds?.let { put(SECONDS, it) }
             // Only ever set on a finished day, so it is left out of the object entirely while the
             // day is still running rather than written as a zero nobody can tell from a real one.
-            if (wordCount > 0) put(FOUND, wordCount)
+            // The test is now the null and not `> 0`: those agreed on every value the field could
+            // hold, but one of them was reading a count and the other was reading a flag.
+            wordCount?.let { put(FOUND, it) }
             if (done) put(DONE, true)
         }
 

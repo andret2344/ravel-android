@@ -110,20 +110,15 @@ class PuzzleSpecTest {
     }
 
     @Test
-    fun `the ramp is the endless mode's alone`() {
-        // Every other mode hands out one board at a time with nothing before it to have learned
-        // from, so nothing about a small ordinal should make its board small. Asserted on SPECIAL
-        // rather than DAILY because the daily has a ceiling of its own - a flat one, which is a
-        // different thing from a ramp and is guarded by the two tests below.
-        //
-        // Over the first twenty-five ordinals, where the endless ceiling is seven, so a single
-        // board bigger than that is proof the ramp was not consulted.
-        val sizes = (1L..25L).map { PuzzleSpec.of(PuzzleId(PuzzleMode.SPECIAL, it)).size }
-        assertTrue("sizes went $sizes", sizes.any { it > 7 })
-    }
-
-    @Test
     fun `no daily board is bigger than one sitting`() {
+        // There used to be a test above this one asserting that the size ramp is the endless mode's
+        // alone, run against SPECIAL because that mode took the unramped range. With SPECIAL gone
+        // the claim has no subject and cannot be given one: a daily ordinal is a date, so it sits
+        // far past the last size tier, where the ramp opens back up to MIN_SIZE..MAX_SIZE - and
+        // MIN_SIZE..DAILY_MAX_SIZE is what capping that produces anyway. Ramped-then-capped and flat
+        // are the same output for every date, so the difference is a claim about the code and not
+        // about any board. The exhaustive `when` in PuzzleSpec.sizeFor is what guards it now.
+        //
         // The whole point of the daily's ceiling. A 10x10 once a week is not a hard daily, it is a
         // daily a sixth of the calendar abandons - and an abandoned daily breaks the streak, which
         // is what stops the player coming back at all.
@@ -227,11 +222,11 @@ class PuzzleSpecTest {
     }
 
     @Test
-    fun `the vocabulary ramp is the endless mode's alone`() {
-        // Same reasoning as the size ramp: no other mode has an ordinal to ramp along, so nothing
-        // about a small one should hold its words back. The daily has a cap all the same, and a flat
-        // one - see below - so the claim here is only about the ramp.
-        assertEquals(NO_RANK_LIMIT, PuzzleSpec.of(PuzzleId(PuzzleMode.SPECIAL, 1)).maxWordRank)
+    fun `the daily's vocabulary cap is flat and not a ramp`() {
+        // The daily has no ordinal to ramp along - a date is not a position on a curve - so its cap
+        // is one number for every date there is. Unlike the size axis this stays observable with
+        // SPECIAL gone: the endless ramp ends at NO_RANK_LIMIT, so a daily that went through it
+        // would come back uncapped rather than at DAILY_MAX_RANK.
         val caps = threeYearsOfDailies()
             .map { PuzzleSpec.of(PuzzleId(PuzzleMode.DAILY, it)).maxWordRank }
             .toSet()

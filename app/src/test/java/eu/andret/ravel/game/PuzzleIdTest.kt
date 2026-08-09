@@ -79,6 +79,5 @@ class PuzzleIdTest {
         // is the question to answer, not a number to update.
         assertEquals(-4374057668283239204L, PuzzleId(PuzzleMode.DAILY, 20260807).seed)
         assertEquals(-8100068134740190993L, PuzzleId(PuzzleMode.ENDLESS, 1).seed)
-        assertEquals(4816972168677063686L, PuzzleId(PuzzleMode.SPECIAL, 1).seed)
     }
 }

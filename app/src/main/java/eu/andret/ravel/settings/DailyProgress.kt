@@ -26,17 +26,32 @@ data class DayResult(
     val boughtWords: Int = 0,
     val seconds: Int? = null,
     /**
-     * How many words the day's board held, written down when it was solved.
+     * How many words the day's board held, written down when it was solved, or null when nobody
+     * counted.
      *
-     * Zero on an unfinished day and on every day recorded before this was counted. It is here rather
-     * than derived because deriving it means regenerating the board - seconds of work and a
-     * dictionary in memory - to answer "how many words have I found", and a total that costs a
-     * second per day of history is a total no screen can show.
+     * **Null and not zero**, on the same argument as [seconds] and for a sharper reason. A solved
+     * board held at least one word, so zero is a value this field can never legitimately take on a
+     * finished day - which made it a perfect stand-in for "unknown" and a terrible one, because it
+     * is also a number. It joined the sum in [DailyProgressState.totalWordsFound] like any other,
+     * dragging a lifetime total down by exactly as much as it did not know, with nothing anywhere
+     * able to tell the two apart. Null is a state the sum can skip and a screen could qualify.
+     *
+     * Null while a day is still running, and on any day recorded before boards started counting
+     * their words. **The second kind cannot be repaired**, which is the whole reason to store this
+     * at all rather than derive it: regenerating the board answers with what the *current* generator
+     * builds for that date, and that is not the board that was solved - board identity is
+     * (id, generator version), see [eu.andret.ravel.game.PuzzleId]. A count written down at the
+     * moment of solving is a record of what happened; a count derived later is a statement about
+     * today's generator wearing an old date.
+     *
+     * The cheaper reason points the same way: deriving it means running the generator - seconds of
+     * work and a dictionary in memory - once per day of history, and a total that costs a second per
+     * day is a total no screen can show.
      *
      * On a solved day this is also the count of words *found*, since a day is only solved when the
      * board is empty of them. That is what lets [DailyProgressState.totalWordsFound] sum it.
      */
-    val wordCount: Int = 0,
+    val wordCount: Int? = null,
 )
 
 /**
@@ -145,8 +160,16 @@ data class DailyProgressState(
     val totalBoughtWords: Int get() = solved.values.sumOf(DayResult::boughtWords)
     val totalSeconds: Int get() = solved.values.sumOf { it.seconds ?: 0 }
 
-    /** Words found across every day finished, which is every word those boards held. */
-    val totalWordsFound: Int get() = solved.values.sumOf(DayResult::wordCount)
+    /**
+     * Words found across every day finished, which is every word those boards held.
+     *
+     * Days whose count was never written down are skipped rather than read as zero - see
+     * [DayResult.wordCount]. The arithmetic is identical either way, and that is fine: the point of
+     * the change is not a different number but that the number is now a floor the type admits to,
+     * rather than an exact figure that was quietly wrong. A screen that ever needs to say so can
+     * ask `solved.values.all { it.wordCount != null }`; nothing does, so nothing here holds it.
+     */
+    val totalWordsFound: Int get() = solved.values.sumOf { it.wordCount ?: 0 }
 }
 
 /**
@@ -186,7 +209,9 @@ interface DailyProgress {
      *
      * @param wordCount how many words the board held, which is how many the player has just finished
      *   finding. Passed in rather than looked up because only the screen that solved the board has
-     *   it - see [DayResult.wordCount].
+     *   it - see [DayResult.wordCount]. Not nullable and not zero: a board with no words in it is
+     *   not a board that can be solved, and [DayResult.wordCount] keeps null for the days nobody
+     *   counted rather than for days the caller could not be bothered to.
      * @return false when it was already recorded, which is how the caller knows not to pay for it
      *   twice - a board can be finished, left and finished again, and the streak only ever buys the
      *   first time. The first finish is the one that happened, and a second pass with hints already

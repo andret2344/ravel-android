@@ -64,13 +64,17 @@ data class PuzzleSpec(
          * down to eight, which is the largest grid that still reads at a glance on a phone, and the
          * floor stays at [MIN_SIZE] so the sizes still vary rather than settling on one.
          *
-         * [PuzzleMode.SPECIAL] still draws from the whole range: an event board is opted into, once,
-         * by a player who went looking for it, and no streak depends on finishing it.
+         * **There is deliberately no `else` here**, and there was one until the unused `SPECIAL`
+         * mode was removed - see [PuzzleMode]. Both modes are named, so the `when` is exhaustive and
+         * a third mode does not compile until somebody decides what its sizes are. That is worth the
+         * ceremony because of what the `else` branch actually did: it handed anything unnamed the
+         * full [MIN_SIZE]..[MAX_SIZE] range, which is the widest spec in the game and precisely the
+         * one the daily had to be rescued from. A new mode inheriting it silently is the same
+         * mistake arriving a second time, with nothing to fail.
          */
         private fun sizeFor(id: PuzzleId): Int = when (id.mode) {
             PuzzleMode.ENDLESS -> sizeIn(id.seed, rampFor(id.ordinal))
             PuzzleMode.DAILY -> sizeIn(id.seed, MIN_SIZE..DAILY_MAX_SIZE)
-            else -> sizeIn(id.seed, MIN_SIZE..MAX_SIZE)
         }
 
         /**
@@ -130,15 +134,17 @@ data class PuzzleSpec(
          * endless level 100 runs the same 8000 over the full size range - so this narrows what a
          * daily asks without putting the search into a regime nothing has measured.
          *
-         * [PuzzleMode.SPECIAL] still draws from everything, for the same reason it draws from every
-         * size: it is opted into and no streak rides on it.
+         * Exhaustive rather than defaulting, for the reason spelled out in [sizeFor], and the stakes
+         * are higher on this axis: the `else` that used to sit here answered [NO_RANK_LIMIT], so a
+         * mode added without a thought about vocabulary would draw from all 35 000 words on its
+         * first board. That is the exact spec the daily was shipped with by accident and had to be
+         * taken off.
          */
         private fun rankFor(id: PuzzleId): Int = when (id.mode) {
             PuzzleMode.ENDLESS ->
                 RANK_TIERS.firstOrNull { (lastLevel, _) -> id.ordinal <= lastLevel }?.second
                     ?: NO_RANK_LIMIT
             PuzzleMode.DAILY -> DAILY_MAX_RANK
-            else -> NO_RANK_LIMIT
         }
 
         /**
