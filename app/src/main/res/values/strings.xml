@@ -156,8 +156,6 @@
 
     <string name="hint_letter">Letter</string>
     <string name="hint_word">Word</string>
-    <!-- What a hint gives away, then what it costs: "Letter · 100". -->
-    <string name="hint_with_cost">%1$s · %2$d</string>
 
     <!--
         The running tally under the board, and the same two counts on the day card afterwards. The
@@ -175,9 +173,11 @@
     </plurals>
 
     <!--
-        The player's coins, shown beside prices and in the shop. Plurals rather than a format
-        string: English needs two forms and Polish four, and a balance is a number the player reads
-        constantly.
+        The player's coins, spoken rather than shown. Every coin figure on screen is a figure and
+        the coin drawable next to it - see CoinAmount - so this is what a screen reader is given in
+        place of the bare digits, and it is the only thing that still needs the noun. Putting it
+        back on screen beside the icon would be the label read twice, in four Polish forms the icon
+        does not need.
     -->
     <plurals name="coins_balance">
         <item quantity="one">%1$d coin</item>
@@ -185,12 +185,27 @@
     </plurals>
 
     <string name="shop_title">Shop</string>
-    <string name="shop_earn_solving">Solve puzzles</string>
-    <plurals name="shop_earn_solving_detail">
-        <item quantity="one">%1$d coin for every board you finish, in any mode.</item>
-        <item quantity="other">%1$d coins for every board you finish, in any mode.</item>
-    </plurals>
+
+    <!--
+        The ad tile, which is the only place in the game an ad can be started.
+
+        Solving used to have a card of its own here, listing what a finished board pays. It is gone:
+        the shop is where a player comes to get coins now, and "keep playing the game you are
+        already playing" is not something they came here to be told. The reward for solving has not
+        changed - see Rewards.FOR_COMPLETING - it is simply not news.
+
+        Every line is written to be readable before anything happens: what it pays, how many are
+        left, and - when there is nothing to offer - which of the several reasons it is.
+    -->
     <string name="shop_earn_ads">Watch an ad</string>
+    <!-- Digits and a plus sign; there is nothing in it to translate. -->
+    <string name="shop_ad_reward" translatable="false">+%1$d</string>
+    <string name="shop_ad_left_today">%1$d/%2$d today</string>
+    <string name="shop_ad_none_left">Come back tomorrow.</string>
+    <string name="shop_ad_loading">Finding an ad…</string>
+    <string name="shop_ad_unavailable">No ad right now. Tap to try again.</string>
+    <string name="shop_ad_blocked">Ads are off, because of the privacy choice you made. You can change it under %1$s.</string>
+
     <string name="shop_buy">Buy coins</string>
     <string name="shop_coming_soon">Coming soon.</string>
     <string name="shop_prices">A letter costs %1$d, a whole word %2$d.</string>
@@ -203,7 +218,16 @@
         "English" - see SettingsScreen.
     -->
     <string name="settings_language">Language</string>
-    <string name="settings_language_system">Phone language</string>
+    <!--
+        The trailing half of the row that opens the picker. The leading half is the language itself,
+        so this is what makes the row read as a control rather than as a fact about the game.
+
+        There is no longer a "Phone language" option. A player who has never chosen is on the
+        phone's language anyway - English where the game does not speak theirs - so the row said
+        nothing the default did not already do, and it was a permanent third entry in a list that
+        grows by one every time the game learns a language.
+    -->
+    <string name="settings_change">Change</string>
     <!-- What the setting reaches, said once, because it reaches further than a player would guess. -->
     <string name="settings_language_note">Sets the words on the boards and the language of the game.</string>
 
@@ -219,6 +243,20 @@
     <string name="settings_switch_cancel">Keep it</string>
 
     <!--
+        The vibration switch. "Feedback" heads the group rather than "Vibration", because the group
+        is about what the game says back to a touch and the vibration is only how it says it today.
+
+        The note is the important half. This switch can only ever take haptics away: with it on, the
+        phone's own touch-feedback setting still decides, so a player who turned that off feels
+        nothing here and would otherwise go looking for a fault in the game. It names the system
+        setting rather than linking to it - every manufacturer buries it somewhere different, and a
+        button that opened the wrong screen would be worse than a sentence that says what to look for.
+    -->
+    <string name="settings_feedback">Feedback</string>
+    <string name="settings_haptics">Vibration on the board</string>
+    <string name="settings_haptics_note">A short vibration for each letter, a word found and a finished board. Your phone\'s own touch feedback setting has to be on as well.</string>
+
+    <!--
         Where the words come from, listed on the settings tab and opened one at a time.
 
         Everything below marked translatable="false" is either a proper name or a licence notice.
@@ -228,6 +266,15 @@
         carry the statement that the material was modified, which that licence requires and which is
         the one part of these paragraphs that is about this game rather than about the source.
     -->
+    <!--
+        Only shown where the consent SDK says a form is required - see AdConsent. A player who was
+        never asked has nothing to change, and a row that opens a form which reports "nothing to
+        show" is worse than no row at all.
+    -->
+    <string name="settings_privacy">Privacy</string>
+    <string name="settings_privacy_ads">Ad privacy choices</string>
+    <string name="settings_privacy_note">Change what ads on this device are allowed to use. Ads are only ever shown when you ask for one in the shop.</string>
+
     <string name="settings_sources">Word sources</string>
     <string name="settings_sources_note">The dictionaries are built from public word lists and corpora. Tap a source to see its licence.</string>
     <string name="licence_open">Open the licence</string>

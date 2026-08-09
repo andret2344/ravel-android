@@ -11,7 +11,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import java.util.Locale
 
 /**
- * Which language the game speaks: the phone's, unless the player has said otherwise.
+ * Which language the game speaks: one of the ones it has, guessed from the phone until the player
+ * says otherwise.
  *
  * One setting behind two things that used to be separate. It picks the dictionary boards are
  * generated from, and it picks the locale the interface is read in - see [localize]. Splitting them
@@ -19,9 +20,22 @@ import java.util.Locale
  * which is not a combination anybody asks for.
  *
  * Stored as a language code rather than an enum ordinal, so adding a language later cannot silently
- * repoint an existing player's saved choice. Absent means "follow the phone", which is a different
- * state from "the player chose Polish and the phone is Polish": switching the phone to English then
- * has to switch the game too in the first case and must not in the second.
+ * repoint an existing player's saved choice.
+ *
+ * ### There is no "follow the phone" any more
+ *
+ * There used to be, as a third option in the picker and as a null in here, and the options screen
+ * drew all three. It is gone from the picker, and what is left of it is the *default*: a player who
+ * has never chosen is on [fromDevice], which is the phone's language when the game speaks it and
+ * English when it does not.
+ *
+ * The difference that leaves is worth naming, because it is a real behaviour change and not a tidy-up.
+ * Absent storage still means "resolve from the phone every time", so a player who has never opened
+ * the picker does follow their phone across a system language switch. The moment they pick anything -
+ * including the language they were already on - it is written down and they stop following it. That
+ * is the whole of what the option used to buy, minus the ability to *go back* to following, which is
+ * an answer to a question players do not ask and which cost a third row and a nullable everywhere it
+ * was carried.
  *
  * Observable rather than a plain getter, and one instance per process rather than one per screen -
  * see [eu.andret.ravel.RavelApplication.language]. Both are consequences of the same change: the
@@ -30,46 +44,43 @@ import java.util.Locale
  */
 class LanguageSettings(context: Context) {
     private val context = context.applicationContext
-    private val preferences = this.context.getSharedPreferences(FILE, Context.MODE_PRIVATE)
-
-    private val _choice = MutableStateFlow(stored())
+    private val preferences = this.context.getSharedPreferences(SETTINGS_FILE, Context.MODE_PRIVATE)
 
     private val _current = MutableStateFlow(stored() ?: fromDevice(this.context))
 
     /**
-     * What the player picked in the options, or null while the game follows the phone.
+     * The language to play and read in right now, which is also the one the picker shows as chosen.
      *
-     * Kept apart from [current] rather than derived from it, because the options screen has to be
-     * able to draw the difference: "follow the phone" and "Polish" are the same language on a Polish
-     * phone and two different answers, and a picker that could not tell them apart would move the
-     * player's selection onto Polish the moment they opened it.
+     * One flow where there used to be two. The picker needed a second, nullable one back when it had
+     * to draw "follow the phone" as distinct from the language that option resolved to; with the
+     * option gone, so is the distinction and so is the nullable.
      */
-    val choice: StateFlow<Language?> = _choice.asStateFlow()
-
-    /** The language to play and read in right now. */
     val current: StateFlow<Language> = _current.asStateFlow()
 
-    /** What the player picked in the options, or null while the game follows the phone. */
-    var chosen: Language?
-        get() = _choice.value
-        set(language) {
-            val previous = _current.value
-            preferences.edit {
-                if (language == null) remove(KEY_LANGUAGE) else putString(KEY_LANGUAGE, language.code)
-            }
-            _choice.value = language
-            val next = language ?: fromDevice(context)
-            if (next == previous) return
-            // Each language holds its own trie. Keeping the old one alive after a switch doubles
-            // the memory for a dictionary nothing is going to ask for again.
-            Ravel.forget()
-            _current.value = next
-        }
+    /** What the player picked, or null if they never have. Only [localize] has a use for the null. */
+    val chosen: Language? get() = stored()
+
+    /**
+     * Puts the game on [language] for good.
+     *
+     * Written even when it is the language already being played, which looks like a no-op and is
+     * not: until something is stored, the language is re-derived from the phone on every launch, so
+     * writing is what turns a guess into a decision. A player who picks the language they are on has
+     * said "this one", and their phone changing later must not overrule that.
+     */
+    fun choose(language: Language) {
+        val previous = _current.value
+        preferences.edit { putString(KEY_LANGUAGE, language.code) }
+        if (language == previous) return
+        // Each language holds its own trie. Keeping the old one alive after a switch doubles the
+        // memory for a dictionary nothing is going to ask for again.
+        Ravel.forget()
+        _current.value = language
+    }
 
     private fun stored(): Language? = preferences.getString(KEY_LANGUAGE, null)?.let(::byCode)
 
     companion object {
-        private const val FILE = "ravel-settings"
         private const val KEY_LANGUAGE = "language"
 
         /** The [Language] with this code, or null for a code no release of the game speaks. */
@@ -80,6 +91,10 @@ class LanguageSettings(context: Context) {
          *
          * English is the fallback rather than Polish because a player whose phone is in neither
          * wants the one they are more likely to read, not the developer's.
+         *
+         * This is the whole of what the removed "follow the phone" option did, and it is now what
+         * every player gets before they have chosen anything - which is why it is the guess and not
+         * a setting: there is no state to store for "I have not decided yet".
          */
         fun fromDevice(context: Context): Language {
             val locale: Locale = context.resources.configuration.locales[0]
@@ -99,9 +114,10 @@ class LanguageSettings(context: Context) {
          * `LocaleManager` is API 33 and this ships to 24, which would leave most of the range with
          * a setting that silently did half of what it says.
          *
-         * Returning [base] unchanged for the unchosen case is what keeps "follow the phone" honest,
-         * including the system's own per-app language picker on Android 13 and later: with nothing
-         * forced here, whatever locale the system handed the activity is the one it keeps.
+         * Returning [base] unchanged for the unchosen case is what keeps the guess honest, including
+         * the system's own per-app language picker on Android 13 and later: with nothing forced
+         * here, whatever locale the system handed the activity is the one it keeps. It is also the
+         * one place a null [chosen] still means something, now that the picker has no row for it.
          */
         fun localize(base: Context): Context {
             val chosen = LanguageSettings(base).chosen ?: return base

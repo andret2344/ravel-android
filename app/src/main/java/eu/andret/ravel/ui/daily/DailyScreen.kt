@@ -32,6 +32,7 @@ import eu.andret.ravel.R
 import eu.andret.ravel.game.Hint
 import eu.andret.ravel.game.Puzzle
 import eu.andret.ravel.settings.DayResult
+import eu.andret.ravel.ui.CoinAmount
 import eu.andret.ravel.ui.game.BoardState
 import eu.andret.ravel.ui.game.BoardTopBar
 import eu.andret.ravel.ui.game.BoughtLine
@@ -66,6 +67,7 @@ fun DailyScreen(
     val bought by viewModel.bought.collectAsStateWithLifecycle()
     val completion by viewModel.completion.collectAsStateWithLifecycle()
     val elapsed by viewModel.elapsed.collectAsStateWithLifecycle()
+    val hapticsEnabled by viewModel.hapticsEnabled.collectAsStateWithLifecycle()
 
     /*
      * The clock runs while the board is on screen and stops when it is not.
@@ -124,6 +126,7 @@ fun DailyScreen(
                     puzzle = current.puzzle,
                     onPathTraced = viewModel::trace,
                     onTap = viewModel::tap,
+                    hapticsEnabled = hapticsEnabled,
                 )
             }
         }
@@ -177,7 +180,8 @@ private fun CompletedDialog(completion: Completion, onExit: () -> Unit, onStay: 
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Text(
+                CoinAmount(
+                    amount = completion.total,
                     text = stringResource(R.string.done_gained, completion.total),
                     style = MaterialTheme.typography.displaySmall,
                     color = goldColors.fill,
@@ -224,10 +228,10 @@ private fun Earned(label: String, amount: Int) {
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(text = label, style = MaterialTheme.typography.bodyMedium)
-        Text(
+        CoinAmount(
+            amount = amount,
             text = stringResource(R.string.done_gained, amount),
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
         )
     }
 }

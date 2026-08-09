@@ -22,7 +22,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -147,9 +146,6 @@ private fun Header(today: Long, balance: Int, onShop: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        BalanceButton(
-            text = pluralStringResource(R.plurals.coins_balance, balance, balance),
-            onShop = onShop,
-        )
+        BalanceButton(balance = balance, onShop = onShop)
     }
 }

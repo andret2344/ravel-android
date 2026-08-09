@@ -197,26 +197,36 @@ class PuzzleTest {
     @Test
     fun `solving pays far less than buying the answer`() {
         // The hole this closes: if a board paid more than the hints that finish it, the fastest way
-        // to earn would be to buy words. The cheapest board here is three words, so 750 coins for a
-        // reward of 10.
+        // to earn would be to buy words. The cheapest board here is three words, so 300 coins for a
+        // reward of 25.
+        //
+        // An inequality and not a figure, on purpose. This is the rule the prices have to keep, and
+        // it has now survived them being cut to a quarter without a line of it being edited - which
+        // is exactly what a test of a rule should do when a number underneath it moves.
         val cheapestBoardByHints = board.solution.size * Hint.WORD.cost
         assertTrue(Rewards.FOR_COMPLETING < cheapestBoardByHints)
     }
 
     @Test
     fun `a wallet cannot be spent below zero`() {
-        assertEquals(150, Rewards.afterSpending(250, Hint.LETTER.cost))
+        assertEquals(210, Rewards.afterSpending(250, Hint.LETTER.cost))
         assertEquals(0, Rewards.afterSpending(Hint.WORD.cost, Hint.WORD.cost))
-        assertEquals(null, Rewards.afterSpending(99, Hint.LETTER.cost))
+        assertEquals(null, Rewards.afterSpending(Hint.LETTER.cost - 1, Hint.LETTER.cost))
     }
 
     @Test
-    fun `a word costs more than a letter`() {
+    fun `a word costs two and a half letters`() {
         // The prices are a game decision, not an implementation detail: changing them is a change
         // to what the game charges, and it should not be possible to do by accident.
-        assertEquals(100, Hint.LETTER.cost)
-        assertEquals(250, Hint.WORD.cost)
-        assertTrue(Hint.WORD.cost > Hint.LETTER.cost)
+        assertEquals(40, Hint.LETTER.cost)
+        assertEquals(100, Hint.WORD.cost)
+
+        // The ratio, which is the part that is a rule rather than a number - see Hint. It puts the
+        // break-even at two letters, and that is asserted rather than described: two letters have to
+        // stay cheaper than the word and three have to stay dearer, or the two hints stop being a
+        // choice about the board and become a sum the player is expected to do.
+        assertTrue(2 * Hint.LETTER.cost < Hint.WORD.cost)
+        assertTrue(3 * Hint.LETTER.cost > Hint.WORD.cost)
     }
 
     @Test

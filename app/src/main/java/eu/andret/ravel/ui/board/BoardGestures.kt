@@ -69,9 +69,20 @@ internal fun Modifier.boardGestures(
  * A snapshot list, so each cell the finger picks up redraws the canvas without waiting for the
  * gesture to end. [active] is separate from the list being empty: a gesture that began on a wall
  * owns nothing and must not be mistaken for one that has just cleared its path.
+ *
+ * The cell tick is fired from here, at the mutation, rather than from a snapshot of the list's
+ * length. Two cells crossed inside one frame are two ticks and a cell taken back is a third, and a
+ * watcher counting the list would report one of those as nothing happening at all - backtracking
+ * removes a cell and moving on adds one, which leaves the length exactly where it started. Since
+ * the tick is what tells the player the board took the cell, missing it is missing the answer to
+ * the only question they are asking while the finger is down.
+ *
+ * @param haptics fired once per cell joined or dropped. Not a callback out to the screen, because
+ *   there is nothing for a screen to decide here - the decision is which cell the trace accepts,
+ *   and this is the class that makes it.
  */
 @Stable
-internal class TraceState {
+internal class TraceState(private val haptics: BoardHaptics) {
     val cells: SnapshotStateList<Int> = mutableStateListOf()
 
     var active: Boolean by mutableStateOf(false)
@@ -82,6 +93,11 @@ internal class TraceState {
      *
      * Starting on the marked path picks it up where it was left, so a long word can be traced in as
      * many goes as the player likes. Starting on a wall or a finished word takes nothing.
+     *
+     * One tick for a gesture that took hold of something, however many cells it picked up. Picking
+     * up a standing path is a single act to the player - they put a finger on a word they had
+     * already started - and a tick per cell of it would spend the whole board's haptic budget on a
+     * touch that changed nothing on screen.
      */
     fun begin(board: Board, path: List<Int>, solved: Set<Int>, cell: Int?) {
         cells.clear()
@@ -97,6 +113,7 @@ internal class TraceState {
             }
             else -> false
         }
+        if (active) haptics.cell()
     }
 
     /**
@@ -111,18 +128,26 @@ internal class TraceState {
      */
     fun extend(board: Board, solved: Set<Int>, cell: Int) {
         if (cells.isEmpty()) {
-            if (isTraceable(board, solved, cell)) cells.add(cell)
+            if (isTraceable(board, solved, cell)) {
+                cells.add(cell)
+                haptics.cell()
+            }
             return
         }
         if (cell == cells.last()) return
         if (cells.size >= 2 && cell == cells[cells.size - 2]) {
             cells.removeAt(cells.size - 1)
+            // Undoing a cell is the same tick as taking one. It is the same size of event to the
+            // player - one letter changed hands - and giving it an effect of its own would be
+            // teaching a second sensation to say something the screen already shows.
+            haptics.cell()
             return
         }
         if (cell in cells) return
         if (!isTraceable(board, solved, cell)) return
         if (!areAdjacent(board.width, cells.last(), cell)) return
         cells.add(cell)
+        haptics.cell()
     }
 
     fun end() {

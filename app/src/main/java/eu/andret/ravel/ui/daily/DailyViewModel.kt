@@ -69,6 +69,10 @@ class DailyViewModel(
     /** What the player can spend, for the screen to show beside the prices. */
     val balance: StateFlow<Int> = wallet.balance
 
+    /** Whether the board may buzz. Straight through from the store, since nothing here decides it. */
+    val hapticsEnabled: StateFlow<Boolean> =
+        (application as RavelApplication).haptics.enabled
+
     /**
      * What this day has cost in hints, across every visit to it and not just this one.
      *

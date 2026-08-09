@@ -9,6 +9,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import eu.andret.ravel.settings.LanguageSettings
+import eu.andret.ravel.ui.LoadingScreen
 import eu.andret.ravel.ui.RavelApp
 import eu.andret.ravel.ui.theme.RavelTheme
 
@@ -29,7 +30,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val language = (application as RavelApplication).language
+        val ravel = application as RavelApplication
+        // Asked here because a consent form is a dialog and needs an activity to sit in front of,
+        // and asked before anything is drawn because the game waits on the answer - see below. It
+        // shows a form only where one is owed, and it does nothing at all on the second call, so a
+        // language switch rebuilding this activity is a check rather than a second form.
+        ravel.consent.gather(this)
+        val language = ravel.language
         // What this activity was built with. Resources are bound to a context that was localized
         // once, in attachBaseContext, so a language chosen afterwards cannot reach the strings
         // already on screen: the activity has to be built again. Captured rather than re-read so
@@ -37,6 +44,7 @@ class MainActivity : ComponentActivity() {
         val built = language.current.value
         setContent {
             val current by language.current.collectAsStateWithLifecycle()
+            val settled by ravel.consent.settled.collectAsStateWithLifecycle()
             // Recreated rather than restarted, so the navigation state survives the switch: the
             // player who changes the language from the options tab is still on the options tab
             // afterwards, reading it in the language they just picked.
@@ -44,7 +52,22 @@ class MainActivity : ComponentActivity() {
                 if (current != built) recreate()
             }
             RavelTheme {
-                RavelApp()
+                /*
+                 * Nothing of the game is drawn until the consent question has been settled.
+                 *
+                 * The form has to come first, and "first" has to mean before the player has started
+                 * reading something else: a dialog that lands on top of a screen they were already
+                 * looking at gets dismissed by whichever button is closest, and the answer to that
+                 * dialog is what the app's advertising stands on legally.
+                 *
+                 * Cheap in every case that is not the first launch. The flag lives on the
+                 * application, so it survives this activity being rebuilt, and it is already true
+                 * on a device that has answered - which means the loading screen is not a frame the
+                 * returning player ever sees. And it always ends: see AdConsent.gather for the
+                 * timer that opens the game whatever the consent service is doing, because a word
+                 * puzzle that works offline must not have a launch that depends on a network.
+                 */
+                if (settled) RavelApp() else LoadingScreen()
             }
         }
     }

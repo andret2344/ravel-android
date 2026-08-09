@@ -1,19 +1,60 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample data extraction rules file; uncomment and customize as necessary.
-   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
-   for details.
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    What leaves the device, for Android 12 and up. Everything below API 31 reads backup_rules.xml
+    instead, and this app ships to 24, so the two files exist and must be kept saying the same thing.
+
+    Everything the player owns is backed up, and everything the player owns is a shared preference:
+    the coins, the level they are on, the daily history and streak, and the language they chose. A
+    new phone that arrives without those is a new phone that has lost the game, and there is no
+    account to restore it from - the game deliberately stores nothing on a server.
+
+    Listed one by one rather than backed up wholesale by leaving this file empty. An empty rule set
+    means "take everything", which is the same instruction whether or not anybody thought about it,
+    and it silently adopts every preference file added from here on. Naming them is what makes the
+    next file a decision.
+
+    ## ravel-ads, which is here on purpose and is the interesting one
+
+    It holds today's date and how many rewarded ads have been watched against it. Including it is
+    what makes a restore honest in both directions:
+
+    - Restored on the same day the backup was taken: the watches already spent that day come back
+      with it, so reinstalling is not a second three.
+    - Restored later: the stored day is in the past, which reads as a fresh allowance, which is
+      correct - it is a different day.
+    - Restored onto a device whose clock is behind the stored day: nothing today. This is the
+      branch that answers winding the date back to farm ads, and it is a rule about the *stored*
+      day rather than a lockout flag, so a clock put right is forgiven immediately.
+
+    See AdAllowance.remainingFrom, which is where all three of those actually live.
+
+    ## The one thing this cannot defend, and when to come back
+
+    A restored balance is a restored balance. Once coins can be bought with real money, "spend, then
+    restore an older backup" duplicates them, and no rule in this file can see that happening - the
+    only real answer is a balance the server owns, which means an account. Today there is nothing to
+    defraud but yourself, so ravel-wallet is backed up. **The commit that adds in-app purchases is
+    the commit that has to revisit this file.**
 -->
 <data-extraction-rules>
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <include domain="sharedpref" path="ravel-wallet.xml" />
+        <include domain="sharedpref" path="ravel-levels.xml" />
+        <include domain="sharedpref" path="ravel-daily.xml" />
+        <include domain="sharedpref" path="ravel-settings.xml" />
+        <include domain="sharedpref" path="ravel-ads.xml" />
     </cloud-backup>
     <!--
-    <device-transfer>
-        <include .../>
-        <exclude .../>
-    </device-transfer>
+        Device-to-device transfer, which is a different path with the same answer. It is a copy onto
+        a phone the player is holding in their other hand, so there is even less reason to hold
+        anything back than there is for a cloud backup - and a transfer that dropped the ad counter
+        would be a way to get three more by migrating.
     -->
+    <device-transfer>
+        <include domain="sharedpref" path="ravel-wallet.xml" />
+        <include domain="sharedpref" path="ravel-levels.xml" />
+        <include domain="sharedpref" path="ravel-daily.xml" />
+        <include domain="sharedpref" path="ravel-settings.xml" />
+        <include domain="sharedpref" path="ravel-ads.xml" />
+    </device-transfer>
 </data-extraction-rules>

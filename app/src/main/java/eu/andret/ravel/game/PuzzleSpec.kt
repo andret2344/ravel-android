@@ -47,13 +47,29 @@ data class PuzzleSpec(
         /**
          * A size out of the range [id]'s mode allows at that point in its stream.
          *
-         * Only [PuzzleMode.ENDLESS] narrows the range, because it is the only mode a player walks
-         * through in order: level one is the first board anybody sees, and a 10x10 there is not a
-         * hard first level so much as an unreadable one. Every other mode hands out one board at a
-         * time with nothing before it to have learned from, so it draws from the whole range.
+         * Two modes narrow the range, for reasons that are not the same reason.
+         *
+         * [PuzzleMode.ENDLESS] narrows it *along its ordinal*, because it is the only mode a player
+         * walks through in order: level one is the first board anybody sees, and a 10x10 there is
+         * not a hard first level so much as an unreadable one. That ramp ends, because the lesson
+         * ends - see [rampFor].
+         *
+         * [PuzzleMode.DAILY] narrows it *flatly*, to [DAILY_MAX_SIZE], and never opens up. Nothing
+         * about a date says the player has learned anything, so there is no ramp to walk; what
+         * decides this is what the mode is for. A daily is the board a player fits into a coffee
+         * break before deciding whether to come back tomorrow, and one day in six being a 10x10 -
+         * which is what the full range meant - made a sixth of the calendar a board most people
+         * would abandon. An abandoned daily is not a hard daily: it breaks the streak, and a broken
+         * streak is the one thing that stops the player opening the app at all. So the ceiling comes
+         * down to eight, which is the largest grid that still reads at a glance on a phone, and the
+         * floor stays at [MIN_SIZE] so the sizes still vary rather than settling on one.
+         *
+         * [PuzzleMode.SPECIAL] still draws from the whole range: an event board is opted into, once,
+         * by a player who went looking for it, and no streak depends on finishing it.
          */
         private fun sizeFor(id: PuzzleId): Int = when (id.mode) {
             PuzzleMode.ENDLESS -> sizeIn(id.seed, rampFor(id.ordinal))
+            PuzzleMode.DAILY -> sizeIn(id.seed, MIN_SIZE..DAILY_MAX_SIZE)
             else -> sizeIn(id.seed, MIN_SIZE..MAX_SIZE)
         }
 
@@ -61,11 +77,18 @@ data class PuzzleSpec(
          * How deep into the frequency-ranked dictionary [id]'s words may reach.
          *
          * Ramped for the same reason as the size and for the same mode only, but **not** on the same
-         * tiers, and the difference is the point. Size stops mattering early: by level twenty-six a
-         * player knows what a 10x10 costs them, so there is nothing left to teach and the range
-         * opens. Vocabulary never stops mattering, because it is not a skill the player acquires by
-         * playing - either they know *drogowiec* or they do not, and no number of boards changes
-         * that. So this curve is measured in thousands of levels where [rampFor] is measured in tens.
+         * tiers, and the difference is the point. Size stops mattering first, because it runs out of
+         * room: [MAX_SIZE] is the last width the generator will build in a time a player will wait,
+         * so [SIZE_TIERS] has somewhere to arrive and arrives at level 250. Vocabulary never stops
+         * mattering, because it is not a skill the player acquires by playing - either they know
+         * *drogowiec* or they do not, and no number of boards changes that. So this curve is
+         * measured in thousands of levels where [rampFor] is measured in hundreds.
+         *
+         * Three boundaries do fall on the same level in both tables - 15, 100 and 250 - which means
+         * levels 16, 101 and 251 step on both axes at once. Left alone rather than nudged apart: a
+         * board is not noticeably harder for the two arriving together, and moving a boundary to
+         * avoid a coincidence would be letting the other table decide this one, which is the exact
+         * coupling the separation is for.
          *
          * The tiers are deliberately long and get longer, because the interesting part of the
          * dictionary is its head. Going from rank 1500 to 4000 is a bigger change in what a board
@@ -91,40 +114,40 @@ data class PuzzleSpec(
          * only movable as far as the pools behind the *shortest* words allow, which is always the
          * binding constraint.
          *
-         * Every mode but [PuzzleMode.ENDLESS] draws from the whole dictionary. A daily puzzle has no
-         * ordinal to ramp along: it is one board, and the player who solves it today is not the same
-         * player who started yesterday.
+         * [PuzzleMode.DAILY] has no ordinal to ramp along - a date is not a position on a curve, and
+         * the player who solves today's board is not the same player who started yesterday - so it
+         * takes one cap and keeps it: [DAILY_MAX_RANK]. Uncapped, which is what it used to be, made
+         * the daily the single hardest board in the game and by some distance: it drew from all
+         * 35 000 words on its first day, where a player has to reach level 2500 of the endless mode
+         * before the tiers let go of 30 000. The mode meant to be a habit was running an end-game
+         * vocabulary, and a board asking for a word the player has never met is not a board they
+         * lose, it is one they close - which costs the streak and then the habit.
+         *
+         * Eight thousand rather than something rounder because that is where the dictionary stops
+         * being ordinary: rank 4000 is *cierpienie* and *naprawa*, rank 10 000 is already *kredens*
+         * and *ślubny*, so the cap sits just under the point where a length alone stops being enough
+         * of a clue. It is also a band the generator is already known to handle at these sizes -
+         * endless level 100 runs the same 8000 over the full size range - so this narrows what a
+         * daily asks without putting the search into a regime nothing has measured.
+         *
+         * [PuzzleMode.SPECIAL] still draws from everything, for the same reason it draws from every
+         * size: it is opted into and no streak rides on it.
          */
         private fun rankFor(id: PuzzleId): Int = when (id.mode) {
             PuzzleMode.ENDLESS ->
                 RANK_TIERS.firstOrNull { (lastLevel, _) -> id.ordinal <= lastLevel }?.second
                     ?: NO_RANK_LIMIT
+            PuzzleMode.DAILY -> DAILY_MAX_RANK
             else -> NO_RANK_LIMIT
         }
 
         /**
-         * How wide a board level [level] is allowed to be.
-         *
-         * Three tiers and then the whole range, which is a teaching curve and not a difficulty one:
-         *
-         * - the first five levels are as small as the game goes, because a player meeting the rules
-         *   for the first time is reading a grid, not solving one.
-         * - up to fifteen it opens to seven, which is still a grid that can be taken in at a glance.
-         * - to twenty-five the floor drops back to five and the ceiling goes to eight, so the sizes
-         *   start varying rather than only growing. A run of boards that each look bigger than the
-         *   last reads as a difficulty slider; the point here is that size is not one.
-         * - after that, everything. By level twenty-six the player has seen enough boards to know
-         *   what a big one costs them, and a 10x10 is a change of pace rather than a wall.
-         *
-         * Sizes are still drawn from the seed inside the tier, so neighbouring levels do not march
-         * upwards one square at a time - see [PuzzleId].
+         * How wide a board level [level] is allowed to be: the tier of [SIZE_TIERS] it falls in,
+         * and the whole range once the table runs out.
          */
-        private fun rampFor(level: Long): IntRange = when {
-            level <= FIRST_TIER -> MIN_SIZE..6
-            level <= SECOND_TIER -> 6..7
-            level <= THIRD_TIER -> MIN_SIZE..8
-            else -> MIN_SIZE..MAX_SIZE
-        }
+        private fun rampFor(level: Long): IntRange =
+            SIZE_TIERS.firstOrNull { (lastLevel, _) -> level <= lastLevel }?.second
+                ?: MIN_SIZE..MAX_SIZE
 
         /**
          * A size in [range], taken from the seed's high bits.
@@ -146,10 +169,73 @@ data class PuzzleSpec(
         const val MIN_SIZE = 5
         const val MAX_SIZE = 10
 
-        /** The last level of each tier of [rampFor]. */
-        const val FIRST_TIER = 5L
-        const val SECOND_TIER = 15L
-        const val THIRD_TIER = 25L
+        /**
+         * The daily's own ceiling, well inside [MAX_SIZE]. See [sizeFor] for why it is flat.
+         *
+         * Eight and not seven, measured against [SIZE_TIERS]: eight is where the endless ceiling
+         * sits for its long middle, levels 51 to 125, so a daily is the size of a mid-game level.
+         * Seven would have put it at level fifty, which says a daily is easier than the first fifty
+         * levels of the game, and it is not meant to be easy - it is meant to be finishable in one
+         * sitting.
+         *
+         * Note this is now a ceiling the endless mode passes rather than one it stops at: from level
+         * 126 the endless ramp reaches nine and eventually [MAX_SIZE], and the daily never does.
+         * That is the intended end state - a habit is not an end-game - but it does mean the daily
+         * stops being the bigger board somewhere around level 126, so "the daily is a break from the
+         * levels" is only true for a player who has not got that far.
+         */
+        const val DAILY_MAX_SIZE = 8
+
+        /**
+         * The daily's own vocabulary cap, flat for every date. See [rankFor] for the number.
+         *
+         * Deliberately a constant here rather than an entry in [RANK_TIERS]: the tiers are a curve
+         * along an ordinal and the daily has no ordinal to walk. Folding it in would make it look
+         * like a stage the daily eventually leaves.
+         */
+        const val DAILY_MAX_RANK = 8_000
+
+        /**
+         * The size curve of [rampFor]: the last level of each tier, and the range of grid widths
+         * that tier draws from. Ordered, and read in order. A level past the last entry draws from
+         * [MIN_SIZE]..[MAX_SIZE].
+         *
+         * A table for the same reason [RANK_TIERS] is one: there are eight boundaries and the shape
+         * they make is the thing being decided, which nine named constants would hide. It is *not*
+         * folded into [RANK_TIERS] - see there for why the two curves stay apart.
+         *
+         * **Every ceiling arrives twice, and the pair is the design.** A new width first appears in
+         * a two-value tier with the floor at six, so it is a coin flip and the player meets it in
+         * the first level or two; then the floor drops to five, the tier becomes three values, and
+         * that same width goes back to being occasional. Introduce, then dilute. The alternative -
+         * one tier per width, floor rising with the ceiling - is a staircase, and a run of boards
+         * that each look bigger than the last reads as a difficulty slider. Size is not one: a 9x9
+         * of common words is easier than a 6x6 of rare ones, and the curve must not teach otherwise.
+         * That is also why the floor returns to five at the end rather than settling at six.
+         *
+         * The spans widen as they go - fifteen levels to introduce the first width, fifty to
+         * introduce the last - because the earlier steps are the ones that teach something. Going
+         * from a 6x6 to a 7x7 doubles what the player has to hold in their head at once; going from
+         * a 9x9 to a 10x10 is more of the same reading they have already done sixty times.
+         *
+         * **The curve is over at 250 and there is nothing past it**, because [MAX_SIZE] is the last
+         * width the generator will build in a time a player will wait - a 9x9 has been measured at
+         * 1.3 s and a 12x12 at 4.5. Levels past 250 are made harder by the vocabulary curve alone,
+         * which is why that one runs ten times further. See [rankFor].
+         *
+         * Sizes are still drawn from the seed inside the tier, so neighbouring levels do not march
+         * upwards one square at a time - see [PuzzleId].
+         */
+        val SIZE_TIERS: List<Pair<Long, IntRange>> = listOf(
+            15L to MIN_SIZE..6,
+            25L to 6..7,
+            50L to MIN_SIZE..7,
+            100L to 6..8,
+            125L to MIN_SIZE..8,
+            150L to 6..9,
+            200L to MIN_SIZE..9,
+            250L to 6..MAX_SIZE,
+        )
 
         /**
          * The vocabulary curve of [rankFor]: the last level of each tier, and the rank cap that

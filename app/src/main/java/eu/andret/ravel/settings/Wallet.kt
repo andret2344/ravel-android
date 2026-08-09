@@ -26,8 +26,6 @@ class Wallet(context: Context) {
 
     val balance: StateFlow<Int> = _balance.asStateFlow()
 
-    fun canAfford(cost: Int): Boolean = Rewards.afterSpending(_balance.value, cost) != null
-
     /**
      * Takes [cost] from the balance, or leaves it alone and returns false when it does not cover it.
      *
@@ -59,13 +57,19 @@ class Wallet(context: Context) {
          *
          * A player who has never seen a hint cannot know whether it is worth buying, and one who
          * can only afford a single letter has to treat that letter as precious - so they hoard it,
-         * never spend it, and never find out what they were being sold. Ten letters or four words
-         * is enough to spend badly once and still be curious.
+         * never spend it, and never find out what they were being sold. Six letters, or a word and
+         * three letters, is enough to spend badly twice and still be curious.
+         *
+         * It was 1000, which was the same idea costed against an economy that paid ten coins a
+         * board. Against the current one it is twenty-four solved boards handed over at install,
+         * and the cost of that is not generosity - it is weeks in which the shop has nothing a new
+         * player needs, which is weeks of the only thing in this game that earns anything going
+         * unlooked at. 600 buys the same lesson in a fortnight instead of a month.
          *
          * Only the default for a wallet that has never been written, so raising it hands the new
          * amount to anyone who has not spent a coin yet. Harmless before release; after it, this
          * number has to be frozen and a grant written instead.
          */
-        const val STARTING_BALANCE = 1000
+        const val STARTING_BALANCE = 600
     }
 }

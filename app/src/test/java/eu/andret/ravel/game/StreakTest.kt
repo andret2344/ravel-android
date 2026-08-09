@@ -2,23 +2,32 @@ package eu.andret.ravel.game
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class StreakTest {
 
     @Test
     fun `the seventh day is the only one worth more`() {
-        assertEquals(listOf(10, 10, 10, 10, 10, 10, 50), Streak.ladder)
+        assertEquals(List(Streak.CYCLE - 1) { Streak.DAY } + Streak.SEVENTH, Streak.ladder)
     }
 
     @Test
     fun `a week of showing up stays in the same range as a week of solving`() {
         // The guard on the whole design: if the streak ever pays several times what playing pays,
         // the optimal player is one who opens the app and closes it again.
+        //
+        // A band rather than two figures. This test used to assert 110 and 70, which made it fail
+        // the day the economy was rescaled - correctly, in the sense that something changed, and
+        // uselessly, in the sense that it had nothing to say about whether the change was wrong.
+        // The claim in Streak's own documentation is a relationship, so that is what is checked,
+        // and it still catches the failure worth catching: a streak that quietly outgrows the game.
         val week = Streak.ladder.sum()
         val solving = Rewards.FOR_COMPLETING * Streak.CYCLE
-        assertEquals(110, week)
-        assertEquals(70, solving)
+        assertTrue(
+            "A week of streak pays $week against $solving for a week of solving",
+            week in solving..(solving * 2),
+        )
     }
 
     @Test

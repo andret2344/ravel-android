@@ -28,6 +28,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import eu.andret.ravel.R
 import eu.andret.ravel.game.Puzzle
+import eu.andret.ravel.ui.CoinAmount
 import eu.andret.ravel.ui.game.BoardState
 import eu.andret.ravel.ui.game.BoardTopBar
 import eu.andret.ravel.ui.game.BoughtLine
@@ -64,6 +65,7 @@ fun LevelScreen(
     val completion by viewModel.completion.collectAsStateWithLifecycle()
     val elapsed by viewModel.elapsed.collectAsStateWithLifecycle()
     val unreachable by viewModel.unreachable.collectAsStateWithLifecycle()
+    val hapticsEnabled by viewModel.hapticsEnabled.collectAsStateWithLifecycle()
 
     // A language switch moves the player onto that language's ladder, which this level may be far
     // ahead of - see LevelViewModel.unreachable. The board behind them is not theirs to be on, so
@@ -141,6 +143,7 @@ fun LevelScreen(
                         puzzle = current.puzzle,
                         onPathTraced = viewModel::trace,
                         onTap = viewModel::tap,
+                        hapticsEnabled = hapticsEnabled,
                     )
                 }
             }
@@ -201,7 +204,8 @@ private fun CompletedDialog(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Text(
+                CoinAmount(
+                    amount = completion.coins,
                     text = stringResource(R.string.done_gained, completion.coins),
                     style = MaterialTheme.typography.displaySmall,
                     color = goldColors.fill,

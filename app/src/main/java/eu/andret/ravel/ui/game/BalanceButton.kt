@@ -3,10 +3,10 @@ package eu.andret.ravel.ui.game
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
+import eu.andret.ravel.ui.CoinAmount
 
 /**
  * The player's coins, in the top right corner, and the way to buy more of them.
@@ -21,11 +21,13 @@ import androidx.compose.ui.unit.dp
  * The padding is tighter than a text button's default so the figure stays in the corner it has
  * always been in rather than sliding inwards to make room for its own touch target.
  *
- * @param text the balance as its own screen words it - the bare figure over a board, where a noun
- *   would be furniture, and the counted noun on a menu, where there is room to read it.
+ * It takes the balance and not a string, which it used to. Every screen that showed one wrote it its
+ * own way - a glyph and a number over a board, the counted noun on a menu - and the caller choosing
+ * between them is the caller inventing a currency notation. There is one, in [CoinAmount], and this
+ * button asks for it like everything else does.
  */
 @Composable
-internal fun BalanceButton(text: String, onShop: () -> Unit) {
+internal fun BalanceButton(balance: Int, onShop: () -> Unit) {
     TextButton(
         onClick = onShop,
         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
@@ -33,6 +35,6 @@ internal fun BalanceButton(text: String, onShop: () -> Unit) {
             contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         ),
     ) {
-        Text(text = text, style = MaterialTheme.typography.titleMedium)
+        CoinAmount(amount = balance, style = MaterialTheme.typography.titleMedium)
     }
 }

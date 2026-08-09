@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    A coin: an outer ring with a filled core, drawn as one even-odd path.
+
+    Three concentric circles in a single path rather than three paths, so the whole thing takes one
+    tint and one alpha. Even-odd fill is what turns them into a ring and a core: the band between
+    the first two circles is inside one subpath, the core is inside all three, and both come out
+    odd - filled - while the gap between them is inside two and comes out empty.
+
+    White rather than a theme colour, because a drawable cannot read the Compose colour scheme. Every
+    use tints it, which is also what keeps it legible in both themes.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M22,12 A10,10 0 1,1 2,12 A10,10 0 1,1 22,12 Z M19.6,12 A7.6,7.6 0 1,0 4.4,12 A7.6,7.6 0 1,0 19.6,12 Z M17.2,12 A5.2,5.2 0 1,1 6.8,12 A5.2,5.2 0 1,1 17.2,12 Z" />
+</vector>

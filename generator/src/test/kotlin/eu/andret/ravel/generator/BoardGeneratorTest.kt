@@ -110,6 +110,47 @@ class BoardGeneratorTest {
     }
 
     @Test
+    fun `no word is shorter than half the longest one`() {
+        // The length band. Stated over the finished board rather than over randomComposition,
+        // because the composition is not the only thing that decides a length list - the long word
+        // is pushed up afterwards, out of the others, and that push is where the rule was broken
+        // when it was first written.
+        //
+        // Awkward shapes are in the list on purpose: a 10x4 wants a seven-letter word out of a mean
+        // of six, so it is the case where somebody has to pay for the long word and the payment can
+        // take them under the floor.
+        listOf(5 to 5, 6 to 6, 8 to 8, 9 to 9, 10 to 10, 10 to 4, 8 to 5).forEach { (width, height) ->
+            val spec = BoardSpec.forDifficulty(width, height, Difficulty.HARD)
+            val generator = BoardGenerator(dictionary, Random(414))
+            repeat(SMALL_SAMPLE) {
+                val board = assertNotNull(generator.generate(spec), "no board for ${width}x$height")
+                val lengths = board.wordLengths
+                assertTrue(
+                    lengths.min() * 2 >= lengths.max(),
+                    "${width}x$height produced $lengths",
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `a large board is not one length repeated`() {
+        // What the band is for. The list of lengths is the only clue this game gives, and a 10x10
+        // used to answer with eight words of which six were twelve letters - a clue that repeats one
+        // number is not a clue. Asserted as a spread rather than as an exact list, since the point
+        // is that the lengths differ and not which ones turn up.
+        val spec = BoardSpec.forDifficulty(10, 10, Difficulty.HARD)
+        val generator = BoardGenerator(dictionary, Random(828))
+        val spreads = (1..SMALL_SAMPLE).map {
+            val lengths = assertNotNull(generator.generate(spec), "no 10x10 board").wordLengths
+            lengths.max() - lengths.min()
+        }
+        // Four letters of spread on average. The old behaviour averaged under three and could not
+        // exceed three at all, so this fails outright on a revert rather than drifting.
+        assertTrue(spreads.average() >= 4.0, "spreads went $spreads")
+    }
+
+    @Test
     fun `words never run alongside themselves into clumps`() {
         Difficulty.entries.forEach { difficulty ->
             val generator = BoardGenerator(Dictionary.loadBundled(Language.POLISH, difficulty), Random(616))

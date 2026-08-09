@@ -32,7 +32,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import eu.andret.ravel.R
+import eu.andret.ravel.debug.LevelJump
 import eu.andret.ravel.settings.LevelProgressState
+import eu.andret.ravel.settings.SavedBoard
 import eu.andret.ravel.ui.game.BalanceButton
 import eu.andret.ravel.ui.game.asClock
 import eu.andret.ravel.ui.theme.foundColors
@@ -72,6 +74,14 @@ fun LevelMenuScreen(
         Header(balance = balance, onShop = onShop)
         PlayCard(progress = progress, onPlay = { onPlay(progress.current) })
         Ladder(progress.current)
+        // Draws a button in a debug build and literally nothing in a release one - there are two
+        // files behind this call and the release one has an empty body, so the shipped APK does not
+        // contain a way to skip the ladder rather than containing one nobody can reach. See
+        // eu.andret.ravel.debug.LevelJump.
+        //
+        // Called from here because this is the screen the ladder is on: a level set from anywhere
+        // else would be a developer changing a number and then going to look at what it did.
+        LevelJump()
     }
 }
 
@@ -86,10 +96,7 @@ private fun Header(balance: Int, onShop: () -> Unit) {
             text = stringResource(R.string.main_title),
             style = MaterialTheme.typography.headlineSmall,
         )
-        BalanceButton(
-            text = pluralStringResource(R.plurals.coins_balance, balance, balance),
-            onShop = onShop,
-        )
+        BalanceButton(balance = balance, onShop = onShop)
     }
 }
 
@@ -109,19 +116,25 @@ private fun Header(balance: Int, onShop: () -> Unit) {
 @Composable
 private fun PlayCard(progress: LevelProgressState, onPlay: () -> Unit) {
     val started = progress.boardFor(progress.current)
+    // The three ways the card answers "has this been started" are read here, at the top, rather
+    // than at the four points inside the layout that used to ask. They are one question with one
+    // answer, and asking it again beside every widget it changes buries that: what the card is
+    // doing only becomes visible once the branches sit next to each other.
+    val container = if (started == null) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        MaterialTheme.colorScheme.primary
+    }
+    val content = if (started == null) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.onPrimary
+    }
+    val label = if (started == null) R.string.level_play else R.string.level_resume
     Card(
         onClick = onPlay,
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = when (started) {
-                null -> MaterialTheme.colorScheme.primaryContainer
-                else -> MaterialTheme.colorScheme.primary
-            },
-            contentColor = when (started) {
-                null -> MaterialTheme.colorScheme.onPrimaryContainer
-                else -> MaterialTheme.colorScheme.onPrimary
-            },
-        ),
+        colors = CardDefaults.cardColors(containerColor = container, contentColor = content),
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             Column(
@@ -137,51 +150,61 @@ private fun PlayCard(progress: LevelProgressState, onPlay: () -> Unit) {
                     textAlign = TextAlign.Center,
                 )
                 Text(
-                    text = stringResource(
-                        if (started == null) R.string.level_play else R.string.level_resume,
-                    ),
+                    text = stringResource(label),
                     style = MaterialTheme.typography.labelLarge,
                 )
-                // How far in, rather than a word: "2/5" is the reason to come back, and it is the
-                // only thing here a player cannot already guess from the colour.
-                //
-                // The clock beside it is the other half of that reason. Two words out of five is a
-                // different proposition after forty seconds than after nine minutes, and the time
-                // already spent is the part a player coming back tomorrow will not remember.
                 if (started != null) {
-                    val seconds = progress.secondsFor(progress.current)
-                    Text(
-                        text = when {
-                            // Zero while the level has been opened but not yet timed - the board
-                            // reports its time when it closes - and "0:00" would read as a stopwatch
-                            // that is broken rather than one that has not started.
-                            seconds > 0 -> "${started.found.size}/${started.wordCount} · ${asClock(seconds)}"
-                            else -> "${started.found.size}/${started.wordCount}"
-                        },
-                        style = MaterialTheme.typography.labelMedium,
-                    )
+                    ResumeCaption(board = started, seconds = progress.secondsFor(progress.current))
                 }
             }
-            // The notification dot, in the corner every notification dot has ever been in. It is
-            // redundant with the colour and the label on purpose: this is the one thing on the
-            // screen that has to survive being seen out of the corner of an eye.
-            if (started != null) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(8.dp)
-                        .size(14.dp)
-                        .background(MaterialTheme.colorScheme.surface, CircleShape),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(9.dp)
-                            .background(MaterialTheme.colorScheme.error, CircleShape),
-                    )
-                }
-            }
+            if (started != null) NotificationDot(modifier = Modifier.align(Alignment.TopEnd))
         }
+    }
+}
+
+/**
+ * How far in, rather than a word: "2/5" is the reason to come back, and it is the only thing on the
+ * card a player cannot already guess from the colour.
+ *
+ * The clock beside it is the other half of that reason. Two words out of five is a different
+ * proposition after forty seconds than after nine minutes, and the time already spent is the part a
+ * player coming back tomorrow will not remember.
+ */
+@Composable
+private fun ResumeCaption(board: SavedBoard, seconds: Int) {
+    val counted = "${board.found.size}/${board.wordCount}"
+    Text(
+        // Zero while the level has been opened but not yet timed - the board reports its time when
+        // it closes - and "0:00" would read as a stopwatch that is broken rather than one that has
+        // not started.
+        text = if (seconds > 0) "$counted · ${asClock(seconds)}" else counted,
+        style = MaterialTheme.typography.labelMedium,
+    )
+}
+
+/**
+ * The notification dot, in the corner every notification dot has ever been in. It is redundant with
+ * the colour and the label on purpose: this is the one thing on the screen that has to survive being
+ * seen out of the corner of an eye.
+ *
+ * No content description: the caption beside it already says how far in the level is, and a screen
+ * reader announcing a dot as well would be reading the redundancy out loud, which is the one place
+ * redundancy stops helping.
+ */
+@Composable
+private fun NotificationDot(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .padding(8.dp)
+            .size(14.dp)
+            .background(MaterialTheme.colorScheme.surface, CircleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(9.dp)
+                .background(MaterialTheme.colorScheme.error, CircleShape),
+        )
     }
 }
 

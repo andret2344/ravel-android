@@ -96,6 +96,37 @@ class StoredLevelProgress(
         return true
     }
 
+    /**
+     * Puts the player on [level] outright, as if every level below it had been finished.
+     *
+     * **A developer tool, and the reason it is here rather than on [LevelProgress] is the whole
+     * point.** That interface says in as many words that there is no method for setting the level,
+     * because the ladder being unskippable is a rule the type enforces rather than one a screen
+     * observes - and every consumer in the app is typed as the interface, so that stays true. The
+     * escape hatch is on the class, reachable only by a caller that already knows it is holding the
+     * concrete store, and the only such caller lives in the `debug` source set and does not exist in
+     * a release build at all.
+     *
+     * It is on the store rather than written into the preference file by the debug code because the
+     * key names are private here for a reason. A tool that spelled `pl.completed` itself would go on
+     * compiling after this class renamed it, and silently stop working.
+     *
+     * **Nothing is paid and nothing is counted.** No coins, no words, no time - the lifetime totals
+     * are left exactly as they were. One consequence is visible and is not worth hiding:
+     * [LevelTotals.levelsCompleted] is *derived* from the per-language counter this writes, so the
+     * statistics screen will report the levels as completed while the words and seconds behind them
+     * stay at whatever they really were. That is the honest reading of what happened - the levels
+     * were skipped, not played - and a tool that faked plausible totals to match would be putting
+     * invented numbers into the one place the app keeps a real history.
+     *
+     * The current level's board and costs go with it, since they belonged to a level the player is
+     * no longer on.
+     */
+    fun jumpTo(level: Int) {
+        require(level >= 1) { "There is no level below one: $level" }
+        write(LevelProgressState(completed = level - 1))
+    }
+
     override fun saveBoard(board: SavedBoard) {
         preferences.edit { putString(key(KEY_BOARD), SavedBoards.toJson(board).toString()) }
         _state.value = _state.value.copy(board = board)

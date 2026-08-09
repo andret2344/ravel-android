@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The AdMob identifiers, in one file so that going live is one edit and not a search.
+
+    These are the live identifiers of the Ravel app in AdMob, and they were Google's public test
+    ones until this commit. That change is the point at which every ad request became real
+    inventory: an impression counts, a click counts, and a click made by the person who wrote the
+    app counts as invalid traffic. Nothing in the code can tell the difference - see
+    ad_test_devices below, which is the only thing standing between a developer testing the reward
+    path and a suspended account.
+
+    The application id also has to reach the manifest, which cannot read a Kotlin constant, so both
+    live as resources rather than one as a resource and one as a constant. They are marked
+    untranslatable because they are identifiers, not text.
+
+    They belong together and are replaced together: the application id names the AdMob app, the unit
+    id names one ad placement inside it, and a mismatched pair - one real, one test - is a
+    configuration AdMob rejects at request time rather than at build time. Both carry the same
+    publisher number, which is the quick way to see they are from the same account.
+-->
+<resources>
+    <string name="admob_application_id" translatable="false">ca-app-pub-3410450408196791~4964715314</string>
+    <string name="ad_unit_rewarded" translatable="false">ca-app-pub-3410450408196791/8712388633</string>
+
+    <!--
+        Devices that must always be served test ads, by their hashed advertising id.
+
+        The identifiers above are live, so this list is now the only protection there is. An ad
+        request from your own phone is a real impression, and tapping it is a click on your own
+        inventory - which AdMob treats as invalid traffic and answers by suspending the account, not
+        by discounting the click. A developer testing a rewarded ad taps it every time, because
+        tapping is how you find out the reward arrives.
+
+        **This list being empty means the next run of the app on your own device is unprotected.**
+        Filling it is the first thing to do after the identifiers changed, not the last.
+
+        The hash is not guessable and has to be read off the device: run the app, ask for an ad, and
+        the SDK logs the exact line to paste, of the form
+        "RequestConfiguration.Builder().setTestDeviceIds(Arrays.asList("33BE2250B43518CCDA7DE426D04EE231"))".
+        It changes when the advertising id is reset.
+
+        A hash that is not a real one matches no device, which looks identical to having configured
+        nothing - so an entry here is only worth as much as the log line it was copied from. Add
+        every device the app is developed on, not only the one being used today.
+
+        Not limited to debug builds on purpose. Naming a device here only ever costs that one device
+        its real ads, and the alternative - a list that stops working in a release build - is a
+        developer running a signed build against live inventory with no protection at all.
+    -->
+    <string-array name="ad_test_devices" translatable="false">
+        <item>62E9F968EA197E9A42C783903F5A6085</item>
+    </string-array>
+</resources>

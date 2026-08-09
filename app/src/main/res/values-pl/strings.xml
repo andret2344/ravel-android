@@ -111,7 +111,6 @@
 
     <string name="hint_letter">Litera</string>
     <string name="hint_word">Słowo</string>
-    <string name="hint_with_cost">%1$s · %2$d</string>
 
     <string name="hints_used">%1$s · %2$s</string>
     <plurals name="hints_letters">
@@ -135,26 +134,34 @@
     </plurals>
 
     <string name="shop_title">Sklep</string>
-    <string name="shop_earn_solving">Rozwiązuj łamigłówki</string>
-    <plurals name="shop_earn_solving_detail">
-        <item quantity="one">%1$d moneta za każdą ukończoną planszę, w dowolnym trybie.</item>
-        <item quantity="few">%1$d monety za każdą ukończoną planszę, w dowolnym trybie.</item>
-        <item quantity="many">%1$d monet za każdą ukończoną planszę, w dowolnym trybie.</item>
-        <item quantity="other">%1$d monety za każdą ukończoną planszę, w dowolnym trybie.</item>
-    </plurals>
+
     <string name="shop_earn_ads">Obejrzyj reklamę</string>
+    <string name="shop_ad_left_today">%1$d/%2$d dzisiaj</string>
+    <string name="shop_ad_none_left">Wróć jutro.</string>
+    <string name="shop_ad_loading">Szukam reklamy…</string>
+    <string name="shop_ad_unavailable">Teraz nie ma reklamy. Dotknij, aby spróbować ponownie.</string>
+    <string name="shop_ad_blocked">Reklamy są wyłączone przez Twój wybór prywatności. Możesz go zmienić w sekcji %1$s.</string>
+
     <string name="shop_buy">Kup monety</string>
     <string name="shop_coming_soon">Wkrótce.</string>
     <string name="shop_prices">Litera kosztuje %1$d, całe słowo %2$d.</string>
 
     <string name="settings_language">Język</string>
-    <string name="settings_language_system">Język telefonu</string>
+    <string name="settings_change">Zmień</string>
     <string name="settings_language_note">Ustawia słowa na planszach i język gry.</string>
 
     <string name="settings_switch_title">Zmienić język?</string>
     <string name="settings_switch_body">Rozpoczęta plansza jest w języku, w którym teraz grasz, więc zostanie ułożona od nowa. Poziom, passa i monety zostają — podpowiedzi opłacone na tej planszy nie.</string>
     <string name="settings_switch_confirm">Zmień</string>
     <string name="settings_switch_cancel">Zostaw</string>
+
+    <string name="settings_feedback">Reakcje</string>
+    <string name="settings_haptics">Wibracje na planszy</string>
+    <string name="settings_haptics_note">Krótka wibracja przy każdej literze, znalezionym słowie i ukończonej planszy. Reakcja haptyczna w ustawieniach telefonu też musi być włączona.</string>
+
+    <string name="settings_privacy">Prywatność</string>
+    <string name="settings_privacy_ads">Ustawienia prywatności reklam</string>
+    <string name="settings_privacy_note">Zmień, z czego mogą korzystać reklamy na tym urządzeniu. Reklama pojawia się wyłącznie wtedy, gdy sam poprosisz o nią w sklepie.</string>
 
     <string name="settings_sources">Źródła słów</string>
     <string name="settings_sources_note">Słowniki powstają z publicznych list słów i korpusów. Dotknij źródła, aby zobaczyć jego licencję.</string>

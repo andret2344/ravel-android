@@ -57,6 +57,10 @@ class LevelViewModel(
     /** What the player can spend, for the screen to show beside the prices. */
     val balance: StateFlow<Int> = wallet.balance
 
+    /** Whether the board may buzz. Straight through from the store, since nothing here decides it. */
+    val hapticsEnabled: StateFlow<Boolean> =
+        (application as RavelApplication).haptics.enabled
+
     /**
      * The tally as it stood when the level was beaten, or null while it is still being played.
      *
@@ -89,8 +93,8 @@ class LevelViewModel(
      * The only thing that can put them here is a language switch. Each language keeps its own ladder
      * - see [LevelProgressState] - so leaving the twenty-first Polish level open and switching to an
      * English ladder that has reached level one leaves this screen showing an English board under
-     * the number 21, playable, and paying nothing: [LevelProgress.complete] refuses a level that is
-     * not the current one, which is correct and invisible.
+     * the number 21, playable, and paying nothing: [eu.andret.ravel.settings.LevelProgress.complete]
+     * refuses a level that is not the current one, which is correct and invisible.
      *
      * Ahead of the ladder rather than "not the current level", because finishing a level makes it
      * not the current one - and a celebration that threw the player back to the menu the moment they

@@ -16,26 +16,32 @@ package eu.andret.ravel.game
  * for that, and [DailyDate] for what a day is called.
  *
  * The sums are deliberately of the same order as the game they are attached to: a full week pays
- * `6 * `[DAY]` + `[SEVENTH]` = 110`, against the seventy a week of solving pays through
+ * `6 * `[DAY]` + `[SEVENTH]` = 275`, against the 175 a week of solving pays through
  * [Rewards.FOR_COMPLETING]. Showing up is therefore worth roughly as much as playing and not
  * several times more, which is the only version where a player optimising for coins is still a
  * player who opens a board.
+ *
+ * Both numbers here were multiplied by two and a half when [Rewards.FOR_COMPLETING] was, and that
+ * is the rule to follow next time rather than a coincidence: the ratio between the two is what the
+ * paragraph above is about, so tuning one of them alone silently answers a question this file
+ * already answered. At the old scale a week paid 110 against 70, which is the same 1.57.
  */
 object Streak {
     /** How many days the reward ladder runs before it starts over. */
     const val CYCLE = 7
 
-    /** Any of the first six days. */
-    const val DAY = 10
+    /** Any of the first six days, and worth exactly one solved board - see [Rewards]. */
+    const val DAY = 25
 
     /**
      * The seventh day, which is the one the other six exist to reach.
      *
      * Five days' worth on top of a sixth, so missing day six costs the player day seven as well and
      * they can see that coming from the start of the week. A smaller bonus would make the seventh
-     * day a rounding error and the six before it arbitrary.
+     * day a rounding error and the six before it arbitrary. That it is `5 * `[DAY] is the rule, not
+     * the number: move [DAY] and this moves with it.
      */
-    const val SEVENTH = 50
+    const val SEVENTH = 5 * DAY
 
     /**
      * What the [day]th day of a cycle pays, counting from 1.

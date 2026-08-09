@@ -19,7 +19,14 @@ object Puzzles {
      *
      * Cancelling the calling coroutine interrupts the search rather than merely abandoning it, so
      * leaving a screen stops the work instead of paying for a board nobody will see.
+     *
+     * The dispatcher is named rather than taken as a parameter, which Sonar asks for and which would
+     * be wrong twice here. A test dispatcher does not run on a thread that can be interrupted, so
+     * the seam would quietly trade away the cancellation this method's whole contract is about; and
+     * there is nothing to gain by moving the work elsewhere anyway, since a board is a fixed amount
+     * of CPU and the seed already makes it deterministic.
      */
+    @Suppress("kotlin:S6310")
     suspend fun generate(
         id: PuzzleId,
         language: Language,

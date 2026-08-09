@@ -14,9 +14,10 @@ android {
         minSdk = 24
         targetSdk = 37
         versionCode = 1
-        versionName = "1.0"
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Not 1.0: nothing has shipped, so claiming a first release is claiming something that has
+        // not happened. The version the first internal build carries should be the version its
+        // crash reports carry, and "1.0" is a name to spend once.
+        versionName = "0.1.0"
     }
 
     buildFeatures {
@@ -25,9 +26,39 @@ android {
 
     buildTypes {
         release {
+            /*
+             * Shrinking is on, and it is on now rather than at release time on purpose.
+             *
+             * R8 is the step that fails for reasons no test and no debug build can show: it removes
+             * code nothing appears to call, and "appears" is a static judgement about an app that
+             * reaches some of its code by reflection. The moment to find that out is the moment a
+             * dependency is added - the ads SDK arrived a few commits ago - and not the evening of
+             * the first upload, with a store listing already written.
+             *
+             * It is also not optional in the end. An unshrunk build ships the whole of the ads SDK
+             * and the whole of Compose, and the reason to care is not the download size on its own:
+             * this app already carries a megabyte of dictionaries it genuinely needs, and spending
+             * the rest of the budget on unreachable library code is spending it on nothing.
+             *
+             * See proguard-rules.pro for what R8 had to be told, which is nearly nothing, and for
+             * the note on why that file should stay that way.
+             *
+             * Android Studio's security inspection says obfuscation is not enabled in the release
+             * build here. It is: the inspection matches on `isMinifyEnabled`, which this DSL
+             * replaced, and has not learned the new spelling. Checked rather than assumed - the
+             * mapping file this build produces renames `CoinsKt.CoinAmount` to `b`, along with
+             * everything else the keeps in proguard-rules.pro do not hold back.
+             */
             optimization {
-                enable = false
+                enable = true
             }
+            proguardFiles(
+                // The optimizing variant of the default file, not the plain one: the plain
+                // `proguard-android.txt` disables optimisation passes wholesale, which leaves the
+                // build paying R8's compile time for the shrinking alone.
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
     }
     compileOptions {
@@ -71,8 +102,20 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.navigation.compose)
+    // Rewarded ads, and the consent form that has to run before they are requested. The consent SDK
+    // is a separate artifact from the ads SDK on purpose - it is the Google-certified CMP the
+    // privacy policy names, and it is what decides whether a request may be personalised at all.
+    implementation(libs.play.services.ads)
+    implementation(libs.user.messaging.platform)
     debugImplementation(libs.androidx.compose.ui.tooling)
     testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(libs.androidx.junit)
+    // No androidTest source set, and therefore no instrumentation runner and no Espresso. There
+    // never was a test in it - the two files here were the ones Android Studio generates, one
+    // asserting that 2 + 2 is 4 and one asserting the package name - and a build file that keeps
+    // declaring the dependencies reads as a project with device coverage that is currently empty,
+    // which is a worse claim than an honest zero.
+    //
+    // The instrumented test worth writing is a smoke test that launches the release variant, since
+    // that is the build R8 can break and no unit test can see. Writing it means an emulator in CI;
+    // until then the release build is installed and opened by hand before every upload.
 }

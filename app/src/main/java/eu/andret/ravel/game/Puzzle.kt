@@ -78,6 +78,16 @@ data class Puzzle(
     }
 
     /**
+     * Whether the board has any answer at all to a touch on [cell].
+     *
+     * Every one of [tapped]'s branches changes something; this is the one case that changes nothing,
+     * so it is named rather than left as the first arm of that `when`. The screen needs the same
+     * question answered before it decides whether a tap was worth a haptic tick, and a second copy
+     * of the rule over there would be a copy that gets to disagree with this one.
+     */
+    fun accepts(cell: Int): Boolean = cell !in solvedCells && !board.isWall(cell)
+
+    /**
      * A tap, which is the correction a player makes without redrawing anything.
      *
      * - on the first marked cell: clears the path, since there is no shorter path to keep;
@@ -87,7 +97,7 @@ data class Puzzle(
      * - anywhere else: starts a new path there.
      */
     fun tapped(cell: Int): Puzzle = when {
-        cell in solvedCells || board.isWall(cell) -> this
+        !accepts(cell) -> this
         path.isEmpty() -> withPath(listOf(cell))
         cell == path.first() -> withPath(emptyList())
         cell in path -> withPath(path.take(path.indexOf(cell) + 1))

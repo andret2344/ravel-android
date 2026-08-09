@@ -1,9 +1,12 @@
 package eu.andret.ravel
 
 import android.app.Application
-import android.content.ComponentCallbacks2
+import eu.andret.ravel.ads.AdConsent
+import eu.andret.ravel.ads.RewardedAds
 import eu.andret.ravel.generator.Ravel
+import eu.andret.ravel.settings.AdAllowance
 import eu.andret.ravel.settings.DailyProgress
+import eu.andret.ravel.settings.HapticSettings
 import eu.andret.ravel.settings.LanguageSettings
 import eu.andret.ravel.settings.LevelProgress
 import eu.andret.ravel.settings.StoredDailyProgress
@@ -37,7 +40,12 @@ class RavelApplication : Application() {
      * a store that stopped following the setting when the last board was closed would be reading the
      * wrong ladder the next time one opened. Nothing is ever cancelled here for the same reason -
      * the scope ends when the process does.
+     *
+     * The dispatcher is named here rather than injected, against Sonar's advice, because there is
+     * nothing on the other side of the seam it is asking for: no test builds a [RavelApplication],
+     * and the whole point of this scope is that it is the one the process's stores live on.
      */
+    @Suppress("kotlin:S6310")
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     /**
@@ -49,6 +57,14 @@ class RavelApplication : Application() {
      * level am I on".
      */
     val language: LanguageSettings by lazy { LanguageSettings(this) }
+
+    /**
+     * Whether the board may buzz, for the same reason [language] is here: it is written from the
+     * options tab and read on a board, and those are two screens that must not each hold their own
+     * answer. It shares a preference file with [language] and not an instance - see
+     * [eu.andret.ravel.settings.SETTINGS_FILE].
+     */
+    val haptics: HapticSettings by lazy { HapticSettings(this) }
 
     /**
      * The daily history and the board in progress, for the same reason and with the same lifetime
@@ -63,17 +79,46 @@ class RavelApplication : Application() {
         StoredLevelProgress(this, language.current, scope)
     }
 
+    /**
+     * What this device has said about ads, and the ad itself.
+     *
+     * Process-wide for the reasons everything above is, plus one of their own: fetching an ad takes
+     * seconds and the SDK holds a single initialised instance whatever this code does, so a copy
+     * per screen would be several screens each waiting out the same fetch to use one of the
+     * results. The shop reaches both through its view model.
+     *
+     * [ads] is built from [consent] rather than beside it, so there is no way to hold one without
+     * the other and no way for an ad to be requested before the answer to [AdConsent.canRequestAds]
+     * exists - see [RewardedAds] for why it starts itself off that flow instead of being started.
+     */
+    val consent: AdConsent by lazy { AdConsent(this, scope) }
+
+    val ads: RewardedAds by lazy { RewardedAds(this, consent.canRequestAds, scope) }
+
+    /** Today's three watches, counted here so every screen sees the same three. */
+    val adAllowance: AdAllowance by lazy { AdAllowance(this) }
+
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)
-        // Everything from RUNNING_CRITICAL up: the app is either off screen or the device is short
-        // enough on memory that a rebuildable cache is the first thing that should go.
-        if (level >= ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL) Ravel.forget()
-    }
-
-    @Deprecated("Kept for API levels that still deliver it; onTrimMemory covers the rest.")
-    override fun onLowMemory() {
-        @Suppress("DEPRECATION")
-        super.onLowMemory()
-        Ravel.forget()
+        // Everything from UI_HIDDEN up, which is to say: the app is off screen.
+        //
+        // This used to name TRIM_MEMORY_RUNNING_CRITICAL, and read as a response to memory
+        // pressure. It has not been one since API 34 - "apps are not notified of this level since
+        // API level 34", and the same sentence is on every other RUNNING_* and on BACKGROUND's
+        // heavier neighbors. onLowMemory, which used to be overridden here for the older devices
+        // that still delivered it, carries the blunter version: "since API level 34 this is never
+        // called". Neither is a hook any more, so an override of it is a release path that runs
+        // only on hardware from before Android 14.
+        //
+        // What is still delivered is UI_HIDDEN and BACKGROUND, and UI_HIDDEN is the moment this
+        // cache should go regardless of what the device is short of: a rebuildable 17 MB in a
+        // process nobody is looking at buys nothing and costs the process its place in the LRU
+        // list. The old constant happened to be numerically below both, so the branch did keep
+        // firing - by arithmetic, not by saying what it meant.
+        //
+        // Nothing visible is paid for dropping it this eagerly. A board being resumed is already
+        // in memory or comes back from JSON; the reload lands on the next Puzzles.generate, which
+        // is off the main thread behind a spinner already.
+        if (level >= TRIM_MEMORY_UI_HIDDEN) Ravel.forget()
     }
 }

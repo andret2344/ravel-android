@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import eu.andret.ravel.R
 import eu.andret.ravel.game.Hint
 import eu.andret.ravel.game.Puzzle
+import eu.andret.ravel.ui.CoinAmount
 import eu.andret.ravel.ui.board.BoardGrid
 
 /**
@@ -87,9 +88,7 @@ internal fun BoardTopBar(balance: Int, elapsed: Int?, onClose: () -> Unit, onSho
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        // The shop's own glyph, so the number is legible as coins rather than as a score - and so
-        // the thing it opens is guessable before it is tapped.
-        BalanceButton(text = "◈ $balance", onShop = onShop)
+        BalanceButton(balance = balance, onShop = onShop)
     }
 }
 
@@ -99,6 +98,7 @@ internal fun PlayableBoard(
     puzzle: Puzzle,
     onPathTraced: (List<Int>) -> Unit,
     onTap: (Int) -> Unit,
+    hapticsEnabled: Boolean,
 ) {
     val description = stringResource(
         R.string.board_description,
@@ -109,6 +109,7 @@ internal fun PlayableBoard(
         puzzle = puzzle,
         onPathTraced = onPathTraced,
         onTap = onTap,
+        hapticsEnabled = hapticsEnabled,
         modifier = Modifier.semantics { contentDescription = description },
     )
 }
@@ -175,7 +176,16 @@ private fun HintButton(
     onHint: (Hint) -> Unit,
 ) {
     OutlinedButton(onClick = { onHint(hint) }, enabled = !complete) {
-        Text(stringResource(R.string.hint_with_cost, stringResource(label), hint.cost))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(text = stringResource(label), style = MaterialTheme.typography.labelLarge)
+            // The price wears the same coin as the balance the player is spending from, three
+            // centimetres above it. It used to be a number after a middle dot, which asked them to
+            // work out for themselves that the two figures were in the same units.
+            CoinAmount(amount = hint.cost, style = MaterialTheme.typography.labelLarge)
+        }
     }
 }
 

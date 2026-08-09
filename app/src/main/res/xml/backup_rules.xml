@@ -1,13 +1,23 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample backup rules file; uncomment and customize as necessary.
-   See https://developer.android.com/guide/topics/data/autobackup
-   for details.
-   Note: This file is ignored for devices older than API 31
-   See https://developer.android.com/about/versions/12/backup-restore
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The same rules as data_extraction_rules.xml, for Android 11 and below.
+
+    Two files rather than one because the platform changed the format at API 31 and reads whichever
+    matches the device, and this app ships to 24 - so both are live and the pair has to be edited
+    together. Adding a preference file to one and not the other produces a backup that carries it on
+    a new phone and drops it on an old one, which is the kind of difference nobody finds by testing
+    on their own device.
+
+    The reasoning for every line here - why each file is included, and why ravel-ads in particular
+    is - is written out once, in data_extraction_rules.xml. It is not repeated here, because two
+    copies of an argument are two things to keep true.
+
+    This format has no device-transfer section; it did not exist yet.
 -->
 <full-backup-content>
-    <!--
-   <include domain="sharedpref" path="."/>
-   <exclude domain="sharedpref" path="device.xml"/>
--->
+    <include domain="sharedpref" path="ravel-wallet.xml" />
+    <include domain="sharedpref" path="ravel-levels.xml" />
+    <include domain="sharedpref" path="ravel-daily.xml" />
+    <include domain="sharedpref" path="ravel-settings.xml" />
+    <include domain="sharedpref" path="ravel-ads.xml" />
 </full-backup-content>

@@ -2,6 +2,33 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!--
+        usesCleartextTraffic is spelled out because leaving it off does not mean "off": the platform
+        default is permissive below API 28 and restrictive from 28 up, so an unset attribute is two
+        different policies depending on the phone, and the permissive one covers exactly the API
+        levels this app still supports at the bottom - 24 to 27.
+
+        The app makes no requests of its own. The board, the dictionaries and every preference are
+        local; the only traffic in the process belongs to play-services-ads and the UMP consent SDK.
+        That is also the one thing to watch here, and the reason this is a decision rather than
+        hygiene: an ad creative or a third-party impression tracker that still uses http is a
+        creative that will not render, and a rewarded ad that does not render is coins the player was
+        promised. The argument for taking that risk is that it is not a new one - from API 28 up the
+        platform has been refusing cleartext for this app all along, which is nearly every device
+        that will install it, and the ads work. This makes the remaining four API levels agree with
+        the rest rather than being the quiet exception.
+
+        If rewarded fill turns out to drop on API 24-27 specifically, this attribute is the first
+        thing to put back, and a network security config scoped to the ad hosts is the second.
+
+        The suppression below is for localeConfig, which lint reports as unused because it does
+        nothing under API 33 - which is true, and is the whole design rather than an oversight. It
+        is what puts Ravel in the system's per-app language picker on Android 13 and later, and the
+        options tab is what covers the years below that; see res/xml/locales_config.xml for why the
+        two settings do not fight. There is no way to scope tools:ignore to one attribute, so this
+        covers the element: a later attribute here that is genuinely too new for minSdk will be
+        silent, and the place to notice that is a review of this file rather than a warning.
+    -->
     <application
         android:name=".RavelApplication"
         android:allowBackup="true"
@@ -12,7 +39,35 @@
         android:localeConfig="@xml/locales_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Ravel">
+        android:theme="@style/Theme.Ravel"
+        android:usesCleartextTraffic="false"
+        tools:ignore="UnusedAttribute">
+
+        <!--
+            The AdMob app this build belongs to. The ads SDK reads it here and crashes on the first
+            request without it, so it is a manifest entry rather than anything the code can pass in.
+            See res/values/ads.xml - the value there is currently a test identifier.
+        -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="@string/admob_application_id" />
+
+        <!--
+            The ads SDK starts collecting app measurement data as soon as it is loaded, which is
+            before the consent form has been answered. This holds that off until MobileAds.initialize
+            is called - and that call is made only once the consent flow says ads may be requested,
+            in AdConsent - so the first thing the SDK does is not something the player has yet been
+            asked about.
+
+            Worth knowing and invisible from here: play-services-ads merges in the
+            com.google.android.gms.permission.AD_ID permission of its own accord. The app therefore
+            has access to the advertising id and the Play Data safety form has to say so, whatever
+            this app itself does with it, which is nothing directly.
+        -->
+        <meta-data
+            android:name="com.google.android.gms.ads.DELAY_APP_MEASUREMENT_INIT"
+            android:value="true" />
+
         <!--
             Portrait either way up, and no landscape.
 
