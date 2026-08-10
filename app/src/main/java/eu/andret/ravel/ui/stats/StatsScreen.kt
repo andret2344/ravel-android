@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import eu.andret.ravel.R
+import eu.andret.ravel.ui.AdaptiveScreen
 import eu.andret.ravel.ui.game.asDuration
 
 /**
@@ -52,18 +53,7 @@ import eu.andret.ravel.ui.game.asDuration
 fun StatsScreen(modifier: Modifier = Modifier, viewModel: StatsViewModel = viewModel()) {
     val stats by viewModel.state.collectAsStateWithLifecycle()
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
-    ) {
-        Text(
-            text = stringResource(R.string.tab_stats),
-            style = MaterialTheme.typography.headlineSmall,
-        )
-
+    val daily: @Composable () -> Unit = {
         Section(stringResource(R.string.stats_section_daily)) {
             StatTile(
                 value = stats.days.toString(),
@@ -80,7 +70,8 @@ fun StatsScreen(modifier: Modifier = Modifier, viewModel: StatsViewModel = viewM
                 modifier = Modifier.weight(1f).fillMaxHeight(),
             )
         }
-
+    }
+    val hints: @Composable () -> Unit = {
         Section(stringResource(R.string.stats_section_hints)) {
             StatTile(
                 value = stats.boughtLetters.toString(),
@@ -93,7 +84,8 @@ fun StatsScreen(modifier: Modifier = Modifier, viewModel: StatsViewModel = viewM
                 modifier = Modifier.weight(1f).fillMaxHeight(),
             )
         }
-
+    }
+    val total: @Composable () -> Unit = {
         Section(stringResource(R.string.stats_section_total)) {
             StatTile(
                 value = stats.boards.toString(),
@@ -106,9 +98,11 @@ fun StatsScreen(modifier: Modifier = Modifier, viewModel: StatsViewModel = viewM
                 modifier = Modifier.weight(1f).fillMaxHeight(),
             )
         }
-        // The wide one, alone on its line and in the filled colour. Time is the total the other two
-        // are measured in - boards and words are what the hours went on - and a clock squeezed into
-        // a third of a row is also the one value here that can outgrow its tile.
+    }
+    // The wide one, alone on its line and in the filled colour. Time is the total the other two are
+    // measured in - boards and words are what the hours went on - and a clock squeezed into a third
+    // of a row is also the one value here that can outgrow its tile.
+    val time: @Composable () -> Unit = {
         StatTile(
             value = asDuration(stats.seconds),
             label = stringResource(R.string.stats_total_time),
@@ -116,17 +110,75 @@ fun StatsScreen(modifier: Modifier = Modifier, viewModel: StatsViewModel = viewM
             content = MaterialTheme.colorScheme.onPrimaryContainer,
             modifier = Modifier.fillMaxWidth(),
         )
-
-        // The one thing a number on this screen cannot say for itself. The main mode is a separate
-        // ladder per language, so a player halfway through two of them has two current levels and
-        // one history - and the tiles above are the history. Without this line the count of boards
-        // reads as the count for the language they happen to be playing, which is the number the
-        // game tab shows and a different thing entirely.
+    }
+    // The one thing a number on this screen cannot say for itself. The main mode is a separate
+    // ladder per language, so a player halfway through two of them has two current levels and one
+    // history - and the tiles above are the history. Without this line the count of boards reads as
+    // the count for the language they happen to be playing, which is the number the game tab shows
+    // and a different thing entirely.
+    val note: @Composable () -> Unit = {
         Text(
             text = stringResource(R.string.stats_all_languages),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+    }
+
+    AdaptiveScreen(modifier = modifier) { wide ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.tab_stats),
+                style = MaterialTheme.typography.headlineSmall,
+            )
+            if (wide) {
+                /*
+                 * Two columns of groups, and never one row of six tiles.
+                 *
+                 * The groups are the whole structure of this screen - three questions, and only the
+                 * last of them counts both modes - so the thing that has to survive a wide window is
+                 * which tile belongs to which heading. Six tiles across would fit and would read as
+                 * one undivided row of numbers under three headings nobody can attach them to, which
+                 * is exactly the failure the grouping exists to prevent.
+                 *
+                 * The split is two groups against one, not one and a half each: the total group
+                 * carries the time tile and the caption, which makes it as tall as the two short
+                 * groups stacked. Both columns therefore end at about the same line without either
+                 * being padded to get there.
+                 */
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(20.dp),
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(20.dp),
+                    ) {
+                        daily()
+                        hints()
+                    }
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(20.dp),
+                    ) {
+                        total()
+                        time()
+                        note()
+                    }
+                }
+            } else {
+                daily()
+                hints()
+                total()
+                time()
+                note()
+            }
+        }
     }
 }
 

@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import eu.andret.ravel.R
 import eu.andret.ravel.game.DailyDate
 import eu.andret.ravel.settings.DayResult
+import eu.andret.ravel.settings.ShareCard
 import eu.andret.ravel.ui.game.asClock
 import java.util.Date
 
@@ -43,6 +44,7 @@ import java.util.Date
 internal fun DayDetailCard(
     ordinal: Long?,
     result: DayResult?,
+    share: ShareCard?,
     today: Long,
     onOpen: (Long) -> Unit,
     modifier: Modifier = Modifier,
@@ -65,6 +67,11 @@ internal fun DayDetailCard(
                 Title(ordinal)
                 Stats(result)
                 Action(ordinal, result, today, onOpen)
+                // Null on every day but the one last solved - see DailyProgressState.shareFor - so
+                // there is no test against `today` here. The slot already answers it, and a second
+                // reading of the clock on this screen would be a second chance to disagree about
+                // which day it is.
+                share?.let { ShareButton(card = it, seconds = result?.seconds) }
             }
         }
     }

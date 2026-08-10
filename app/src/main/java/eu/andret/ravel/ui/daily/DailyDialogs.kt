@@ -55,6 +55,7 @@ internal fun CalendarDialog(
         DayDetailCard(
             ordinal = selected,
             result = selected?.let(progress::resultOf),
+            share = selected?.let(progress::shareFor),
             today = today,
             onOpen = onOpenBoard,
         )

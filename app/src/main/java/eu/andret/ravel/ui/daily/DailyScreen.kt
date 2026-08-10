@@ -2,12 +2,11 @@ package eu.andret.ravel.ui.daily
 
 import android.text.format.DateFormat
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -33,6 +32,7 @@ import eu.andret.ravel.game.Hint
 import eu.andret.ravel.game.Puzzle
 import eu.andret.ravel.settings.DayResult
 import eu.andret.ravel.ui.CoinAmount
+import eu.andret.ravel.ui.game.BoardLayout
 import eu.andret.ravel.ui.game.BoardState
 import eu.andret.ravel.ui.game.BoardTopBar
 import eu.andret.ravel.ui.game.BoughtLine
@@ -96,29 +96,22 @@ fun DailyScreen(
 
     val puzzle = (state as? BoardState.Playing)?.puzzle
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 20.dp, vertical = 12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
+    BoardLayout(
+        modifier = modifier,
         // No confirmation on the way out any more, and no red on the button. Every move is written
         // down as it is made, so leaving a half-solved board loses nothing: the same board, with the
         // same words found and the same clock, is what opens next time. A dialog guarding against a
         // loss that cannot happen is a dialog that teaches players to dismiss dialogs.
-        BoardTopBar(
-            balance = balance,
-            elapsed = elapsed.takeIf { !viewModel.review },
-            onClose = onBack,
-            onShop = onShop,
-        )
-        Title(viewModel.date)
-
-        Box(
-            modifier = Modifier.fillMaxWidth().weight(1f),
-            contentAlignment = Alignment.Center,
-        ) {
+        topBar = {
+            BoardTopBar(
+                balance = balance,
+                elapsed = elapsed.takeIf { !viewModel.review },
+                onClose = onBack,
+                onShop = onShop,
+            )
+        },
+        title = { Title(viewModel.date) },
+        board = {
             when (val current = state) {
                 BoardState.Generating -> GeneratingBoard()
                 is BoardState.Failed -> FailedBoard(current.reason, viewModel::generate)
@@ -129,23 +122,24 @@ fun DailyScreen(
                     hapticsEnabled = hapticsEnabled,
                 )
             }
-        }
-
-        puzzle?.let {
-            if (viewModel.review) {
-                Reviewed(it)
-            } else {
-                Footer(
-                    puzzle = it,
-                    bought = bought,
-                    // The view model takes the coins if there are any; if there are not, the player
-                    // wanted to spend and could not, which is the one moment the shop is worth
-                    // showing.
-                    onHint = { hint -> if (!viewModel.hint(hint)) onShop() },
-                )
+        },
+        footer = {
+            puzzle?.let {
+                if (viewModel.review) {
+                    Reviewed(it)
+                } else {
+                    Footer(
+                        puzzle = it,
+                        bought = bought,
+                        // The view model takes the coins if there are any; if there are not, the
+                        // player wanted to spend and could not, which is the one moment the shop is
+                        // worth showing.
+                        onHint = { hint -> if (!viewModel.hint(hint)) onShop() },
+                    )
+                }
             }
-        }
-    }
+        },
+    )
 
     completion?.let {
         CompletedDialog(
@@ -168,6 +162,11 @@ fun DailyScreen(
  *
  * Dismissing it without the button leaves the player on the finished board rather than backing out
  * for them. A solved grid is worth a moment's looking at, and the way out is a tap away either way.
+ *
+ * Sharing sits inside the dialog's body rather than in its button row. The row is about this dialog
+ * - stay or leave - and sharing is about the board behind it, so a third button there would be a
+ * third answer to a two-answer question. It is also the moment the player is most likely to want it,
+ * which is why it is here at all and not only on the calendar afterwards.
  */
 @Composable
 private fun CompletedDialog(completion: Completion, onExit: () -> Unit, onStay: () -> Unit) {
@@ -176,7 +175,12 @@ private fun CompletedDialog(completion: Completion, onExit: () -> Unit, onStay: 
         title = { Text(stringResource(R.string.done_title)) },
         text = {
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                // Scrollable because a wide window is a short one: the dialog's body is given
+                // whatever height is left after the title and the button, and on a phone lying on
+                // its side that is not much. This body is the longest in the game - a total, a
+                // breakdown, a streak line and the share button - and one that overflows takes the
+                // way out off the bottom of the screen with it.
+                modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
@@ -213,6 +217,7 @@ private fun CompletedDialog(completion: Completion, onExit: () -> Unit, onStay: 
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                ShareButton(completion.card, completion.seconds)
             }
         },
         confirmButton = {

@@ -1,5 +1,7 @@
 package eu.andret.ravel.ui.daily
 
+import eu.andret.ravel.settings.ShareCard
+
 /**
  * What the board paid out the moment it was finished.
  *
@@ -13,6 +15,10 @@ package eu.andret.ravel.ui.daily
  * @param cycleDay which rung of the week [forStreak] came off, so the dialog can name it.
  * @param streak the run including today, which is the number the player just extended.
  * @param seconds how long the board took, summed over every sitting it took to finish it.
+ * @param card what the board looked like, so the dialog can offer to share it. Carried here rather
+ *   than read back out of the store for the same reason as everything else on this class: this is
+ *   the moment, and the moment is the thing the dialog is about. The menu's copy of the button asks
+ *   the store instead, because by then the moment is over and the store is what remembers it.
  */
 data class Completion(
     val forBoard: Int,
@@ -20,6 +26,7 @@ data class Completion(
     val cycleDay: Int,
     val streak: Int,
     val seconds: Int,
+    val card: ShareCard,
 ) {
     val total: Int get() = forBoard + forStreak
 }

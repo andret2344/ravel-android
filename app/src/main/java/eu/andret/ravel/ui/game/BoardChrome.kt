@@ -3,6 +3,8 @@ package eu.andret.ravel.ui.game
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
@@ -144,12 +146,20 @@ internal fun FailedBoard(reason: String?, onRetry: () -> Unit) {
     }
 }
 
-/** The two ways to stop looking for a word, and what each of them costs. */
+/**
+ * The two ways to stop looking for a word, and what each of them costs.
+ *
+ * Flowing rather than a plain row, so the second button drops onto its own line instead of squeezing
+ * the first. Side by side these need about 260dp, which every phone has across and none has to spare
+ * beside a board - and a button too narrow for its own price does not shrink, it wraps: "Word 100"
+ * came out as "Word" over "10" over "0", which is a price the player cannot read.
+ */
 @Composable
 internal fun HintRow(complete: Boolean, onHint: (Hint) -> Unit) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         // Nothing left to reveal once every word is found; the buttons stay and go quiet rather
         // than disappearing, so the row under the board keeps its height.
@@ -175,7 +185,19 @@ private fun HintButton(
     complete: Boolean,
     onHint: (Hint) -> Unit,
 ) {
-    OutlinedButton(onClick = { onHint(hint) }, enabled = !complete) {
+    OutlinedButton(
+        onClick = { onHint(hint) },
+        enabled = !complete,
+        // Tighter than Material's own 24dp, which is sized for a button carrying one word. These
+        // carry two things - what is bought and what it costs - and the pair has to fit on one line
+        // beside a board: at the default they came to about 270dp against the 222dp the column has
+        // on a phone on its side, so the second one wrapped and sat half off the bottom of the
+        // screen. The row [HintRow] flows, so a narrower window still gets two readable buttons
+        // rather than two clipped ones - but a control below the fold is a control the player has to
+        // find, and these are the only two on the screen. The vertical padding is Material's, so the
+        // buttons stay as tall as every other one in the game.
+        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp),
+    ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),

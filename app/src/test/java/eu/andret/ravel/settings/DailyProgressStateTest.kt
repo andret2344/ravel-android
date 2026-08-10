@@ -1,5 +1,8 @@
 package eu.andret.ravel.settings
 
+import eu.andret.ravel.game.WordMark
+import eu.andret.ravel.game.WordResult
+import eu.andret.ravel.generator.Language
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -53,5 +56,47 @@ class DailyProgressStateTest {
         )
         assertEquals(90, state.totalSeconds)
         assertEquals(6, state.totalWordsFound)
+    }
+
+    @Test
+    fun `the share card belongs to the day it names and to no other`() {
+        // One slot for the last solve, exactly like the saved board, so the guard is the whole
+        // feature: without it a card written yesterday would offer today's date a row of squares
+        // from a board the player has not finished.
+        val card = ShareCard(
+            ordinal = 20260810L,
+            language = Language.POLISH,
+            size = 8,
+            words = listOf(
+                WordResult(4, WordMark.UNAIDED),
+                WordResult(7, WordMark.REVEALED),
+            ),
+        )
+        val state = DailyProgressState(share = card)
+        assertEquals(card, state.shareFor(20260810L))
+        assertEquals(null, state.shareFor(20260809L))
+        assertEquals(null, state.shareFor(20260811L))
+    }
+
+    @Test
+    fun `a day nobody has solved has nothing to share`() {
+        assertEquals(null, DailyProgressState().shareFor(20260810L))
+    }
+
+    @Test
+    fun `a card counts its words by counting its entries`() {
+        // Which is why nothing stores the count beside them. Two numbers for one fact is the thing
+        // this file keeps refusing to have.
+        val card = ShareCard(
+            ordinal = 20260810L,
+            language = Language.ENGLISH,
+            size = 6,
+            words = listOf(
+                WordResult(3, WordMark.UNAIDED),
+                WordResult(5, WordMark.PARTLY_REVEALED),
+                WordResult(6, WordMark.UNAIDED),
+            ),
+        )
+        assertEquals(3, card.wordCount)
     }
 }

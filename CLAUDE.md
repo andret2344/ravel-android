@@ -2,6 +2,16 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+**This file holds rules; `docs/DECISIONS.md` holds the arguments for them.** A rule here is a
+sentence: what to do, or what never to do. The measurement behind it, what was tried and rejected,
+and the incident that produced it live in `DECISIONS.md` under the matching section.
+
+Keep it that way. When you learn *why* something is the way it is — a benchmark, a regression, an
+option ruled out — it goes in `DECISIONS.md`; only the resulting rule comes back here. When you add
+a rule here that needs more than one sentence of justification, that justification is already
+`DECISIONS.md` material. This file is loaded into context every session; the other one is read when
+somebody is about to change something.
+
 ## What this is
 
 Ravel is an Android word puzzle. The player is shown a grid of letters, a list of word *lengths*,
@@ -46,298 +56,215 @@ CI (`.github/workflows/tests.yml`) runs exactly those four, in that order, on JD
 ./gradlew :generator:buildDictionaries        # or buildDictionaryPl / buildDictionaryEn
 ```
 
-`buildDictionaryPl` prints a per-length histogram at each rank tier. Read it before moving any cap
-in `PuzzleSpec.rankFor`: the binding constraint is always the *shortest* words, not the longest.
-
-`printPuzzle` lives in `:app`'s **test** source set (`app/src/test/.../tools/PrintPuzzle.kt`) so a
-developer tool is never packaged into the APK. Gradle's own `--quiet` would silence the board along
-with Gradle — pass `--quiet` inside `--args` instead.
-
-**"Debug: jump to level"** on the level menu sets the ladder outright — level *n* means every level
-below it counts as completed, paying nothing (no coins, no words, no time) and discarding the
-current level's board and hints. It is a **pair of source-set files**, `app/src/debug/.../debug/
-LevelJump.kt` with the real button and `app/src/release/...` with an empty body, so the release APK
-does not contain the code rather than containing code R8 is trusted to drop — verified: the release
-dex holds neither the class, the string, nor `StoredLevelProgress.jumpTo`. Editing one file without
-the other breaks `assembleRelease` only, which is the pair working. Its strings are hard-coded
-English on purpose: a debug-only entry in `values/` would be a translation obligation for a button
-no player sees. The hatch is `StoredLevelProgress.jumpTo`, deliberately **not** on the
-`LevelProgress` interface — see below.
+- `buildDictionaryPl` prints a per-length histogram at each rank tier. **Read it before moving any
+  cap in `PuzzleSpec.rankFor`**: the binding constraint is always the *shortest* words.
+- `printPuzzle` lives in `:app`'s **test** source set (`app/src/test/.../tools/PrintPuzzle.kt`) so a
+  developer tool is never packaged into the APK. Gradle's own `--quiet` would silence the board along
+  with Gradle — pass `--quiet` inside `--args` instead.
+- **"Debug: jump to level"** is a *pair* of source-set files, `app/src/debug/.../debug/LevelJump.kt`
+  and `app/src/release/...` with an empty body. **Edit both or neither.** Its strings are hard-coded
+  English deliberately. Level *n* means every level below counts as completed, paying nothing.
 
 ## Architecture
+
+Rationale for everything in this section: `docs/DECISIONS.md`.
 
 ### Generation pipeline (`:generator`)
 
 `Ravel` (Ravel.kt) is the entire public surface; everything else is machinery.
 
-1. `BoardSpec.forDifficulty` turns a `Difficulty` into the dials: the bands on path shape, and how
-   much of the frequency-ranked dictionary gets loaded. **How obscure a board's own words may be is
-   a separate axis**, `BoardSpec.maxWordRank`, whose curve lives in `PuzzleSpec.rankFor`. Narrowing
-   that pool is not the same as loading less: every word the dictionary holds is one `Solver` must
-   rule out before calling a board unique, so a smaller load weakens the uniqueness claim rather
-   than easing the board.
+1. `BoardSpec.forDifficulty` turns a `Difficulty` into the dials.
 2. Walls are placed as whole orbits under a `WallSymmetry`, so the pattern holds by construction.
-3. `Partitioner` splits the free cells into disjoint paths of the chosen lengths — **shape first,
-   words second**. Choosing words first means backtracking over a dictionary instead of over a
-   handful of shapes, and does not scale.
-   **The lengths span a band: no word shorter than half the longest** (`randomComposition`). The
-   floor used to be one letter under the mean, which meant a 10x10 could only produce lengths 9..12
-   and often came out as six twelve-letter words — and *the list of lengths is the only clue this
-   game gives*, so a list repeating one number is not a clue. Those are also the thinnest bands of
-   the dictionary: within rank 4000 Polish has 574 five-letter lemmas against 93 twelve-letter ones,
-   so the biggest boards drew from the narrowest pool while the most recognisable vocabulary never
-   appeared on them. The old flat list was a second layer of defence against short words coming out
-   as squat blocks, and the per-word fold gate in `PathShape.accepts` is the layer that actually
-   does that job, at every length. **The ratio is load-bearing in two places** — the donor loop that
-   pays for the required long word must stop at the floor, not at `MIN_WORD_LENGTH`, or an awkward
-   shape like 10x4 breaks the band by the one route the wobble never touches; and
-   `BoardSpec.wordCountFor` must keep enough words that the floor is *reachable*, or the band is a
-   promise the arithmetic cannot keep (measured: with the old `fewest`, a 10x10 came out as seven
-   twelve-letter words with the band wide open and unusable).
-4. Words are drawn from `Dictionary.poolTo(maxWordRank)`, while its trie holds every loaded word
-   **and its reverse** (a path is traceable from either end). Pool and trie are deliberately
-   different sets — see step 1.
+3. `Partitioner` splits the free cells into disjoint paths — **shape first, words second**.
+4. Words are drawn from `Dictionary.poolTo(maxWordRank)`; the trie holds every loaded word **and its
+   reverse**.
 5. `Solver` counts tilings; the board is rejected unless exactly one exists.
 
-Path shape is governed by three independent measures, all in `Board.kt` — `turnRatio` (how much
-paths bend), `directness` (how far they travel end to end), `foldRatio` (how much a path runs
-alongside itself). They are enforced **per word during enumeration**, not on the finished board, and
-against the worst word rather than the average. Both choices are load-bearing: the comments in
-`Board.kt` and `Language.kt` explain what averaging and post-hoc checking each produced.
+Rules:
 
-Generation blocks (long tail: 10x10 ≈ 0.22 s median, 2.7 s worst over 30 boards; 8x8 ≈ 0.08 s
-median, 0.45 s worst) and is interruptible — call it inside `runInterruptible` so leaving a screen
-cancels the search. The median came down from 0.8 s when the length band opened: more, shorter paths
-partition more easily than a full set of twelve-letter ones. **The tail did not move** — it is the
-uniqueness search, not the partition, and it is still the number to design against. Dictionaries are cached per
-(language, difficulty) and cost 23–33 MB at the shipped `HARD`; `RavelApplication.onTrimMemory`
-calls `Ravel.forget()`. `Difficulty.HARD.maxRank` is 35 000 for that reason as much as for what
-lies past it — `DictionaryFootprint` asserts the budget, `generator/DICTIONARY.md` explains it.
-
-Both dictionaries ship **base forms only**, and the two get there by opposite routes:
-
-- **Polish** (51 685, from PoliMorf) keeps the lemmas. Three quarters of the old 247 012-entry list
-  were oblique cases, which is not what a player recognises when the only clue is a length.
-- **English** (42 554, from WordNet) folds regular inflections into a base *that is itself in the
-  dictionary*. It cannot ask "is this a lemma?" — WordNet indexes only nouns, verbs, adjectives and
-  adverbs, so that question deletes `the`, `and`, `for` and `with`. Asking about inflection instead
-  lets function words through with nobody maintaining a list of them.
-
-Both builds also sum a folded form's frequency into its base; ranking a survivor by its own form's
-frequency alone is what buries `robić` under `robi`.
+- **How much dictionary is loaded (`Difficulty`) and how obscure a board's words may be
+  (`BoardSpec.maxWordRank`) are two separate axes.** Loading less weakens the uniqueness claim; it
+  does not make boards easier.
+- **The word lengths span a band: none shorter than half the longest** (`randomComposition`). The
+  ratio is load-bearing in the donor loop and in `BoardSpec.wordCountFor` — see `DECISIONS.md`.
+- **Path shape (`turnRatio`, `directness`, `foldRatio`, all in `Board.kt`) is enforced per word
+  during enumeration and against the worst word**, never on the finished board, never as an average.
+- **Generation blocks and must be called inside `runInterruptible`** so leaving a screen cancels the
+  search. Design against the tail (10x10 worst 2.7 s), not the median.
+- Dictionaries are cached per (language, difficulty); `RavelApplication.onTrimMemory` calls
+  `Ravel.forget()`. `DictionaryFootprint` asserts the heap budget — `generator/DICTIONARY.md`
+  explains the 35 000 cap.
+- Both dictionaries ship **base forms only** (Polish 51 685 lemmas, English 42 554 base forms).
 
 ### Puzzle identity (`:app`, `game/`)
 
 This is the part most easily broken by an innocent-looking change.
 
-- `PuzzleId(mode, ordinal)` names a board. The generator seed is derived from it via a SplitMix64
-  hash mixed with a per-mode salt, so the same ordinal in two modes is two unrelated boards.
-- **`PuzzleMode` salts must never change.** A salt is part of a board's identity; editing one
-  silently replaces every puzzle that mode has ever produced.
-- **There are two modes, `DAILY` and `ENDLESS`, and `PuzzleSpec`'s `when`s over them are exhaustive
-  on purpose.** A third mode is a compile error until somebody chooses its size range and its rank
-  cap. That is the replacement for a `SPECIAL` entry that existed, had no screen and no call site
-  outside the tests, and whose only live effect was keeping an `else` branch open — a branch that
-  handed anything unnamed the full size range and no rank cap, which is the end-game spec the daily
-  had to be rescued from. Adding the mode back is one line; keeping the `when`s exhaustive when you
-  do is the point.
-- `PuzzleSpec.of(id)` derives size, difficulty and word-rank cap **from the id alone**. Never accept
-  them from a call site — a seed picks one board *for a given size*, so a caller-chosen size means
-  the id no longer names one board.
-- Two ramps, deliberately different lengths and each driven by its own table: `rampFor`
-  (size, `SIZE_TIERS`) is measured in hundreds of levels and is over by 250, `rankFor`
-  (vocabulary, `RANK_TIERS`) in thousands and runs to 2500. Size stops because it runs out of room —
-  `MAX_SIZE` is the last width the generator builds in a time a player will wait; vocabulary is not
-  a skill playing confers, so it never stops mattering. Do not collapse them onto shared tiers.
-  Three boundaries (15, 100, 250) happen to coincide and are left alone on purpose — see `rankFor`.
-- **The size curve introduces each width twice**: a new ceiling always arrives in a two-value tier
-  with floor 6 (so the player meets it immediately), and the next tier drops the floor to 5 (so it
-  goes back to being occasional). Introduce, then dilute. One tier per width with the floor rising
-  alongside the ceiling is a staircase, and a run of boards each bigger than the last reads as a
-  difficulty slider — which size is not: a 9x9 of common words is easier than a 6x6 of rare ones.
-- **The vocabulary curve is exhausted at 2500 and cannot be extended by raising the cap** — the
-  dictionary ends at 35 000 for heap reasons and its last bands are near-indistinguishable. Making
-  later levels harder needs a second axis; the path-shape dials are the measured candidate, and
-  they trade against board size rather than composing with it. See `PuzzleSpec.rankFor`.
-- **The daily has its own two ceilings and they are flat, not ramps**: `DAILY_MAX_SIZE` (8) and
-  `DAILY_MAX_RANK` (8000). A date is not a position on a curve, so there is nothing to ramp along —
-  which is exactly why the daily used to take the *unnarrowed* range and end up the hardest board in
-  the game: 5..10 meant a 10x10 one day in six, and no rank cap meant all 35 000 words on day one,
-  where `ENDLESS` does not let go of 30 000 until level 2500. The mode built on a streak was running
-  an end-game spec. A board the player closes is not a hard daily — it breaks the streak, and the
-  streak is what makes them open the app. 8 is the largest grid that reads at a glance on a phone and
-  is deliberately *not* 7: 8 is where the endless ceiling sits through levels 51–125, so a daily is a
-  mid-game board, where 7 would put it at level 50. Note the endless ramp now *passes* 8 — from level
-  126 it reaches 9 and eventually 10 — so the daily stops being the bigger board around there; that is
-  intended (a habit is not an end-game) but "the daily is a break from the levels" only holds before
-  it. 8000 sits just under `kredens` at rank 10 000. Measured when the daily was narrowed: fourteen
-  consecutive dailies built in 194–615 ms, the 8x8 among them, against 0.8 s median for the 10x10 it
-  replaced. Re-measured after the length band opened: 8x8 is 77 ms median, 450 ms worst over thirty.
-- Board identity is really *(id, generator version)*. Changing the search order, a difficulty
-  constant, the length band, or the dictionary reissues every puzzle in the game — the length band
-  did exactly that, in **every mode at once**, which is wider than the size-ramp change below.
-  Treat that as a deliberate decision
-  each time, never a side effect. Narrowing the daily's spec above did exactly that to every daily
-  ever issued: `DailyViewModel.restored` drops saved marks that no longer fit, so nothing crashes,
-  but reviewing an old day now shows a different board than was solved.
-- **`DayResult.wordCount` is deliberately a record and not a derivation, and it is `Int?`.** A count
-  written down at the moment of solving stays true across a generator change; a count derived later
-  describes today's board wearing an old date, which is not what the player found. Null is "nobody
-  counted" — a day still running, or one banked before boards counted their words — and `null` is
-  load-bearing rather than tidy: the field used to default to `0`, which is a number a solved day can
-  never legitimately hold, so it joined `totalWordsFound` and shortened a lifetime total by exactly
-  as much as it did not know, undetectably. `StoredDailyProgress.complete` now requires a positive
-  count, so null can only ever mean unknown.
-- Language is deliberately **not** part of a puzzle's identity — level 40 is the same level in both
-  languages — but progress *is* per-language, so the two ladders are walked independently.
+- `PuzzleId(mode, ordinal)` names a board; the seed is a SplitMix64 hash of it mixed with a per-mode
+  salt.
+- **`PuzzleMode` salts must never change.** A salt is part of a board's identity.
+- **There are two modes, `DAILY` and `ENDLESS`, and `PuzzleSpec`'s `when`s over them must stay
+  exhaustive.** A third mode should be a compile error until somebody chooses its size range and its
+  rank cap.
+- **`PuzzleSpec.of(id)` derives size, difficulty and rank cap from the id alone. Never accept them
+  from a call site** — a caller-chosen size means the id no longer names one board.
+- **Two ramps, two tables, and they must not be collapsed onto shared tiers**: `rampFor` /
+  `SIZE_TIERS` (size, over by level 250) and `rankFor` / `RANK_TIERS` (vocabulary, runs to 2500).
+- **The size curve introduces each width twice** — new ceiling with floor 6, then the next tier drops
+  the floor to 5. Introduce, then dilute; never a staircase.
+- **The vocabulary curve cannot be extended past 2500 by raising the cap.** Harder late levels need a
+  second axis.
+- **The daily's two ceilings are flat, not ramps**: `DAILY_MAX_SIZE` (8), `DAILY_MAX_RANK` (8000).
+- **Board identity is really *(id, generator version)*.** Changing search order, a difficulty
+  constant, the length band or the dictionary reissues puzzles — a deliberate decision every time,
+  never a side effect.
+- **`DayResult.wordCount` is a record, not a derivation, and `Int?` means "nobody counted".** Never
+  default it to `0`. `complete` takes a `ShareCard`, so a solved day cannot be recorded without one
+  entry per word.
+- Language is **not** part of a puzzle's identity, but progress *is* per-language.
+
+### Sharing a solved day
+
+- **The result is a picture, not a sentence** — `4🟥 5🟩 9🟨`, one entry per word. **Numbers stay on
+  the same line as the squares.**
+- **Only lengths may appear.** No grid, no path, no letter — between them they are the answer.
+- **`WordMark` describes the board, not the wallet**: `UNAIDED`, `PARTLY_REVEALED`, `REVEALED`.
+- **The order is by length, matching `Puzzle.clues`** — that is the entire comparability claim.
+  `WordMarkTest` holds the two orderings together.
+- **`ShareCard` is one slot, checked against the day asked about (`shareFor`)**, not a field on every
+  `DayResult`.
+- **The card records language and grid size rather than deriving them.**
+- **On disk, marks and lengths are checked for equal size, never zipped.** Marks are `WordMark.code`
+  characters, not enum names.
+- **The squares must never go into `strings.xml`.** The surrounding layout (`share_text`) is
+  translatable; the colours are not.
+- Reachable from exactly two places, both via `ShareButton`: the completion dialog and the calendar's
+  day card. `review` has none — a gap, not a decision.
 
 ### App layer
 
-`Puzzle` (game/Puzzle.kt) is an immutable data class; every move returns a new puzzle, and every
-route into the board (drag, tap, hint) funnels through `withPath`. The whole rule set is therefore
-testable with no device, view model or frame of animation.
+`Puzzle` (game/Puzzle.kt) is immutable; every move returns a new puzzle and **every route into the
+board — drag, tap, hint — funnels through `withPath`**. The whole rule set is testable with no device.
 
 `RavelApplication` holds the process-wide singletons — `wallet`, `language`, `progress` (daily),
-`levels` — because a second instance over the same preference file is a second answer to the same
-question. Screens reach them through their `AndroidViewModel`, never by constructing their own.
+`levels`. **Screens reach them through their `AndroidViewModel`, never by constructing their own.**
 
-`RavelApp.kt` is the whole navigation graph: five tabs, each keeping its own back stack across
-switches. Screens live under `ui/<area>/` as `XScreen.kt` + `XViewModel.kt`; board rendering is split
-across `ui/board/` (`BoardView` decides what a cell means, `BoardPainter` draws it).
+`RavelApp.kt` is the whole navigation graph: five tabs, each keeping its own back stack. Screens live
+under `ui/<area>/` as `XScreen.kt` + `XViewModel.kt`; board rendering splits across `ui/board/`
+(`BoardView` decides what a cell means, `BoardPainter` draws it).
 
-Persistence is SharedPreferences plus JSON (`settings/SavedBoards.kt`, single-letter keys because a
-part-solved 10x10 is rewritten on every move). `LevelProgress` and `DailyProgress` are interfaces
-precisely because storage is the part expected to be replaced by an account later.
+Persistence is SharedPreferences plus JSON (`settings/SavedBoards.kt`, single-letter keys).
+`LevelProgress` and `DailyProgress` are interfaces because storage is expected to become an account.
 
-**`LevelProgress` has no method for setting the level, and must not gain one.** The ladder being
-unskippable is enforced by the type rather than observed by a screen, and every consumer in the app
-is typed as the interface. The debug jump is a public method on `StoredLevelProgress` instead,
-reachable only by a caller holding the concrete store — and the only such caller is in `src/debug`.
-Keep it that way: the moment the setter is on the interface, "no skipping ahead" is a convention.
+- **`LevelProgress` has no method for setting the level and must not gain one.** The debug hatch is
+  `StoredLevelProgress.jumpTo`, on the concrete store, reachable only from `src/debug`.
+- **Every screen that lays out differently on its side asks `AdaptiveScreen { wide -> }`
+  (`ui/Adaptive.kt`), never the device.** Material's window size classes are deliberately unused.
+- **`BoardLayout` is shared by both board screens.** Do not re-copy it.
+- **The board's half is a ceiling, `weight(5f)` against `4f`, not a share.**
+- **The board must never scroll**, in either arrangement. Every other overflowing screen may.
+- **No `android:configChanges` in the manifest**, deliberately — it would strip the forced locale.
+- **`android:screenOrientation="fullUser"`**; leaving the attribute off is not the same thing, and
+  `fullSensor` would ignore the device's rotation lock.
+
+### Ads and consent
+
+- **`ads/RewardedAds.kt` is reachable only from `ShopScreen`'s ad card.** No other call site may start
+  an ad — that is the structural form of the rewarded-only promise.
+- **The reward amount is `Rewards.FOR_WATCHING_AD`, never the value the AdMob console attaches to the
+  unit.** `ADS_PER_DAY` (3) watches, counted per *completed* watch by `settings/AdAllowance.kt`.
+- **Consent is gathered in `MainActivity.onCreate` before any of the game is drawn**
+  (`ads/AdConsent.kt`; `LoadingScreen` until `AdConsent.settled`, capped at `SETTLE_TIMEOUT`).
+- **The AdMob ids in `res/values/ads.xml` are live.** Any device testing ads must have its hash in
+  `ad_test_devices` in the same file — and that array is deliberately not debug-only.
+- `play-services-ads` merges in the `AD_ID` permission on its own; the Data safety form must say so.
 
 ### Localization
 
-`LanguageSettings` drives **both** the dictionary and the UI locale. The locale is forced in
-`MainActivity.attachBaseContext` — not through appcompat (not a dependency) or `LocaleManager`
-(API 33, this ships to 24) — and the activity recreates itself on a switch.
+`LanguageSettings` drives **both** the dictionary and the UI locale, forced in
+`MainActivity.attachBaseContext` — not appcompat (not a dependency), not `LocaleManager` (API 33,
+this ships to 24). The activity recreates itself on a switch.
 
-Every user-facing string must be added to both `app/src/main/res/values/strings.xml` and
-`values-pl/strings.xml`. `lintDebug` treats a missing translation as an error, and that is the main
+**Every user-facing string goes into both `app/src/main/res/values/strings.xml` and
+`values-pl/strings.xml`.** `lintDebug` treats a missing translation as an error, which is the main
 reason the lint step is in CI.
+
+Three deliberate exceptions, each argued where it lives: the debug jump's hard-coded English, the
+share card's squares, and the `translatable="false"` licence notices.
 
 ## Conventions
 
 - **Comments explain why, at length, including what was tried and rejected.** This is the strongest
-  convention in the repo — see `Board.kt`, `PuzzleId.kt`, `RavelApp.kt`. New code is expected to
-  match it; a KDoc block that only restates the signature is not in keeping.
-- Both modules compile to **Java 11** with `-Xjdk-release=11`, deliberately: `:app` cannot read newer
-  class files, and the release flag also hides newer JDK APIs the Android runtime does not ship.
+  convention in the repo — see `Board.kt`, `PuzzleId.kt`, `RavelApp.kt`. A KDoc block that only
+  restates the signature is not in keeping. **Comments are written in English** even though the UI
+  and the project's working language are Polish.
+- Both modules compile to **Java 11** with `-Xjdk-release=11`: `:app` cannot read newer class files,
+  and the release flag also hides newer JDK APIs the Android runtime does not ship.
 - `:generator` tests use `kotlin.test`; `:app` unit tests use JUnit 4 (`org.junit.Assert`). Test
   names are backticked sentences.
-- The Gradle configuration cache is on (`gradle.properties`). New tasks must not read project state
-  at execution time — see how `printPuzzle` borrows a classpath through a provider.
-- `Wallet.STARTING_BALANCE` and the `Hint` prices are pre-release numbers. Once the app ships,
-  raising the starting balance silently grants coins to anyone who has not spent one; a grant has to
-  be written instead.
-- **The economy is four numbers and they are tuned as a set**: `Rewards.FOR_COMPLETING` (25),
-  `Streak.DAY` (25, with `SEVENTH` defined as `5 * DAY`), and `Rewards.FOR_WATCHING_AD` (100) against
-  the `Hint` prices (40 / 100). Three ratios are the actual design and all three are written down
-  where they live — a week of streak pays roughly 1.5× a week of solving (`StreakTest` guards it as a
-  band, deliberately not as two figures), an ad pays what four solved boards pay, and a word costs
-  2.5 letters, which is what puts the hint break-even at two letters (`PuzzleTest` guards that as the
-  pair of inequalities, not as the ratio). Moving one number alone silently answers a question those
-  comments already answered. The first three were all multiplied by 2.5 together when solving turned
-  out to earn 10 coins against 300 a day from ads.
-- **The hint prices came down to 40 / 100 from 100 / 250 and nothing else moved with them**, which is
-  the one time a number here was changed alone on purpose. The complaint was grind, not pay: being
-  stuck on a board whose only clue is a length is not difficulty, and pricing the way out at four
-  solved boards made it last longer rather than making the game harder. Two consequences are live and
-  are recorded in `Rewards`: an ad now buys a whole `WORD` instead of a `LETTER`, and `ADS_PER_DAY`
-  (3) therefore reaches 2.5× as far as it was tuned to. **If the game turns out to be winnable
-  through the shop, drop `ADS_PER_DAY` to 2 rather than putting the prices back** — that takes the
-  shortcut from the player abusing it instead of from the player who was stuck.
-- **Release builds are shrunk (`optimization { enable = true }`) and R8 breaks things no test can
-  see.** It already did: `play-services-ads` pins `work-runtime` → `room-runtime 2.2.5`, Room finds
-  its generated database by `Class.forName`, and full mode renamed it — the app died before its
-  first frame while `assembleRelease` and the whole unit suite stayed green. The keep rule and the
-  reasoning are in `app/proguard-rules.pro`, which is deliberately short. **Installing a release
-  build and opening it is a release-checklist step, not an optional one**, and it is the step to
-  repeat whenever the ads SDK moves.
-- **Backup rules are written out by name in both `res/xml/data_extraction_rules.xml` (API 31+) and
-  `res/xml/backup_rules.xml` (below).** Both files are live at `minSdk 24` and must be edited
-  together. Every preference file is included, `ravel-ads` included: the three-way day comparison in
-  `AdAllowance.remainingFrom` is what makes a restore honest — same day keeps the watches spent,
-  later day is a fresh allowance, *earlier* day gives nothing, which is what answers winding the
-  clock back. **The commit that adds in-app purchases has to revisit this**: a restored balance is a
-  restored balance, and "spend, then restore" can only really be answered by a server.
+- The Gradle configuration cache is on (`gradle.properties`). **New tasks must not read project state
+  at execution time** — see how `printPuzzle` borrows a classpath through a provider.
+
+### The economy
+
+**Four numbers, tuned as a set**: `Rewards.FOR_COMPLETING` (25), `Streak.DAY` (25, `SEVENTH` =
+`5 * DAY`), `Rewards.FOR_WATCHING_AD` (100), against the `Hint` prices (40 / 100).
+
+- **Never move one alone.** Three ratios are the design, guarded by `StreakTest` (as a band) and
+  `PuzzleTest` (as a pair of inequalities).
+- **`Wallet.STARTING_BALANCE` cannot be raised after release** — that silently grants coins. Write a
+  grant instead.
+- **If the game turns out winnable through the shop, drop `ADS_PER_DAY` to 2 rather than putting the
+  hint prices back.**
+
+### Showing a coin
+
 - **Every visible coin figure goes through `CoinAmount` (`ui/Coins.kt`), and there is one coin
-  drawable, `res/drawable/ic_coin.xml`.** No exceptions, no second glyph, no `Text("$balance")` next
-  to a number that happens to be coins. This is a rule because the alternative already happened: the
-  balance over a board was `"◈ $balance"`, the balance on a menu was the counted noun from
-  `coins_balance`, and a hint price was a number after a middle dot — three notations for one
-  currency, none of which taught the player the other two. `CoinAmount` sizes the icon from the text
-  style it is given, so it fits a top bar and a headline without a call site picking a dimension,
-  and it carries the counted noun as the row's content description so screen readers still hear
-  "100 coins" where the screen shows a figure and a coin.
-- The `coins_balance` plural still exists and is now **only** an accessibility string. Do not put it
-  back on screen beside a coin: the icon is the noun, and in Polish that noun has four forms the
-  icon does not need.
+  drawable, `res/drawable/ic_coin.xml`.** No second glyph, no `Text("$balance")` beside a number that
+  happens to be coins.
+- **`coins_balance` is an accessibility string only.** Never put it back on screen beside a coin.
+
+### Shipping a release
+
+- **Release builds are shrunk (`optimization { enable = true }`) and R8 breaks things no test can
+  see.** Keep rules live in `app/proguard-rules.pro`, deliberately short.
+- **Installing a release build and opening it is a release-checklist step, not an optional one** —
+  and the step to repeat whenever the ads SDK moves.
+- **Backup rules are written out by name in both `res/xml/data_extraction_rules.xml` (API 31+) and
+  `res/xml/backup_rules.xml` (below). Both are live at `minSdk 24` and must be edited together.**
+  Every preference file is included, `ravel-ads` among them.
+- **The commit that adds in-app purchases has to revisit the backup rules.**
 
 ## Commitments made in the privacy policy
 
-`docs/privacy-policy.md` is the published policy (served from GitHub Pages, `main` + `/docs`). It
-describes an account layer that **does not exist in the code yet**. Everything below is a promise
-already made in writing, so it is a requirement on the feature that implements it, not a preference
-to revisit. Changing any of it means changing the policy and the Play Console Data safety form in
-the same breath — the two must never disagree, in either direction.
+`docs/privacy-policy.md` is the published policy (GitHub Pages, `main` + `/docs`). It describes an
+account layer that **does not exist in the code yet**. Everything below is a promise already made in
+writing — a requirement on the feature that implements it, not a preference to revisit. Changing any
+of it means changing the policy and the Play Console Data safety form in the same breath.
 
-- **Sign-in is Google OAuth through Firebase Auth, and optional.** The game must stay fully playable
-  with no account, storing nothing on a server.
+Not yet built:
+
+- **Sign-in is Google OAuth through Firebase Auth, and optional.** The game stays fully playable with
+  no account, storing nothing on a server.
 - **Leaderboard nickname is chosen by the user and anonymous.** Never default it to the Google
-  display name, the email local part, or the profile picture — the policy states none of those are
-  ever shown to other players.
+  display name, the email local part, or the profile picture.
 - **The leaderboard needs an opt-out toggle in settings.** Ship it with the leaderboard, not after.
-- **Ads are rewarded only.** The user opts into each one in exchange for an in-game reward. No
-  banners, no interstitials, nothing unsolicited. **Built** — `ads/RewardedAds.kt`, reachable only
-  from `ShopScreen`'s ad card, which is the structural version of that promise: no other call site
-  can start one. Three a day (`Rewards.ADS_PER_DAY`) for 100 coins each (`Rewards.FOR_WATCHING_AD`),
-  counted per *completed* watch by `settings/AdAllowance.kt`. The reward amount is a constant here
-  and never the one the AdMob console attaches to the unit — that value is remote config that would
-  retune a shipped economy with no build and no review.
-- **EEA/UK/CH consent before personalised ads**, through a Google-certified CMP (the UMP SDK), and
-  changeable afterwards from settings. Analytics consent lives on the same screen. **Built for ads**
-  — `ads/AdConsent.kt`, gathered in `MainActivity.onCreate` **before any of the game is drawn**:
-  `setContent` shows `LoadingScreen` until `AdConsent.settled` turns true, so the form is never a
-  dialog landing on a screen the player had already started reading. That wait is capped at
-  `SETTLE_TIMEOUT` and the timer is deliberately not cancelled — a word puzzle that works offline
-  must never have a launch that depends on a network, and past the cap the form simply arrives on
-  top of the game as it used to. Reopened afterwards from the settings screen's privacy row (shown
-  only where the SDK says a form is required). *Analytics consent is not built,
-  because Firebase Analytics is not in the project*; the toggle ships with analytics, not before it,
-  since a switch wired to nothing is a lie told to the player.
-- **The AdMob ids in `res/values/ads.xml` are live** (publisher `3410450408196791`). Every request
-  the app makes is real inventory. The consequence is `ad_test_devices` in the same file: an
-  impression from a developer's own phone is real, a tap on it is a click on your own inventory, and
-  AdMob answers invalid traffic by suspending the account rather than by discounting the click. A
-  device whose hash is not in that array is unprotected, and testing a rewarded ad means tapping it
-  — that is how you find out the reward arrived. The array is deliberately **not** limited to debug
-  builds: naming a device costs that one device its real ads, while a list that stopped working in a
-  signed build would put a developer in front of live inventory with nothing at all.
-- **`play-services-ads` merges in the `AD_ID` permission on its own.** The app therefore has access
-  to the advertising id whatever it does with it directly, which is nothing, and the Data safety
-  form has to say so.
-- **Account deletion is by email only** (andret2344@gmail.com), handled within 30 days, removing the
-  account, its game data and its leaderboard entries. This was a deliberate decision against
-  Google Play's expectation of an in-app deletion path; if a review rejects the app over it, an
-  in-app delete button is the fix, not a change to the policy's promise about *what* gets deleted.
-- **Firestore security rules must scope a signed-in user to their own data.** The policy claims it.
-- **Firebase Analytics retention must be set to 14 months** in the console, which is what the policy
-  states; the project default is 2 months.
+- **Firestore security rules must scope a signed-in user to their own data.**
+- **Firebase Analytics retention must be set to 14 months** in the console; the project default is 2.
+- **Account deletion is by email only** (andret2344@gmail.com), within 30 days, removing the account,
+  its game data and its leaderboard entries. If a Play review rejects the app over the missing in-app
+  path, an in-app delete button is the fix — not a change to *what* gets deleted.
+
+Built — see "Ads and consent" above:
+
+- **Ads are rewarded only.** No banners, no interstitials, nothing unsolicited.
+- **EEA/UK/CH consent before personalised ads**, through a Google-certified CMP (UMP SDK), changeable
+  afterwards from settings. Analytics consent ships with analytics, which is not in the project yet.
 
 ## Attribution
 
-`generator/DICTIONARY.md` records the dictionary sources and licences. Three of them require a
-notice, and the app carries all of them: the settings tab lists every source under "Word sources"
+`generator/DICTIONARY.md` records the dictionary sources and licences. Three require a notice, and
+the app carries all of them: the settings tab lists every source under "Word sources"
 (`ui/about/Licences.kt`), and each name opens `LicenceScreen`.
 
 - **SJP.PL word list and KWJP100 frequency data** — CC BY 4.0, attribution **plus** a statement that
@@ -347,13 +274,29 @@ notice, and the app carries all of them: the settings tab lists every source und
 
 ENABLE and OANC need nothing and are listed anyway.
 
-The notices and the source names are `translatable="false"` on purpose: a required notice is
-required in its own wording, and these are proper names. **Adding a dictionary source means adding
-an entry here in the same commit** — the licence obligation starts when the data ships, not when
-somebody remembers.
+The notices and the source names are `translatable="false"` on purpose: a required notice is required
+in its own wording, and these are proper names.
 
-The two licences that ask for their text to travel with the work are bundled verbatim in
-`res/raw/`, and PoliMorf's was reconstructed from the standard BSD 2-clause template plus the
-copyright line on `morfeusz.sgjp.pl` — that host has a **revoked** TLS certificate, so it cannot be
-re-fetched to check without working around the revocation. CC BY 4.0 is linked rather than bundled,
-which is what that licence asks for.
+**Adding a dictionary source means adding an entry here in the same commit** — the licence obligation
+starts when the data ships, not when somebody remembers.
+
+The two licences that ask for their text to travel with the work are bundled verbatim in `res/raw/`.
+PoliMorf's was reconstructed from the standard BSD 2-clause template plus the copyright line on
+`morfeusz.sgjp.pl` — that host has a **revoked** TLS certificate, so it cannot be re-fetched to check
+without working around the revocation. CC BY 4.0 is linked rather than bundled, as that licence asks.
+
+## Deliberate omissions
+
+Absences that are decisions. **Do not report these as gaps or defects.** Reasoning in
+`docs/DECISIONS.md`.
+
+- **No sound anywhere.** Haptics only. Do not add audio, or an audio setting, without being asked.
+- **No screen-reader support on the board.** `ui/board/BoardGrid.kt` is a bare `Canvas` by design.
+  Accessibility everywhere *else* in the app still applies in full and new screens are expected to
+  carry semantics.
+
+## Known gaps
+
+Real, unresolved, and listed so they are neither rediscovered as news nor defended as intentional:
+no tutorial; no skip or give-up on a stuck board; no share button on `review`; no instrumented or
+Compose UI tests at all; no in-app theme override; no progress reset.

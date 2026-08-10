@@ -69,25 +69,41 @@
             android:value="true" />
 
         <!--
-            Portrait either way up, and no landscape.
+            All four orientations, and fullUser rather than nothing at all.
 
-            Every screen here is a column that must not scroll - a board is dragged across with a
-            finger, and a grid that moves under that finger loses the drag - so the layout spends
-            height it does not have on a phone lying on its side: the board is squeezed to a few
-            pixels and the daily menu is cut off mid-card. This is a stopgap over that, not a design
-            decision; a landscape layout would replace it.
+            Leaving the attribute off is not the same as allowing everything: the default is
+            "unspecified", which hands the choice to the system, and what most phones choose is the
+            three orientations that are not upside-down portrait. A tablet in a stand and a phone on a
+            charger with the cable at the top are both held that way, and there is nothing about a
+            word puzzle that needs the fourth one refused.
 
-            userPortrait rather than sensorPortrait, so a player who has turned auto-rotate off keeps
-            it off. The half-turn is worth allowing on its own: a tablet or a phone on a charger is
-            often upside down, and refusing it there is refusing the only orientation the device is
-            in.
+            fullUser and not fullSensor, which also allows all four: fullSensor ignores the device's
+            rotation lock, so a player who has deliberately turned auto-rotate off would still have
+            the board spin when they lean over. fullUser allows every orientation while the lock is
+            off and none of them while it is on, which is what the switch is for.
+
+            This used to be pinned to userPortrait, and the reason was real rather than lazy: every
+            screen was a column that must not scroll - a board is dragged across with a finger, and a
+            grid that moves under that finger loses the drag - so on a phone lying on its side the
+            board was squeezed to a few pixels and the menus were cut off mid-card. That was named a
+            stopgap over a missing layout, and the layout now exists: ui/game/BoardLayout.kt puts the
+            grid beside the clues instead of above them in any window wider than it is tall, and
+            RavelApp moves the five tabs onto a rail down the side so the board keeps its height.
+
+            Deliberately no android:configChanges to go with it. Handling the rotation in-process
+            would be smoother and would break the language setting: the player's locale is forced by
+            wrapping the base context in MainActivity.attachBaseContext, and a configuration change
+            the activity swallows is one the system applies to those resources afterwards - taking
+            the forced locale with it and leaving a Polish player reading English. Recreation re-runs
+            attachBaseContext, which is the whole mechanism. It costs nothing that shows: the view
+            models outlive it, so a board being generated survives the turn, and the consent check in
+            onCreate does nothing on a second call.
         -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:screenOrientation="userPortrait"
-            android:windowSoftInputMode="adjustResize"
-            tools:ignore="LockedOrientationActivity">
+            android:screenOrientation="fullUser"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

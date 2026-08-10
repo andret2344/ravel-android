@@ -116,6 +116,26 @@
     <string name="day_stat_time">time</string>
     <string name="day_open_solved">See the board</string>
 
+    <!-- Sharing a solved day. The layout below is a resource rather than something assembled in
+         code because it is the one string in this app that gets read outside it, and a translator
+         has to be able to move the separators and the line breaks.
+
+         Placeholders, in order: date, language code, grid width (used twice, since boards are
+         square), the row of squares, the word count with its noun, the clock, and the link.
+
+         The squares themselves are not here. They are not language, and two locales disagreeing
+         about which colour means "found it" would make two players' results incomparable, which is
+         the one thing the row exists to be. See DailyShare. -->
+    <string name="share_action">Share result</string>
+    <plurals name="share_words">
+        <item quantity="one">%1$d word</item>
+        <item quantity="other">%1$d words</item>
+    </plurals>
+    <string name="share_text">Ravel · %1$s · %2$s · %3$d×%3$d\n%4$s\n%5$s · %6$s\n\n%7$s</string>
+    <!-- A proper name and a URL: required verbatim, so neither is offered for translation. -->
+    <string name="share_subject" translatable="false">Ravel</string>
+    <string name="share_link" translatable="false">https://play.google.com/store/apps/details?id=eu.andret.ravel</string>
+
     <!-- The three tiles under the streak. Labels are one word: they sit in a square a third of the
          screen wide, and a wrapped label reads as two lines of nothing in particular. -->
     <string name="tile_play">Play</string>

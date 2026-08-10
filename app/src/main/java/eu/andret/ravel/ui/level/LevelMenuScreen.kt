@@ -7,12 +7,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -35,6 +38,7 @@ import eu.andret.ravel.R
 import eu.andret.ravel.debug.LevelJump
 import eu.andret.ravel.settings.LevelProgressState
 import eu.andret.ravel.settings.SavedBoard
+import eu.andret.ravel.ui.AdaptiveScreen
 import eu.andret.ravel.ui.game.BalanceButton
 import eu.andret.ravel.ui.game.asClock
 import eu.andret.ravel.ui.theme.foundColors
@@ -47,10 +51,20 @@ import eu.andret.ravel.ui.theme.foundColors
  * grid of taps would be a screen mostly made of things that refuse to happen. What is on offer is
  * one thing, and it gets the whole card.
  *
- * The strip under it is the same fact drawn as a position rather than a number: five behind, this
- * one, three ahead. It is not a control and nothing on it can be tapped. What it buys is the sense
+ * The road under it is the same fact drawn as a position rather than a number: a few behind, this
+ * one, a few ahead. It is not a control and nothing on it can be tapped. What it buys is the sense
  * of a road, which "Level 7" alone does not give - and it makes the rule visible without a sentence
  * explaining it, because the levels ahead are plainly there and plainly not offered.
+ *
+ * It is drawn twice, because a road is a shape and the two windows have opposite shapes to spend.
+ * Tall gets a strip of seven across the width, which is the dimension there is to spare; wide gets
+ * three rows of three beside the card, which turns the same levels into a block that fills a column
+ * the card cannot use.
+ *
+ * Both counts are odd, and that is the one thing they have to agree on: an odd road has a middle
+ * square, the middle square is the level being offered, and the same number of levels sit behind it
+ * as ahead of it. The strip used to be eight and put the player one place left of centre, which is a
+ * road they are standing slightly off.
  *
  * @param onPlay the level to open, which is only ever the current one.
  * @param onShop where the balance in the corner leads, as it does on every board.
@@ -65,15 +79,36 @@ fun LevelMenuScreen(
     val progress by viewModel.state.collectAsStateWithLifecycle()
     val balance by viewModel.balance.collectAsStateWithLifecycle()
 
+    AdaptiveScreen(modifier = modifier) { wide ->
+        if (wide) {
+            WideMenu(progress = progress, balance = balance, onPlay = onPlay, onShop = onShop)
+        } else {
+            TallMenu(progress = progress, balance = balance, onPlay = onPlay, onShop = onShop)
+        }
+    }
+}
+
+@Composable
+private fun TallMenu(
+    progress: LevelProgressState,
+    balance: Int,
+    onPlay: (level: Int) -> Unit,
+    onShop: () -> Unit,
+) {
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
+            // Scrolls, unlike the board this menu leads to. Nothing here is traced over, so there is
+            // no gesture for a scroll to steal - and on a short phone the card, the road and the
+            // debug button can outgrow the screen, where a menu that clipped its own play button
+            // would be a tab with no way into the game.
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Header(balance = balance, onShop = onShop)
         PlayCard(progress = progress, onPlay = { onPlay(progress.current) })
-        Ladder(progress.current)
+        LadderStrip(progress.current)
         // Draws a button in a debug build and literally nothing in a release one - there are two
         // files behind this call and the release one has an empty body, so the shipped APK does not
         // contain a way to skip the ladder rather than containing one nobody can reach. See
@@ -82,6 +117,51 @@ fun LevelMenuScreen(
         // Called from here because this is the screen the ladder is on: a level set from anywhere
         // else would be a developer changing a number and then going to look at what it did.
         LevelJump()
+    }
+}
+
+/**
+ * The card down one side and the road down the other, neither of them scrolling.
+ *
+ * The card takes the height rather than a slice of it. It is the only thing on this tab anybody came
+ * for, and a wide window is one where an invitation can be the size of a hand without costing
+ * anything else its place - the road beside it is nine small squares that were never going to fill a
+ * column on their own.
+ *
+ * The heading stays across the top instead of joining either side. It names the app and holds the
+ * balance, which belong to the tab rather than to one half of it.
+ */
+@Composable
+private fun WideMenu(
+    progress: LevelProgressState,
+    balance: Int,
+    onPlay: (level: Int) -> Unit,
+    onShop: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 20.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Header(balance = balance, onShop = onShop)
+        Row(
+            modifier = Modifier.fillMaxWidth().weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
+        ) {
+            PlayCard(
+                progress = progress,
+                onPlay = { onPlay(progress.current) },
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+            )
+            Column(
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                LadderGrid(current = progress.current, modifier = Modifier.weight(1f))
+                LevelJump()
+            }
+        }
     }
 }
 
@@ -114,7 +194,11 @@ private fun Header(balance: Int, onShop: () -> Unit) {
  * how far in they already are.
  */
 @Composable
-private fun PlayCard(progress: LevelProgressState, onPlay: () -> Unit) {
+private fun PlayCard(
+    progress: LevelProgressState,
+    onPlay: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val started = progress.boardFor(progress.current)
     // The three ways the card answers "has this been started" are read here, at the top, rather
     // than at the four points inside the layout that used to ask. They are one question with one
@@ -133,10 +217,13 @@ private fun PlayCard(progress: LevelProgressState, onPlay: () -> Unit) {
     val label = if (started == null) R.string.level_play else R.string.level_resume
     Card(
         onClick = onPlay,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = container, contentColor = content),
     ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
+        // Centred rather than hung from the top, which costs nothing where the card is the height of
+        // its own contents and is the whole difference where it is not: given a column to fill, a
+        // top-aligned invitation would sit above a hand's depth of empty card.
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(
                 modifier = Modifier.fillMaxWidth().padding(vertical = 28.dp, horizontal = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -209,7 +296,7 @@ private fun NotificationDot(modifier: Modifier = Modifier) {
 }
 
 /**
- * The road: a few levels behind, the one on offer, a few ahead.
+ * The road as a strip across the width: a few levels behind, the one on offer, a few ahead.
  *
  * A fixed window rather than the whole ladder, because the whole ladder has no end - the mode goes
  * on for as long as the player does - and a strip that grew by one square a level would be a strip
@@ -218,19 +305,19 @@ private fun NotificationDot(modifier: Modifier = Modifier) {
  * The window is anchored on the current level and clipped at one, so a new player sees the road
  * starting rather than a row of blanks where their history would be. Nothing here is clickable, and
  * that is the point being made: the levels behind are done and the ones ahead are not open yet.
+ *
+ * Seven and not the eight it was, for the reason the block is nine: an odd count has a middle, and
+ * the middle is where the level being offered belongs. At eight the current level sat one place left
+ * of centre, which is a road with the player slightly off it - and the difference costs nothing,
+ * since seven squares across a phone are larger and no harder to count than eight.
  */
 @Composable
-private fun Ladder(current: Int, modifier: Modifier = Modifier) {
-    // Four behind and three ahead, which is as many as fit at a legible size across a phone.
-    val first = maxOf(1, current - BEHIND)
+private fun LadderStrip(current: Int, modifier: Modifier = Modifier) {
+    val first = firstOf(current, STRIP)
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            text = pluralStringResource(R.plurals.levels_done, current - 1, current - 1),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        DoneSoFar(current)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            (first until first + WINDOW).forEach { level ->
+            (first until first + STRIP).forEach { level ->
                 Rung(
                     level = level,
                     current = current,
@@ -240,6 +327,79 @@ private fun Ladder(current: Int, modifier: Modifier = Modifier) {
         }
     }
 }
+
+/**
+ * The same road as a block of three by three, for a window with height to fill and no width to spare.
+ *
+ * Nine rather than the strip's eight, and the difference is the whole reason this exists rather than
+ * the strip being wrapped: three by three has a middle square, and putting the level on offer in it
+ * gives the road the same number of levels behind and ahead. Read as a block that is what the shape
+ * says - the player is in the middle of something - where a strip says a queue with the player near
+ * the front of it.
+ *
+ * **The block is one square and the nine rungs divide it**, rather than nine squares laid out in
+ * whatever space each of them lands in. Three rows of equally spaced squares is a square, so this is
+ * the same trick the board uses: take the largest square that fits and let the contents share it out.
+ * Sized instead off the column's width the three rows would come to more height than a column has and
+ * the bottom row would be cut - the row holding the levels still to come - and sized off the height
+ * alone the rungs would sit in a narrow band down the middle of a wide column with gaps twice their
+ * own width between them, which reads as three columns of numbers rather than as one block.
+ */
+@Composable
+private fun LadderGrid(current: Int, modifier: Modifier = Modifier) {
+    val first = firstOf(current, GRID_SIDE * GRID_SIDE)
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        DoneSoFar(current)
+        Box(
+            modifier = Modifier.fillMaxWidth().weight(1f),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(
+                modifier = Modifier.aspectRatio(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                repeat(GRID_SIDE) { row ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth().weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        repeat(GRID_SIDE) { column ->
+                            Rung(
+                                level = first + row * GRID_SIDE + column,
+                                current = current,
+                                modifier = Modifier.weight(1f).fillMaxHeight(),
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** How much of the ladder is behind the player, which is the one number the road does not draw. */
+@Composable
+private fun DoneSoFar(current: Int) {
+    Text(
+        text = pluralStringResource(R.plurals.levels_done, current - 1, current - 1),
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+/**
+ * The first level a road of [size] shows: half of it behind [current], clipped at level one.
+ *
+ * Half and not a number of its own, because both roads have an odd number of squares and the level
+ * being offered goes in the middle of each - that is what made the strip seven instead of eight. The
+ * arithmetic is then the same sentence for both and cannot drift apart when either count changes.
+ *
+ * The clipping is the part with a decision in it. A player on level two gets the road beginning at
+ * one rather than a window starting below it, so a new account sees a road that starts instead of a
+ * row of blanks where its history would be. The cost is that the current level is not central for the
+ * first few levels, which is the honest picture: there is nothing behind them yet.
+ */
+private fun firstOf(current: Int, size: Int) = maxOf(1, current - (size - 1) / 2)
 
 /**
  * One square of the road, coloured by where the player stands relative to it.
@@ -293,5 +453,8 @@ private fun Rung(level: Int, current: Int, modifier: Modifier = Modifier) {
     }
 }
 
-private const val BEHIND = 4
-private const val WINDOW = 8
+/** The strip's length. Odd, so the level on offer has a middle square to sit in. */
+private const val STRIP = 7
+
+/** The block is square, and three a side is what makes nine levels read as a block at all. */
+private const val GRID_SIDE = 3

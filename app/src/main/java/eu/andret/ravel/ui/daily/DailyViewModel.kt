@@ -13,8 +13,10 @@ import eu.andret.ravel.game.PuzzleMode
 import eu.andret.ravel.game.Puzzles
 import eu.andret.ravel.game.Rewards
 import eu.andret.ravel.game.Streak
+import eu.andret.ravel.game.wordResults
 import eu.andret.ravel.settings.DayResult
 import eu.andret.ravel.settings.SavedBoard
+import eu.andret.ravel.settings.ShareCard
 import eu.andret.ravel.ui.game.BoardState
 import eu.andret.ravel.ui.game.SolveClock
 import kotlinx.coroutines.CancellationException
@@ -191,7 +193,7 @@ class DailyViewModel(
         // the last word both buys a hint and finishes the board, and a purchase recorded afterwards
         // would land on a day that had already stopped listening.
         if (next.boughtOf(hint) > playing.puzzle.boughtOf(hint)) progress.recordHint(ordinal, hint)
-        if (next.isComplete) reward(next.board.solution.size)
+        if (next.isComplete) reward(next)
         _state.value = BoardState.Playing(next)
         if (!next.isComplete) progress.saveBoard(saved(next))
         return true
@@ -257,7 +259,7 @@ class DailyViewModel(
         if (review) return
         val playing = _state.value as? BoardState.Playing ?: return
         val next = move(playing.puzzle)
-        if (next.isComplete && !playing.puzzle.isComplete) reward(next.board.solution.size)
+        if (next.isComplete && !playing.puzzle.isComplete) reward(next)
         _state.value = BoardState.Playing(next)
         // Written on every move rather than when the screen closes, because the screen is not
         // always told: a process killed in the background gets no chance to save on the way out.
@@ -275,7 +277,7 @@ class DailyViewModel(
      * balance that has already changed and a streak that has already grown, and would have to work
      * backwards from both to say what just happened.
      */
-    private fun reward(wordCount: Int) {
+    private fun reward(puzzle: Puzzle) {
         // Banked before the day is sealed, or the last few seconds of the solve are lost with the
         // running clock. Stopped directly rather than through syncClock, because the board is over
         // and the screen has not gone anywhere - the state that would tell syncClock so is not
@@ -283,11 +285,16 @@ class DailyViewModel(
         clock.stop()
         wallet.earn(Rewards.FOR_COMPLETING)
 
+        // Taken off the finished board rather than assembled from what this class happens to know:
+        // the per-word results are only derivable while the puzzle is in hand - see
+        // eu.andret.ravel.game.wordResults - and the word count is one of them per word, so reading
+        // it separately would be reading the same fact twice.
+        val card = card(puzzle)
         // No check that this is still today's date. The board carries its own day, and the only
         // board that can be played is the one that was today when it was opened - every other route
         // in opens for review, which never reaches this method. A player who crosses midnight
         // mid-solve is paid for the day they were solving.
-        val counted = progress.complete(ordinal, wordCount)
+        val counted = progress.complete(card)
         val streak = progress.state.value.streak
         val forStreak = if (counted) Streak.rewardFor(Streak.dayInCycle(streak)) else 0
         if (forStreak > 0) wallet.earn(forStreak)
@@ -298,8 +305,27 @@ class DailyViewModel(
             cycleDay = Streak.dayInCycle(streak),
             streak = streak,
             seconds = progress.state.value.costOf(ordinal).seconds ?: 0,
+            // The card the dialog offers to share is the one that was just written down, not the
+            // one read back afterwards. They are the same object, and asking the store for it would
+            // make the dialog depend on a write having landed to show a button about it.
+            card = card,
         )
     }
+
+    /**
+     * What the finished board looked like, for the share button.
+     *
+     * The size comes off the grid rather than out of [eu.andret.ravel.game.PuzzleSpec], though both
+     * answer with the same number: this is a record of the board the player actually had in front
+     * of them, and a board's width is a fact about the grid and not about the arithmetic that asked
+     * for one. See [eu.andret.ravel.settings.ShareCard] for why it is written down at all.
+     */
+    private fun card(puzzle: Puzzle) = ShareCard(
+        ordinal = ordinal,
+        language = language.current.value,
+        size = puzzle.board.width,
+        words = puzzle.wordResults(),
+    )
 
     private companion object {
         /** The same board with every word found, which is what a day already solved looks like. */

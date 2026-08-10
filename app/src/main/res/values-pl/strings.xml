@@ -85,6 +85,15 @@
     <string name="day_stat_time">czas</string>
     <string name="day_open_solved">Zobacz planszę</string>
 
+    <string name="share_action">Udostępnij wynik</string>
+    <plurals name="share_words">
+        <item quantity="one">%1$d słowo</item>
+        <item quantity="few">%1$d słowa</item>
+        <item quantity="many">%1$d słów</item>
+        <item quantity="other">%1$d słowa</item>
+    </plurals>
+    <string name="share_text">Ravel · %1$s · %2$s · %3$d×%3$d\n%4$s\n%5$s · %6$s\n\n%7$s</string>
+
     <string name="tile_play">Zagraj</string>
     <string name="tile_play_caption">dzisiaj</string>
     <string name="tile_play_resume">Kontynuuj</string>

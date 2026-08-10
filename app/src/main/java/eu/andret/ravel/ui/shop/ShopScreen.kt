@@ -3,10 +3,13 @@ package eu.andret.ravel.ui.shop
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -24,6 +27,7 @@ import eu.andret.ravel.R
 import eu.andret.ravel.ads.RewardedAds
 import eu.andret.ravel.game.Hint
 import eu.andret.ravel.game.Rewards
+import eu.andret.ravel.ui.AdaptiveScreen
 import eu.andret.ravel.ui.CoinAmount
 
 /** How wide a tile is allowed to get, so a phone screen is not one edge-to-edge slab per offer. */
@@ -52,47 +56,85 @@ fun ShopScreen(modifier: Modifier = Modifier, viewModel: ShopViewModel = viewMod
     // re-counted every time the tab is opened rather than only when the app started.
     LaunchedEffect(Unit) { viewModel.refresh() }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 20.dp, vertical = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Text(
-            text = stringResource(R.string.shop_title),
-            style = MaterialTheme.typography.headlineSmall,
-        )
-        CoinAmount(amount = balance, style = MaterialTheme.typography.titleLarge)
+    AdaptiveScreen(modifier = modifier) { wide ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                // Scrolls even where it fits. This is a page of offers and the list of them grows -
+                // there is a coin pack behind that second card - so the tab that must never clip the
+                // way to more coins is one that scrolls before it has to.
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.shop_title),
+                style = MaterialTheme.typography.headlineSmall,
+            )
+            CoinAmount(amount = balance, style = MaterialTheme.typography.titleLarge)
 
-        AdTile(state = adState, watchesLeft = watchesLeft, viewModel = viewModel)
-
-        Card(modifier = Modifier.widthIn(max = TILE_WIDTH)) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Text(
-                    text = stringResource(R.string.shop_buy),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                Text(
-                    text = stringResource(R.string.shop_coming_soon),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+            if (wide) {
+                // The offers side by side, top-aligned, each still capped at a tile's width. The
+                // heading and the balance stay across the top because they are the shop and not one
+                // of its offers - and this is a screen where the two cards are read against each
+                // other, which is what putting them on one line is for. Top rather than stretched:
+                // the ad card is much the taller of the two and a "coming soon" placeholder blown up
+                // to match it would promise something bigger than what is arriving.
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    AdTile(
+                        state = adState,
+                        watchesLeft = watchesLeft,
+                        viewModel = viewModel,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    BuyCard(modifier = Modifier.weight(1f, fill = false))
+                }
+            } else {
+                AdTile(state = adState, watchesLeft = watchesLeft, viewModel = viewModel)
+                BuyCard()
             }
-        }
 
-        Text(
-            text = stringResource(R.string.shop_prices, Hint.LETTER.cost, Hint.WORD.cost),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
+            Text(
+                text = stringResource(R.string.shop_prices, Hint.LETTER.cost, Hint.WORD.cost),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
+}
+
+/**
+ * The offer that is not here yet, kept on screen as a card rather than left out.
+ *
+ * Same argument as the locked leaderboards tile: a player who cannot see that coins will be buyable
+ * has no way of knowing the ad is not the only route, and a shop with one thing in it reads as a shop
+ * that is finished.
+ */
+@Composable
+private fun BuyCard(modifier: Modifier = Modifier) {
+    Card(modifier = modifier.widthIn(max = TILE_WIDTH)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.shop_buy),
+                style = MaterialTheme.typography.titleMedium,
+            )
+            Text(
+                text = stringResource(R.string.shop_coming_soon),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
@@ -117,7 +159,12 @@ fun ShopScreen(modifier: Modifier = Modifier, viewModel: ShopViewModel = viewMod
  * with nothing left today does not care whether an ad happens to be loaded.
  */
 @Composable
-private fun AdTile(state: RewardedAds.State, watchesLeft: Int, viewModel: ShopViewModel) {
+private fun AdTile(
+    state: RewardedAds.State,
+    watchesLeft: Int,
+    viewModel: ShopViewModel,
+    modifier: Modifier = Modifier,
+) {
     // Null while the composable is being previewed or torn down; the tile goes dead rather than
     // taking a press - a full-screen ad has nowhere to go without an activity.
     val activity = LocalActivity.current
@@ -160,7 +207,7 @@ private fun AdTile(state: RewardedAds.State, watchesLeft: Int, viewModel: ShopVi
     Card(
         onClick = { press?.invoke() },
         enabled = press != null,
-        modifier = Modifier.widthIn(max = TILE_WIDTH),
+        modifier = modifier.widthIn(max = TILE_WIDTH),
     ) {
         Column(
             modifier = Modifier

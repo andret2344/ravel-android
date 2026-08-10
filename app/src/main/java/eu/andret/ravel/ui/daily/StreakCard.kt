@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -40,12 +41,21 @@ import eu.andret.ravel.ui.theme.goldColors
  * to come back on the third day that "ten coins today" cannot give them. It is also the honest
  * version - the ladder resets, and a screen that showed one number at a time could hide that until
  * the eighth day.
+ *
+ * @param fillHeight whether the card has been given a height to fill rather than one to ask for.
+ *   False everywhere except the wide daily menu, where the week is a column of its own: there the
+ *   rungs are sized off the height left over, and asking for their usual size would have overrun the
+ *   column by the last row - which is the row holding the seventh day, the one thing on this card
+ *   that has to be visible. Not derived from the constraints, because a card asking to be as tall as
+ *   it likes and a card given a column both arrive here with the same bounded height and only the
+ *   caller knows which it meant.
  */
 @Composable
 internal fun StreakCard(
     progress: DailyProgressState,
     today: Long,
     modifier: Modifier = Modifier,
+    fillHeight: Boolean = false,
 ) {
     val solvedToday = progress.isSolved(today)
 
@@ -61,7 +71,9 @@ internal fun StreakCard(
 
     Card(modifier = modifier.fillMaxWidth()) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier
+                .padding(16.dp)
+                .then(if (fillHeight) Modifier.fillMaxHeight() else Modifier),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
@@ -73,7 +85,13 @@ internal fun StreakCard(
             // and both halves were already on screen: the outlined rung is the amount, and the play
             // tile below the card is the way to collect it. A third statement of the same thing
             // reads as filler, which is what it was.
-            Ladder(claimed = claimed, rung = rung, solvedToday = solvedToday)
+            Ladder(
+                claimed = claimed,
+                rung = rung,
+                solvedToday = solvedToday,
+                modifier = if (fillHeight) Modifier.weight(1f) else Modifier,
+                fillHeight = fillHeight,
+            )
         }
     }
 }
@@ -150,9 +168,22 @@ internal fun TotalStreakCard(streak: Int, modifier: Modifier = Modifier) {
  * a slightly bigger box at the end of a queue.
  *
  * The order is still left to right and then down, which is how a week is read anywhere else.
+ *
+ * Two ways of sizing the rungs, one shape. Asked for a height, each rung is a fixed ratio of its own
+ * width and the ladder comes out as tall as that makes it - which is the right answer inside a card
+ * that is as tall as what is in it. Given a height, the three rows share it and each rung takes the
+ * smaller of the width it was dealt and the row it is in, so the ladder ends exactly where the column
+ * does. The alternative in a fixed column is a seventh day drawn past the bottom of the card, and
+ * the seventh day is the reason the other six are on screen.
  */
 @Composable
-private fun Ladder(claimed: Int, rung: Int, solvedToday: Boolean) {
+private fun Ladder(
+    claimed: Int,
+    rung: Int,
+    solvedToday: Boolean,
+    modifier: Modifier = Modifier,
+    fillHeight: Boolean = false,
+) {
     fun stateOf(day: Int) = when {
         day <= claimed -> RungState.TAKEN
         day == rung && solvedToday -> RungState.TAKEN
@@ -160,9 +191,16 @@ private fun Ladder(claimed: Int, rung: Int, solvedToday: Boolean) {
         else -> RungState.AHEAD
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(14.dp)) {
         listOf(1..3, 4..6).forEach { days ->
-            Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            Row(
+                modifier = if (fillHeight) {
+                    Modifier.fillMaxWidth().weight(1f)
+                } else {
+                    Modifier.fillMaxWidth()
+                },
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
                 days.forEach { day ->
                     Rung(
                         day = day,
@@ -172,7 +210,11 @@ private fun Ladder(claimed: Int, rung: Int, solvedToday: Boolean) {
                         // the height back, so the six read as a set of counters instead of a row of
                         // bars - and the ratio does it on any screen, where a height in dp would be
                         // right on the phone it was picked on and wrong on the next one.
-                        modifier = Modifier.weight(1f).aspectRatio(1.15f),
+                        modifier = if (fillHeight) {
+                            Modifier.weight(1f).fillMaxHeight()
+                        } else {
+                            Modifier.weight(1f).aspectRatio(1.15f)
+                        },
                     )
                 }
             }
@@ -181,7 +223,14 @@ private fun Ladder(claimed: Int, rung: Int, solvedToday: Boolean) {
             day = Streak.CYCLE,
             reward = Streak.rewardFor(Streak.CYCLE),
             state = stateOf(Streak.CYCLE),
-            modifier = Modifier.fillMaxWidth(),
+            // The seventh gets a row and a quarter where the ladder has a height to spend, so it
+            // stays the biggest thing on the card - which is four of the ways it says it is
+            // different, and the only one a fixed column could otherwise take away.
+            modifier = if (fillHeight) {
+                Modifier.fillMaxWidth().weight(1.25f)
+            } else {
+                Modifier.fillMaxWidth()
+            },
         )
     }
 }

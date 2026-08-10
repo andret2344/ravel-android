@@ -2,6 +2,7 @@ package eu.andret.ravel.settings
 
 import eu.andret.ravel.game.DailyDate
 import eu.andret.ravel.game.Hint
+import eu.andret.ravel.game.WordResult
 import eu.andret.ravel.generator.Language
 import kotlinx.coroutines.flow.StateFlow
 
@@ -89,6 +90,51 @@ data class SavedBoard(
 )
 
 /**
+ * A board just solved, kept only for as long as its result is still worth telling anyone.
+ *
+ * This is what the share button is built from, and it exists as a slot of its own rather than as
+ * fields on [DayResult] because of how long it is useful for. A day's *cost* is history and belongs
+ * in the calendar forever; how the solve went is a thing the player posts on the day and then never
+ * looks at again. Keeping [marks] on every [DayResult] would put a list per word into every day of
+ * a player's history - the one map in this file that grows without limit - to answer a question
+ * nobody asks about last March.
+ *
+ * So there is one slot, exactly like [DailyProgressState.board], and it is checked against the day
+ * being asked about rather than cleaned up on a timer: see [DailyProgressState.shareFor]. A card
+ * left over from yesterday answers nothing today and costs a few dozen bytes until the next solve
+ * overwrites it, which is cheaper than anything that would have to wake up at midnight to delete it.
+ *
+ * @param ordinal the day this describes, which is what makes the single slot safe.
+ * @param language the dictionary the grid was built from. Stored rather than read at the moment of
+ *   sharing for the reason [SavedBoard.language] is stored: the same date in Polish and in English
+ *   is two unrelated grids, so a card shared after a language switch would otherwise label a Polish
+ *   solve as an English one - and the whole reason to print the language is that two players
+ *   comparing times on different dictionaries are comparing nothing.
+ * @param size the grid's width, which is also its height. Recorded and not derived from [ordinal]
+ *   through [eu.andret.ravel.game.PuzzleSpec], on the same argument as [DayResult.wordCount]: the
+ *   spec is arithmetic over the id and moving a constant in it would silently restate what an
+ *   already-solved day looked like. One int is cheaper than deciding each time whether that has
+ *   happened yet.
+ * @param words one entry per word, in the order the lengths are shown in - see
+ *   [eu.andret.ravel.game.wordResults]. Its size is the board's word count, which is why nothing
+ *   here stores that separately.
+ */
+data class ShareCard(
+    val ordinal: Long,
+    val language: Language,
+    val size: Int,
+    val words: List<WordResult>,
+) {
+    init {
+        require(words.isNotEmpty()) { "A solved board holds at least one word" }
+        require(size > 0) { "A board with no width was never on screen: $size" }
+    }
+
+    /** How many words the board held, which is one entry each. */
+    val wordCount: Int get() = words.size
+}
+
+/**
  * Which days have been solved, how each of them went, and how many run up to today without a gap.
  *
  * All of it is one history across every language, unlike the main mode's ladder - see
@@ -110,11 +156,14 @@ data class SavedBoard(
  *   waiting. It reaches zero only when the day before today was missed too.
  * @param longest the best run so far, kept because it is the one number a player who has just lost
  *   a streak still owns.
+ * @param share the last board solved, for as long as it is still the day it was solved on - see
+ *   [ShareCard]. One slot, like [board], and read through [shareFor] for the same reason.
  */
 data class DailyProgressState(
     val solved: Map<Long, DayResult> = emptyMap(),
     val pending: Map<Long, DayResult> = emptyMap(),
     val board: SavedBoard? = null,
+    val share: ShareCard? = null,
     val streak: Int = 0,
     val longest: Int = 0,
 ) {
@@ -134,6 +183,21 @@ data class DailyProgressState(
 
     /** Whether [ordinal] has a board part-way through: started, touched, and not finished. */
     fun isStarted(ordinal: Long): Boolean = !isSolved(ordinal) && boardFor(ordinal) != null
+
+    /**
+     * What [ordinal]'s solve looked like, or null when there is nothing to tell about it.
+     *
+     * Null on every day but the last one solved, which is what makes the share button a thing that
+     * appears on the day and quietly stops being offered afterwards. That is deliberate rather than
+     * a limitation being tolerated: a result is worth posting while everyone else is on the same
+     * board, and a button that offered to publish a Tuesday in March would be offering something
+     * nobody on the other end can play any more.
+     *
+     * Checked against [ordinal] rather than trusted, exactly as [boardFor] is: the slot holds
+     * whatever was solved last, and yesterday's card laid over today's date would report a board
+     * the player has not finished.
+     */
+    fun shareFor(ordinal: Long): ShareCard? = share?.takeIf { it.ordinal == ordinal }
 
     /** How [ordinal] went, or null when it was never finished. */
     fun resultOf(ordinal: Long): DayResult? = solved[ordinal]
@@ -205,19 +269,22 @@ interface DailyProgress {
     fun recordTime(ordinal: Long, seconds: Int)
 
     /**
-     * Records [ordinal] as solved, at whatever it has cost so far, and forgets its saved board.
+     * Records the day [card] describes as solved, at whatever it has cost so far, and forgets its
+     * saved board.
      *
-     * @param wordCount how many words the board held, which is how many the player has just finished
-     *   finding. Passed in rather than looked up because only the screen that solved the board has
-     *   it - see [DayResult.wordCount]. Not nullable and not zero: a board with no words in it is
-     *   not a board that can be solved, and [DayResult.wordCount] keeps null for the days nobody
-     *   counted rather than for days the caller could not be bothered to.
+     * @param card what the board that was just finished looked like. It names its own day rather
+     *   than taking one beside it, which is the only method here that does: everything a caller
+     *   would have passed separately - the day, the word count - is already on the card, and a
+     *   second copy of either is a second copy that can disagree. It also carries the marks the
+     *   share button needs, which is why this is one call and not two: a count written down by one
+     *   method and a list of that many marks written by another are two chances to record a board
+     *   nobody played.
      * @return false when it was already recorded, which is how the caller knows not to pay for it
      *   twice - a board can be finished, left and finished again, and the streak only ever buys the
      *   first time. The first finish is the one that happened, and a second pass with hints already
      *   revealed would only ever flatter it.
      */
-    fun complete(ordinal: Long, wordCount: Int): Boolean
+    fun complete(card: ShareCard): Boolean
 
     /**
      * Writes down where the player has got to, so closing the screen is not losing the board.

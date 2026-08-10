@@ -34,6 +34,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import eu.andret.ravel.R
 import eu.andret.ravel.generator.Language
+import eu.andret.ravel.ui.AdaptiveScreen
 import eu.andret.ravel.ui.about.Licence
 import java.util.Locale
 
@@ -100,18 +101,7 @@ fun SettingsScreen(
      */
     var pending by remember { mutableStateOf<Language?>(null) }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
-    ) {
-        Text(
-            text = stringResource(R.string.tab_settings),
-            style = MaterialTheme.typography.headlineSmall,
-        )
-
+    val languageSection: @Composable () -> Unit = {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 text = stringResource(R.string.settings_language),
@@ -145,7 +135,9 @@ fun SettingsScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+    }
 
+    val feedbackSection: @Composable () -> Unit = {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 text = stringResource(R.string.settings_feedback),
@@ -186,7 +178,9 @@ fun SettingsScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+    }
 
+    val privacySection: @Composable () -> Unit = {
         if (privacyOptions && activity != null) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
@@ -217,7 +211,9 @@ fun SettingsScreen(
                 )
             }
         }
+    }
 
+    val sourcesSection: @Composable () -> Unit = {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 text = stringResource(R.string.settings_sources),
@@ -236,6 +232,59 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
+    }
+
+    AdaptiveScreen(modifier = modifier) { wide ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                // Scrolls in both arrangements, and the two columns are not an attempt to stop it.
+                // The sources card is six rows and grows by one every time a dictionary is added, so
+                // this screen has a part whose height is a function of a licence obligation - which
+                // is not something a layout gets to decide is short enough.
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.tab_settings),
+                style = MaterialTheme.typography.headlineSmall,
+            )
+            if (wide) {
+                // The switches on the left, the notice on the right, which is the split this screen
+                // already had lengthwise: the first two things here are settings somebody came to
+                // change, and the last is a list they came to read - if they came for it at all.
+                // Side by side, a player looking for the language finds it without passing a
+                // Princeton disclaimer, which is the same argument that kept the licence text itself
+                // one screen deeper.
+                //
+                // The ad privacy row goes with the switches because it is one, even though it opens
+                // a form rather than flipping. It is also the section that is not always there, and
+                // a column that sometimes has three sections and sometimes two is a column - not a
+                // hole in a grid.
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(20.dp),
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(20.dp),
+                    ) {
+                        languageSection()
+                        feedbackSection()
+                        privacySection()
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        sourcesSection()
+                    }
+                }
+            } else {
+                languageSection()
+                feedbackSection()
+                privacySection()
+                sourcesSection()
+            }
         }
     }
 

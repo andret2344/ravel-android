@@ -1,12 +1,10 @@
 package eu.andret.ravel.ui.level
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -29,6 +27,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import eu.andret.ravel.R
 import eu.andret.ravel.game.Puzzle
 import eu.andret.ravel.ui.CoinAmount
+import eu.andret.ravel.ui.game.BoardLayout
 import eu.andret.ravel.ui.game.BoardState
 import eu.andret.ravel.ui.game.BoardTopBar
 import eu.andret.ravel.ui.game.BoughtLine
@@ -99,67 +98,41 @@ fun LevelScreen(
         }
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 20.dp, vertical = 12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
+    BoardLayout(
+        modifier = modifier,
         // No confirmation on the way out. Every move is written down as it is made, so leaving a
         // half-solved level loses nothing: the same board, with the same words found and the same
         // clock, is what opens next time.
-        BoardTopBar(balance = balance, elapsed = elapsed, onClose = onMenu, onShop = onShop)
-
-        // The heading and the grid are one thing and are spaced as one, then the pair is centred in
-        // what is left. Left to the column's own rhythm the heading sat as far from the board as the
-        // board sat from the clues, which reads as three unrelated bands - and the heading names the
-        // board, so it belongs against it.
-        Column(
-            modifier = Modifier.fillMaxWidth().weight(1f),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
-        ) {
-            Title(level = viewModel.level, puzzle = (state as? BoardState.Playing)?.puzzle)
-            Box(
-                // Square, and no bigger than the room left over. The grid centres itself in whatever
-                // it is given, so a box the full height of the screen would put the board back in
-                // the middle of it however tight the heading above was - the box has to be the size
-                // of the board for "under the heading" to mean anything.
-                //
-                // Deliberately not fillMaxWidth: that would fix the width, leaving aspectRatio no
-                // choice but to make the height match it, and a phone on its side would get a board
-                // as tall as the screen is wide. Left unfixed, the ratio takes whichever of the two
-                // is smaller, and the column's own alignment centres it.
-                modifier = Modifier
-                    .weight(1f, fill = false)
-                    .aspectRatio(1f),
-                contentAlignment = Alignment.Center,
-            ) {
-                when (val current = state) {
-                    BoardState.Generating -> GeneratingBoard()
-                    is BoardState.Failed -> FailedBoard(current.reason, viewModel::generate)
-                    is BoardState.Playing -> PlayableBoard(
-                        puzzle = current.puzzle,
-                        onPathTraced = viewModel::trace,
-                        onTap = viewModel::tap,
-                        hapticsEnabled = hapticsEnabled,
-                    )
-                }
+        topBar = {
+            BoardTopBar(balance = balance, elapsed = elapsed, onClose = onMenu, onShop = onShop)
+        },
+        title = { Title(level = viewModel.level, puzzle = (state as? BoardState.Playing)?.puzzle) },
+        board = {
+            when (val current = state) {
+                BoardState.Generating -> GeneratingBoard()
+                is BoardState.Failed -> FailedBoard(current.reason, viewModel::generate)
+                is BoardState.Playing -> PlayableBoard(
+                    puzzle = current.puzzle,
+                    onPathTraced = viewModel::trace,
+                    onTap = viewModel::tap,
+                    hapticsEnabled = hapticsEnabled,
+                )
             }
-        }
-
-        (state as? BoardState.Playing)?.puzzle?.let { puzzle ->
-            CluesRow(puzzle.clues)
-            HintRow(
-                complete = puzzle.isComplete,
-                // The view model takes the coins if there are any; if there are not, the player
-                // wanted to spend and could not, which is the one moment the shop is worth showing.
-                onHint = { hint -> if (!viewModel.hint(hint)) onShop() },
-            )
-            BoughtLine(letters = bought.boughtLetters, words = bought.boughtWords)
-        }
-    }
+        },
+        footer = {
+            (state as? BoardState.Playing)?.puzzle?.let { puzzle ->
+                CluesRow(puzzle.clues)
+                HintRow(
+                    complete = puzzle.isComplete,
+                    // The view model takes the coins if there are any; if there are not, the player
+                    // wanted to spend and could not, which is the one moment the shop is worth
+                    // showing.
+                    onHint = { hint -> if (!viewModel.hint(hint)) onShop() },
+                )
+                BoughtLine(letters = bought.boughtLetters, words = bought.boughtWords)
+            }
+        },
+    )
 
     completion?.let {
         CompletedDialog(
@@ -200,7 +173,11 @@ private fun CompletedDialog(
         title = { Text(stringResource(R.string.level_done_title, completion.level)) },
         text = {
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                // Scrollable because a wide window is a short one: the dialog's body is given
+                // whatever height is left after the title and the buttons, and on a phone lying on
+                // its side that is not much. A body that overflows takes the buttons off the bottom
+                // of the screen with it, which is a celebration the player cannot dismiss.
+                modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {

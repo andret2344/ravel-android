@@ -5,6 +5,8 @@ import android.text.format.DateFormat
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -28,6 +30,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import eu.andret.ravel.R
 import eu.andret.ravel.game.DailyDate
+import eu.andret.ravel.ui.AdaptiveScreen
 import eu.andret.ravel.ui.game.BalanceButton
 import java.util.Date
 
@@ -65,24 +68,9 @@ fun DailyMenuScreen(
     // this screen can open it, and nothing about the game changes while it is up.
     var calendarOpen by rememberSaveable { mutableStateOf(false) }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Header(today = today, balance = balance, onShop = onShop)
-        // The two streak cards sit closer to each other than to anything else: they are one subject
-        // split across two cards, and the outer spacing would read them as unrelated.
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            TotalStreakCard(streak = progress.streak)
-            StreakCard(progress = progress, today = today)
-        }
+    val tiles: @Composable (Modifier) -> Unit = { tileModifier ->
         DailyTiles(
-            // A wider gap than the card spacing, so the tiles read as a separate band rather than
-            // as one more card in the same stack. The streak is a report; these are controls.
-            modifier = Modifier.padding(top = 12.dp),
+            modifier = tileModifier,
             solvedToday = solvedToday,
             started = progress.boardFor(today).takeIf { !solvedToday },
             monthName = monthName(month),
@@ -90,6 +78,75 @@ fun DailyMenuScreen(
             onPlay = { onOpen(today, solvedToday) },
             onCalendar = { calendarOpen = true },
         )
+    }
+
+    AdaptiveScreen(modifier = modifier) { wide ->
+        if (wide) {
+            /*
+             * Two columns and no scroll at all, which is the point rather than a consequence.
+             *
+             * This tab is opened to do one thing and the thing is a tile at the bottom of it: on a
+             * window on its side the stack came to nearly twice the height there was, so the play
+             * tile - the whole reason the tab exists - sat below the fold behind a scroll a returning
+             * player has to perform before they can start. Splitting the screen at its own seam fixes
+             * that without shrinking anything: the report on the right, the controls and what they
+             * are about on the left, both whole.
+             *
+             * The week goes on the right because it is the tallest thing here by a distance and the
+             * only one that can use a full column. Everything else - who this is, the run so far, the
+             * three ways in - is short, and stacking the short things together is what leaves the
+             * week its height.
+             */
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(20.dp),
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Header(today = today, balance = balance, onShop = onShop)
+                    TotalStreakCard(streak = progress.streak)
+                    // Pushed to the bottom of its column rather than following the card above it.
+                    // The three tiles are the controls and the two things over them are a report, so
+                    // the gap between them is doing the same job the wider spacing does in the tall
+                    // layout - and a column with its slack in the middle reads as two groups, where
+                    // one with the slack at the end reads as a list that stopped early.
+                    Spacer(modifier = Modifier.weight(1f))
+                    tiles(Modifier)
+                }
+                StreakCard(
+                    progress = progress,
+                    today = today,
+                    // The one place the week is given a height to fill instead of taking one. See
+                    // StreakCard: its rungs size themselves off whichever they are handed.
+                    fillHeight = true,
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                )
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Header(today = today, balance = balance, onShop = onShop)
+                // The two streak cards sit closer to each other than to anything else: they are one
+                // subject split across two cards, and the outer spacing would read them as unrelated.
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TotalStreakCard(streak = progress.streak)
+                    StreakCard(progress = progress, today = today)
+                }
+                // A wider gap than the card spacing, so the tiles read as a separate band rather
+                // than as one more card in the same stack. The streak is a report; these are
+                // controls.
+                tiles(Modifier.padding(top = 12.dp))
+            }
+        }
     }
 
     if (calendarOpen) {
