@@ -3,6 +3,8 @@ package eu.andret.ravel
 import android.app.Application
 import eu.andret.ravel.ads.AdConsent
 import eu.andret.ravel.ads.RewardedAds
+import eu.andret.ravel.game.PuzzleCache
+import eu.andret.ravel.game.Puzzles
 import eu.andret.ravel.generator.Ravel
 import eu.andret.ravel.settings.AdAllowance
 import eu.andret.ravel.settings.DailyProgress
@@ -15,6 +17,7 @@ import eu.andret.ravel.settings.Wallet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 /**
  * Gives the dictionary memory back when the system asks for it.
@@ -92,6 +95,31 @@ class RavelApplication : Application() {
      * exists - see [RewardedAds] for why it starts itself off that flow instead of being started.
      */
     val consent: AdConsent by lazy { AdConsent(this, scope) }
+
+    /**
+     * Boards built ahead of the player, on the process's own scope for the same reason [scope] is
+     * here at all: a prefetch that died with the screen that asked for it would be exactly the work
+     * this is meant to have finished by the time a screen wants it.
+     */
+    val puzzles: PuzzleCache by lazy { PuzzleCache(scope) }
+
+    /**
+     * Builds the dictionary before anything asks for a board.
+     *
+     * Collected rather than called once, because a language switch throws the trie away - see
+     * [eu.andret.ravel.settings.LanguageSettings.choose] - and the first board after a switch would
+     * otherwise pay to rebuild it in front of the player, which is the cost this exists to move.
+     *
+     * On [Dispatchers.Default] because [Puzzles.preload] blocks, and it is not a small block: on a
+     * Redmi Note 10 5G it is about three seconds. Doing it here is what keeps those three seconds
+     * off the first spinner the player sees rather than adding them to it.
+     */
+    override fun onCreate() {
+        super.onCreate()
+        scope.launch(Dispatchers.Default) {
+            language.current.collect { Puzzles.preload(it) }
+        }
+    }
 
     val ads: RewardedAds by lazy { RewardedAds(this, consent.canRequestAds, scope) }
 

@@ -25,7 +25,7 @@ import java.util.Date
  *
  * This is the one mechanism in the game by which a player can bring another one, and the shape it
  * takes is not decoration. What spread the game this copies was not the numbers - it was a block of
- * coloured squares that read as a *result* at a glance, in a feed, to somebody who had not played.
+ * colored squares that read as a *result* at a glance, in a feed, to somebody who had not played.
  * A line saying "solved in 4:12" is a fact about a stranger and gets scrolled past; a row of squares
  * with one red one in it is a story, and the story is what gets a reply.
  *
@@ -52,7 +52,7 @@ import java.util.Date
  *
  * ## Why the link is not optional
  *
- * Somebody who has never played this sees coloured squares and a date. Without a way to get to the
+ * Somebody who has never played this sees colored squares and a date. Without a way to get to the
  * game from the same message, the whole thing is an ornament rather than the one route by which a
  * player arrives.
  */
@@ -60,12 +60,12 @@ internal object DailyShare {
     /**
      * The row: each word's length, then how much of it the player found.
      *
-     * Colours and not glyphs, and three of them and not five, because this is read at thumbnail size
+     * Colors and not glyphs, and three of them and not five, because this is read at thumbnail size
      * in somebody else's feed. Green is "I found it", red is "it was showing by the end", yellow is
      * the middle - which is the whole vocabulary needed to make a row tell a story.
      *
      * They are here rather than in a string resource because they are not language: a translator has
-     * nothing to say about which colour means "found it", and putting them in `strings.xml` would
+     * nothing to say about which color means "found it", and putting them in `strings.xml` would
      * invite two locales to disagree about what the same row of squares means.
      *
      * All three are Unicode 12, so a device from before Android 10 has no glyph for them and shows

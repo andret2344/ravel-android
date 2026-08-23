@@ -90,6 +90,31 @@ tasks.register<JavaExec>("printPuzzle") {
     mainClass = "eu.andret.ravel.tools.PrintPuzzleKt"
 }
 
+/**
+ * Times the whole ladder and prints a table:
+ *
+ *     ./gradlew :app:sweepLevels --args="--to 300" --quiet > sweep.csv
+ *
+ * The CSV goes to stdout and the summary to stderr, so that line leaves a file holding nothing but
+ * the table and still prints the summary to the terminal. See SweepLevels.kt for why the tool
+ * reaches under `Ravel` instead of calling `boardOrNull` the way the game does.
+ *
+ * Gradle's own `--quiet` is wanted here, unlike in `printPuzzle`, and for the opposite reason: its
+ * task logging goes to stdout and would otherwise be interleaved into the CSV, while the summary
+ * this task writes is on stderr and comes through regardless. `printPuzzle` takes its `--quiet`
+ * inside `--args` because there the thing being hidden is the solution, not Gradle.
+ */
+tasks.register<JavaExec>("sweepLevels") {
+    group = "ravel"
+    description = "Times every level of the ladder and reports the cost per grid size."
+    dependsOn("compileDebugUnitTestKotlin", "bundleDebugClassesToRuntimeJar")
+    classpath = files({ tasks.named<Test>("testDebugUnitTest").get().classpath })
+    mainClass = "eu.andret.ravel.tools.SweepLevelsKt"
+    // A sweep holds one dictionary and builds boards up to 10x10; the default heap is enough for
+    // the game but not for a run that never gives the trie back between levels.
+    maxHeapSize = "2g"
+}
+
 dependencies {
     implementation(project(":generator"))
     implementation(libs.androidx.activity.compose)

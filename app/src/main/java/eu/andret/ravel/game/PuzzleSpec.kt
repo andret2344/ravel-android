@@ -40,9 +40,23 @@ data class PuzzleSpec(
             // The one axis still fixed per mode. Difficulty decides how much the paths are allowed
             // to wind, which is a curve someone will want to shape per mode later; the size no
             // longer competes with it for that job.
-            difficulty = Difficulty.HARD,
+            difficulty = DIFFICULTY,
             maxWordRank = rankFor(id),
         )
+
+        /**
+         * The difficulty every board is built at.
+         *
+         * Named rather than left inside [of] because there is now a second caller, and it is one
+         * that has no puzzle to ask about: dictionaries are cached per (language, difficulty), so
+         * anything warming that cache before a board is wanted - see [Puzzles.preload] - has to name
+         * the same difficulty [of] will, or it spends a second building a trie nothing will read.
+         *
+         * A single constant is honest only while difficulty is the one axis that does not vary. When
+         * it becomes a curve per mode, which [of] above says somebody will want, this stops being a
+         * constant and the preload has to be told which mode it is warming for.
+         */
+        val DIFFICULTY: Difficulty = Difficulty.HARD
 
         /**
          * A size out of the range [id]'s mode allows at that point in its stream.

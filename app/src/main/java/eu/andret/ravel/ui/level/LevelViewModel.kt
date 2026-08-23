@@ -45,6 +45,7 @@ class LevelViewModel(
     private val language = (application as RavelApplication).language
     private val wallet = (application as RavelApplication).wallet
     private val progress = (application as RavelApplication).levels
+    private val puzzles = (application as RavelApplication).puzzles
 
     /** The level this board is, counting from one. */
     val level: Int = checkNotNull(handle.get<Int>(LevelRoute.ARG_LEVEL)) {
@@ -150,7 +151,11 @@ class LevelViewModel(
         val playing = language.current.value
         running = viewModelScope.launch {
             val next = try {
-                Puzzles.generate(id, playing)
+                // The cache first, and it is usually a hit: playing a level orders the next one, so
+                // the board being opened here was started minutes ago and is either finished or
+                // most of the way there. A miss falls through to the same call this always made -
+                // cancellable, on this scope, on a player's deadline. See [PuzzleCache].
+                (puzzles.take(id, playing) ?: Puzzles.generate(id, playing))
                     ?.let { puzzle ->
                         BoardState.Playing(restored(puzzle, progress.state.value.boardFor(level)))
                     }
@@ -164,6 +169,12 @@ class LevelViewModel(
             _state.value = next
             // There is a board now, or there is not. Either way the clock's answer just changed.
             syncClock()
+            // Ordered once there is a board and not before, so the two searches never share the
+            // phone: the one the player is waiting for would be the one that lost. Ordered even
+            // when this board came back from the cache, since the level after it has not.
+            if (next is BoardState.Playing) {
+                puzzles.prefetch(PuzzleId(PuzzleMode.ENDLESS, level + 1L), playing)
+            }
         }
     }
 
