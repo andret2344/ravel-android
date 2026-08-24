@@ -27,7 +27,6 @@
 
     <string name="daily_title">Daily challenge</string>
     <string name="daily_play">Play today\'s board</string>
-    <string name="daily_review">See today\'s board</string>
     <string name="daily_reviewing">Already solved</string>
 
     <!--
@@ -74,7 +73,6 @@
     <string name="done_gained">+%1$d</string>
     <string name="done_for_board">Board</string>
     <!-- The count and its noun, which are separate everywhere else and one sentence here. -->
-    <string name="done_streak">%1$d %2$s</string>
     <string name="done_exit">Done</string>
 
     <!--
@@ -300,11 +298,14 @@
     <string name="licence_open">Open the licence</string>
     <string name="licence_back">Back</string>
 
+    <string name="settings_licence">Licence</string>
+
     <string name="licence_name_cc_by" translatable="false">CC BY 4.0</string>
     <string name="licence_name_bsd" translatable="false">BSD 2-clause</string>
     <string name="licence_name_wordnet" translatable="false">WordNet licence</string>
     <string name="licence_name_public_domain" translatable="false">Public domain</string>
     <string name="licence_name_unrestricted" translatable="false">No restrictions</string>
+    <string name="licence_name_polyform" translatable="false">PolyForm Noncommercial 1.0.0</string>
 
     <string name="licence_sjp_source" translatable="false">SJP.PL word list</string>
     <string name="licence_sjp_notice" translatable="false">The Polish dictionary is based on the SJP.PL Dictionary (https://sjp.pl), made available under the Creative Commons Attribution 4.0 International licence. The material has been modified: a subset of words was selected and ordered by frequency.</string>
@@ -323,4 +324,12 @@
 
     <string name="licence_oanc_source" translatable="false">Open American National Corpus</string>
     <string name="licence_oanc_notice" translatable="false">English word frequencies are computed from the Open American National Corpus (https://anc.org), which is distributed with no restrictions on use, commercial or otherwise.</string>
+
+    <string name="licence_ravel_source" translatable="false">Ravel</string>
+    <!--
+        Translated, unlike the six notices above: no one else's required wording is being reproduced
+        here, so a Polish player reads this one in Polish. The copyright line stays as it is in every
+        locale - it is a name and a year, and PolyForm asks for it to travel with the software.
+    -->
+    <string name="licence_ravel_notice">Ravel is published under the PolyForm Noncommercial License 1.0.0. The source code is at https://github.com/andret2344/ravel-android and may be read, built and changed for any noncommercial purpose; commercial use is not licensed. Copyright 2026 Andret2344. The word lists are not covered by these terms — they are listed above, under the licences of the projects they come from.</string>
 </resources>

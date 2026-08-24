@@ -12,6 +12,16 @@ a rule here that needs more than one sentence of justification, that justificati
 `DECISIONS.md` material. This file is loaded into context every session; the other one is read when
 somebody is about to change something.
 
+`README.md` is the third file, and it faces outward: what Ravel is, how it is built, run and
+tested, and where the other documents are. **It must describe the project as it stands right now
+and must be updated in the same commit as any change that makes it wrong** — a module, a Gradle
+command, a mode, a documentation file, a dictionary source. **It is not a changelog**: never
+"now", "no longer", "recently", "used to"; a reader who has never seen an earlier version is the
+only reader it is written for. Git already holds the history. Its badges are part of that: the
+Kotlin, Android SDK and JDK ones carry hard-coded numbers, so **moving a version in
+`libs.versions.toml`, `app/build.gradle.kts` or the CI workflow means moving the badge too** —
+nothing fails when they drift apart.
+
 ## What this is
 
 Ravel is an Android word puzzle. The player is shown a grid of letters, a list of word *lengths*,
@@ -276,6 +286,11 @@ ENABLE and OANC need nothing and are listed anyway.
 
 The notices and the source names are `translatable="false"` on purpose: a required notice is required
 in its own wording, and these are proper names.
+
+The repository's own code is under **PolyForm Noncommercial 1.0.0** (`LICENSE.md`), which covers the
+code and nothing else. **Every third-party data file in the tree must be named in that file's "What
+it does not cover" list** — a corpus that ships without being carved out is being relicensed by
+accident.
 
 **Adding a dictionary source means adding an entry here in the same commit** — the licence obligation
 starts when the data ships, not when somebody remembers.

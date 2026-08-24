@@ -1,10 +1,10 @@
 [versions]
-agp = "9.3.1"
+agp = "9.3.2"
 kotlin = "2.4.10"
 coreKtx = "1.19.0"
 junit = "4.13.2"
 activityCompose = "1.13.0"
-composeUi = "1.11.4"
+composeUi = "1.12.0"
 composeMaterial3 = "1.4.0"
 lifecycle = "2.11.0"
 navigationCompose = "2.9.8"

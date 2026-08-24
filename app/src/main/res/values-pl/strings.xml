@@ -13,7 +13,6 @@
 
     <string name="daily_title">Wyzwanie dnia</string>
     <string name="daily_play">Zagraj dzisiejszą planszę</string>
-    <string name="daily_review">Zobacz dzisiejszą planszę</string>
     <string name="daily_reviewing">Rozwiązane</string>
 
     <string name="daily_prompt_title">Dzisiejsza plansza czeka</string>
@@ -46,7 +45,6 @@
     <string name="done_title">Rozwiązane!</string>
     <string name="done_gained">+%1$d</string>
     <string name="done_for_board">Plansza</string>
-    <string name="done_streak">%1$d %2$s</string>
     <string name="done_exit">Gotowe</string>
 
     <string name="streak_title">Seria tygodniowa</string>
@@ -176,4 +174,6 @@
     <string name="settings_sources_note">Słowniki powstają z publicznych list słów i korpusów. Dotknij źródła, aby zobaczyć jego licencję.</string>
     <string name="licence_open">Otwórz licencję</string>
     <string name="licence_back">Wstecz</string>
+    <string name="settings_licence">Licencja</string>
+    <string name="licence_ravel_notice">Ravel jest wydany na licencji PolyForm Noncommercial 1.0.0. Kod źródłowy jest dostępny pod adresem https://github.com/andret2344/ravel-android i można go czytać, budować i zmieniać w każdym celu niekomercyjnym; użycie komercyjne nie jest objęte licencją. Copyright 2026 Andret2344. Listy słów nie są objęte tymi warunkami — są wymienione powyżej, na licencjach projektów, z których pochodzą.</string>
 </resources>

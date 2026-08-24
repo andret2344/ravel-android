@@ -6,6 +6,6 @@
 local.properties
 
 # The raw corpora the dictionaries are built from: 179 MB, and regenerable. What the build actually
-# reads is generator/src/main/resources/slownik-*.txt, which is committed. See generator/DICTIONARY.md
+# reads is generator/src/main/resources/dictionary-*.txt, which is committed. See generator/DICTIONARY.md
 # for where each source comes from, and for the OANC checksum to compare a fresh download against.
 /generator/data/
