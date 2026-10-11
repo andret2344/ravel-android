@@ -19,7 +19,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -116,17 +118,31 @@ internal fun PlayableBoard(
     )
 }
 
+/**
+ * The spinner, and - once [slow] - why the player need not stare at it.
+ *
+ * The way out is a concrete place rather than "you can leave": the build only runs while the app is
+ * in front, so the honest offer is something else *in* the game, and the daily is the one thing
+ * there is always something to do on. Null [onElsewhere] shows the text without the button.
+ */
 @Composable
-internal fun GeneratingBoard() {
+internal fun GeneratingBoard(slow: Boolean = false, onElsewhere: (() -> Unit)? = null) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         CircularProgressIndicator()
         Text(
-            text = stringResource(R.string.board_generating),
+            text = stringResource(if (slow) R.string.board_slow else R.string.board_generating),
             style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center,
+            // The text changes under a spinner nobody is touching, so a screen reader would never
+            // hear the "you need not wait" half without being told it changed.
+            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
         )
+        if (slow && onElsewhere != null) {
+            OutlinedButton(onClick = onElsewhere) { Text(stringResource(R.string.board_slow_daily)) }
+        }
     }
 }
 

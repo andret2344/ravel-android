@@ -99,8 +99,10 @@ Rules:
   ratio is load-bearing in the donor loop and in `BoardSpec.wordCountFor` — see `DECISIONS.md`.
 - **Path shape (`turnRatio`, `directness`, `foldRatio`, all in `Board.kt`) is enforced per word
   during enumeration and against the worst word**, never on the finished board, never as an average.
-- **Generation blocks and must be called inside `runInterruptible`** so leaving a screen cancels the
-  search. Design against the tail (10x10 worst 2.7 s), not the median.
+- **Generation blocks and must be called inside `runInterruptible`** so cancelling its coroutine
+  stops the search - a screen's own build when the screen goes, a cache build on eviction or a
+  language switch. Design against the tail, not the median — and against a phone, not the desktop table
+  (10x10 worst 2.7 s there; an order of magnitude more on a mid-range phone).
 - Dictionaries are cached per (language, difficulty); `RavelApplication.onTrimMemory` calls
   `Ravel.forget()`. `DictionaryFootprint` asserts the heap budget — `generator/DICTIONARY.md`
   explains the 35 000 cap.
@@ -125,9 +127,10 @@ This is the part most easily broken by an innocent-looking change.
 - **The vocabulary curve cannot be extended past 2500 by raising the cap.** Harder late levels need a
   second axis.
 - **The daily's two ceilings are flat, not ramps**: `DAILY_MAX_SIZE` (8), `DAILY_MAX_RANK` (8000).
-- **Board identity is really *(id, generator version)*.** Changing search order, a difficulty
-  constant, the length band or the dictionary reissues puzzles — a deliberate decision every time,
-  never a side effect.
+- **Board identity is really *(id, generator version)*** — except for a board already on the shelf,
+  which stays the board the player started across an update. Changing search order, a difficulty
+  constant, the length band or the dictionary reissues every other puzzle — a deliberate decision
+  every time, never a side effect.
 - **`DayResult.wordCount` is a record, not a derivation, and `Int?` means "nobody counted".** Never
   default it to `0`. `complete` takes a `ShareCard`, so a solved day cannot be recorded without one
   entry per word.
@@ -157,11 +160,34 @@ This is the part most easily broken by an innocent-looking change.
 board — drag, tap, hint — funnels through `withPath`**. The whole rule set is testable with no device.
 
 `RavelApplication` holds the process-wide singletons — `wallet`, `language`, `progress` (daily),
-`levels`. **Screens reach them through their `AndroidViewModel`, never by constructing their own.**
+`levels`, `puzzles`. **Screens reach them through their `AndroidViewModel`, never by constructing their own.**
 
 `RavelApp.kt` is the whole navigation graph: five tabs, each keeping its own back stack. Screens live
 under `ui/<area>/` as `XScreen.kt` + `XViewModel.kt`; board rendering splits across `ui/board/`
 (`BoardView` decides what a cell means, `BoardPainter` draws it).
+
+Boards are built ahead in `PuzzleCache` (`game/PuzzleCache.kt`, held by `RavelApplication`):
+
+- **The level screen builds through the cache (`obtain`), never on its own scope**, so leaving the
+  screen stops the waiting, not the search. After `SLOW_AFTER_MILLIS` (30 s) it says so and offers
+  the daily - never "you can leave the app": the build only runs while the app is in front.
+- **The daily screen still builds its misses itself** (`take`, then `Puzzles.generate`): its misses
+  are reviews, which must not take today's slot.
+- **A build that ended in null is started again on the next request**, not answered from memory: a
+  frozen process spends its wall-clock deadline asleep.
+- **Never order a prefetch while a screen is still waiting on its own search** — level *n + 1* goes
+  out once level *n* is on screen; today's daily goes out from the menu, where nothing is waiting.
+- **Starting level *n* orders *n + 1* and *n + 2* (`LOOKAHEAD`).** Background work runs only while
+  the app is on screen - Android freezes cached processes - so the lookahead is counted in levels
+  of foreground play, not in wall-clock time. **Built one at a time per mode, nearest first.**
+- **Slots are per mode (`capacityOf`, exhaustive): `1 + LOOKAHEAD` endless, one daily.** Never a
+  shared pool.
+- **Never cancel the cache from `onTrimMemory`.**
+- **Every built board goes on the shelf (`StoredBoards`, `ravel-boards`) until solved**: prefetches
+  on completion, a screen's own build through `keep`, removal through `solved`. A daily *review*
+  is never kept — it would take today's one slot.
+- **The `RavelGen` log line in `Puzzles.generate` is temporary**: remove it once the device numbers
+  are in `DECISIONS.md`.
 
 Persistence is SharedPreferences plus JSON (`settings/SavedBoards.kt`, single-letter keys).
 `LevelProgress` and `DailyProgress` are interfaces because storage is expected to become an account.

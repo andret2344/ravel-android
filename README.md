@@ -39,7 +39,8 @@ with random restarts — it blocks, it has a long tail, and it can be interrupte
 
 The app keeps puzzle rules in `app/.../game/`, where `Puzzle` is immutable and every move returns a
 new puzzle. Screens live under `ui/<area>/` as `XScreen.kt` + `XViewModel.kt`. Persistence is
-SharedPreferences plus JSON.
+SharedPreferences plus JSON. Boards are built ahead of the player and kept on the device until
+solved (`app/.../game/PuzzleCache.kt`), because a large board can take a minute on a phone.
 
 ## Build and test
 

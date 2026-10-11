@@ -20,6 +20,8 @@
 
     <!-- The board screen itself, which is the same screen in both game modes. -->
     <string name="board_generating">Building the board…</string>
+    <string name="board_slow">This board is a big one and takes longer to build. You don\'t have to wait here: it keeps building while you play the daily challenge.</string>
+    <string name="board_slow_daily">Play the daily challenge</string>
     <string name="board_failed">Could not build a board.</string>
     <string name="board_retry">Try again</string>
     <string name="board_description">Board %1$d by %2$d</string>

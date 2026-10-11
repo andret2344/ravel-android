@@ -238,6 +238,7 @@ fun RavelApp(
                             },
                             onMenu = { navController.popBackStack() },
                             onShop = { navController.switchTo(RavelTab.SHOP) },
+                            onDaily = { navController.switchTo(RavelTab.DAILY) },
                             modifier = content,
                         )
                     }

@@ -12,6 +12,7 @@ import eu.andret.ravel.settings.HapticSettings
 import eu.andret.ravel.settings.LanguageSettings
 import eu.andret.ravel.settings.LevelProgress
 import eu.andret.ravel.settings.StoredDailyProgress
+import eu.andret.ravel.settings.StoredBoards
 import eu.andret.ravel.settings.StoredLevelProgress
 import eu.andret.ravel.settings.Wallet
 import kotlinx.coroutines.CoroutineScope
@@ -101,7 +102,7 @@ class RavelApplication : Application() {
      * here at all: a prefetch that died with the screen that asked for it would be exactly the work
      * this is meant to have finished by the time a screen wants it.
      */
-    val puzzles: PuzzleCache by lazy { PuzzleCache(scope) }
+    val puzzles: PuzzleCache by lazy { PuzzleCache(scope, StoredBoards(this)) }
 
     /**
      * Builds the dictionary before anything asks for a board.

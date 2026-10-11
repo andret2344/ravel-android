@@ -6,6 +6,8 @@
     <string name="tab_settings">Opcje</string>
 
     <string name="board_generating">Układam planszę…</string>
+    <string name="board_slow">Ta plansza jest duża i układa się dłużej. Nie musisz tu czekać: będzie się układać dalej, gdy zagrasz w wyzwanie dnia.</string>
+    <string name="board_slow_daily">Zagraj w wyzwanie dnia</string>
     <string name="board_failed">Nie udało się wygenerować planszy.</string>
     <string name="board_retry">Spróbuj ponownie</string>
     <string name="board_description">Plansza %1$d na %2$d</string>

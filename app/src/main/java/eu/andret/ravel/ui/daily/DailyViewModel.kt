@@ -49,6 +49,7 @@ class DailyViewModel(
     private val language = (application as RavelApplication).language
     private val wallet = (application as RavelApplication).wallet
     private val progress = (application as RavelApplication).progress
+    private val puzzles = (application as RavelApplication).puzzles
 
     /** The day this board belongs to, as a [DailyDate] ordinal. */
     val ordinal: Long = checkNotNull(handle.get<Long>(DailyRoute.ARG_ORDINAL)) {
@@ -139,7 +140,14 @@ class DailyViewModel(
         val playing = language.current.value
         running = viewModelScope.launch {
             val next = try {
-                Puzzles.generate(id, playing)
+                // Today's board was ordered by the menu in front of this screen; any other day
+                // misses and is built here as it always was. See [eu.andret.ravel.game.PuzzleCache].
+                // Written down only when it is going to be played: a review's board would take the
+                // daily's one slot from today's.
+                (puzzles.take(id, playing)
+                    ?: Puzzles.generate(id, playing)?.also {
+                        if (!review) puzzles.keep(id, playing, it)
+                    })
                     ?.let { puzzle ->
                         BoardState.Playing(
                             when {
@@ -295,6 +303,7 @@ class DailyViewModel(
         // in opens for review, which never reaches this method. A player who crosses midnight
         // mid-solve is paid for the day they were solving.
         val counted = progress.complete(card)
+        puzzles.solved(id, card.language)
         val streak = progress.state.value.streak
         val forStreak = if (counted) Streak.rewardFor(Streak.dayInCycle(streak)) else 0
         if (forStreak > 0) wallet.earn(forStreak)

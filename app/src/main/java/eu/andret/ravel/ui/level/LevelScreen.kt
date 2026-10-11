@@ -49,15 +49,18 @@ import eu.andret.ravel.ui.theme.goldColors
  *
  * @param onNext opens the level after this one, in place of this board rather than on top of it.
  * @param onMenu goes back to the ladder.
+ * @param onDaily offered while a slow board builds, so the wait can be spent somewhere else.
  */
 @Composable
 fun LevelScreen(
     onNext: (Int) -> Unit,
     onMenu: () -> Unit,
     onShop: () -> Unit,
+    onDaily: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: LevelViewModel = viewModel(),
 ) {
+    val slow by viewModel.slow.collectAsStateWithLifecycle()
     val state by viewModel.state.collectAsStateWithLifecycle()
     val balance by viewModel.balance.collectAsStateWithLifecycle()
     val bought by viewModel.bought.collectAsStateWithLifecycle()
@@ -109,7 +112,7 @@ fun LevelScreen(
         title = { Title(level = viewModel.level, puzzle = (state as? BoardState.Playing)?.puzzle) },
         board = {
             when (val current = state) {
-                BoardState.Generating -> GeneratingBoard()
+                BoardState.Generating -> GeneratingBoard(slow, onDaily)
                 is BoardState.Failed -> FailedBoard(current.reason, viewModel::generate)
                 is BoardState.Playing -> PlayableBoard(
                     puzzle = current.puzzle,

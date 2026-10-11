@@ -71,6 +71,96 @@ difficulty) and why `RavelApplication.onTrimMemory` calls `Ravel.forget()`. `Dif
 is 35 000 for that reason as much as for what lies past it — `DictionaryFootprint` asserts the
 budget, `generator/DICTIONARY.md` explains the content argument.
 
+**The table above is a desktop JVM, and a phone is not one.** A first run on a Redmi Note 10 5G put
+the same search an order of magnitude slower, with some 10x10 levels below 300 not finishing inside
+`Puzzles.DEFAULT_TIMEOUT_MILLIS` at all — deterministically, since the seed fixes the search. The
+device table is **not recorded yet**: it is to be measured with the `RavelGen` log line in
+`Puzzles.generate`, which stays in the code until it is, and then goes. Until then, treat the
+figures in `PuzzleCache` and `Puzzles` KDoc as a single preliminary run, not as the measurement.
+
+### Why boards are built before they are asked for
+
+`PuzzleCache` (on `RavelApplication`'s scope) builds the next board while the player is busy with
+the current one: `LevelViewModel` orders level *n + 1* once level *n* is on screen, and
+`DailyMenuViewModel` orders today's board while the calendar is showing. Both board screens ask the
+cache first and fall through to `Puzzles.generate` on a miss.
+
+- **It changes nothing about what a board is.** The other ways to make the slow levels cheaper —
+  a gentler size ramp, looser shape dials, a different search order — all reissue puzzles. This
+  fixes the wait without touching identity.
+- **`take` never generates.** A miss answers null and the screen generates on its own scope, so
+  leaving a screen still cancels the only search a player is waiting on. A screen that stops
+  waiting for a prefetch does not cancel the prefetch: its result is kept, which is the point.
+  *Revisited:* see "Why the level screen builds through the cache" below - this now holds for the
+  daily screen only.
+- **A prefetch is ordered only once the current board is on screen**, so the search the player is
+  waiting for never shares the phone with the one they are not.
+- **Starting level *n* orders *n + 1* and *n + 2*.** The first version ordered only *n + 1*, on the
+  assumption that a prefetch keeps running when the player leaves the app. It does not: Android
+  freezes a cached process within seconds of it leaving the foreground, so background work really
+  happens only while the game is on screen. A fast player who finishes level *n* and closes the app
+  leaves the slow *n + 1* half-built, and the process is later killed with it. Two levels of
+  foreground play is the budget instead; a build lost to a kill restarts behind the level the
+  player returns to, which is on the shelf and still has to be finished.
+- **The two are built one after the other, not side by side** (a fair `Mutex` per mode). Side by
+  side finishes both later on a phone that is already warm from the player's own board, and *n + 1*
+  is the one needed first. Per mode, so today's daily never queues behind two slow levels.
+- **Slots are counted per mode: `1 + LOOKAHEAD` (3) for endless, one for the daily.** The board
+  being played and the two after it; fewer and the one being played is evicted by its own
+  successors on a back-and-re-enter. A shared pool would let level prefetches push out today's
+  board and the reverse.
+- **A different language clears everything**, in-flight searches included.
+- **A prefetch gets `PREFETCH_TIMEOUT_MILLIS` (3 min), not the player's 20 s.** Nobody is watching,
+  so the question is "when is this device hopeless", not "how long will they sit here". A timed-out
+  prefetch is cached as its null; retrying would be the same deterministic search again.
+- **The daily menu orders today's board even for a player who only came to look at the streak.**
+  This reverses the menu's earlier "starts no generation" rule, which assumed a board was a second
+  or two. Not ordered for a day already solved — that board is only ever reviewed.
+- **No `forget()`, and the cache is not dropped in `onTrimMemory`.** `TRIM_MEMORY_UI_HIDDEN` fires
+  whenever the player leaves the app, often with a build still running that the freezer only
+  pauses; finished boards are a few kilobytes.
+- **`Puzzles.preload` builds the dictionary at process start** and again on every language switch,
+  so the first board does not pay for the trie in front of the player.
+
+**Built boards are written down, not only held in memory** (`StoredBoards`, preference file
+`ravel-boards`, backed up). Memory alone loses everything when Android kills the process in the
+background, and the player comes back to the level they were on with nothing held — for the slow
+levels, a deterministic failure on every retry. A board goes on the shelf when a prefetch finishes
+or a screen builds it, and leaves when it is solved; the shelf keeps the same per-mode count as
+memory, per language, evicting the lowest ordinal. Stored whole (letters and solution), because
+the seed is the thing that is expensive to turn back into a board.
+
+A side effect, accepted: a shelved board survives a generator change. The player finishes the
+board they started, against which their saved marks were made, instead of having the marks dropped
+by `restored` onto a reissued grid. Boards not yet built still reissue.
+
+What the shelf does not cover: a prefetch killed before it finished, and a level reached with
+nothing built - a restore from a backup older than the board, a phone slower than the prefetch
+deadline. On the 20-second screen deadline both failed on every retry; the next section is the fix.
+
+### Why the level screen builds through the cache
+
+The level screen asks `PuzzleCache.obtain`, which builds a miss on the cache's own scope with
+`PREFETCH_TIMEOUT_MILLIS`, instead of `Puzzles.generate` with the 20-second deadline. Leaving the
+screen stops the waiting, not the search.
+
+- **Background from the start, not a hand-off after a timeout.** Handing over after 30 s was the
+  other option and was rejected: the seed makes the search deterministic, so the background build
+  would start from zero and the first 30 s would be thrown away - about 98 s instead of 68 s for
+  level 238.
+- **After 30 s (`SLOW_AFTER_MILLIS`) the spinner says the board is slow and offers the daily.** Not
+  "you can leave and come back": Android freezes a backgrounded app within seconds, so the build only
+  runs while the game is in front. The offer is a concrete place inside the game where the wait
+  is not wasted.
+- **A build that ended in null is retried on the next request.** The search is deterministic, but
+  its deadline is wall-clock time, and a process frozen mid-build spends that deadline asleep.
+- **The daily screen keeps the old path.** Its misses are days opened for review, which must not
+  take today's one slot on the shelf, and its boards (8x8 at most) fit the deadline.
+
+This hides the cost rather than removing it: the first board of a fresh install and any board
+reached with nothing prefetched still pay in full. Removing it is the layout search, and changing
+that reissues puzzles.
+
 ### Base forms only, by opposite routes
 
 - **Polish** (51 685, from PoliMorf) keeps the lemmas. Three quarters of the old 247 012-entry list
@@ -402,6 +492,18 @@ gives Polish four forms of a noun the icon does not need.
 The keep rule and the reasoning are in `app/proguard-rules.pro`, which is deliberately short.
 Installing a release build and opening it is therefore a release-checklist step and not an optional
 one, and it is the step to repeat whenever the ads SDK moves.
+
+### Why `compose-group-mapping` is pinned in `app/build.gradle.kts`
+
+After the move to AGP 9.4.1 / Kotlin 2.4.21, every release build failed with `Could not find
+org.jetbrains.kotlin:compose-group-mapping:2.2.10`. The Compose compiler plugin requests that
+artifact at the Kotlin version it believes is running, and under AGP 9's built-in Kotlin that is
+AGP's bundled 2.2.10, which was never published. Debug builds do not shrink and never resolve it.
+
+Pinned to `libs.versions.kotlin` rather than switched off with `includeComposeMappingFile = false`,
+which also builds but leaves release stack traces through composables unreadable. Rolling AGP back
+was the third option and was not wanted. The pin is a workaround: when commenting it out still
+lets `:app:assembleRelease` pass, delete it.
 
 ### Why `ravel-ads` is in the backup rules
 

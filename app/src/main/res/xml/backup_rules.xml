@@ -20,4 +20,5 @@
     <include domain="sharedpref" path="ravel-daily.xml" />
     <include domain="sharedpref" path="ravel-settings.xml" />
     <include domain="sharedpref" path="ravel-ads.xml" />
+    <include domain="sharedpref" path="ravel-boards.xml" />
 </full-backup-content>

@@ -2,19 +2,29 @@ package eu.andret.ravel.ui.daily
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import eu.andret.ravel.RavelApplication
 import eu.andret.ravel.game.DailyDate
+import eu.andret.ravel.game.PuzzleId
+import eu.andret.ravel.game.PuzzleMode
 import eu.andret.ravel.settings.DailyProgressState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 /**
  * What the menu in front of the daily challenge knows: the run so far, the month being looked at,
  * and which day the play button opens.
  *
- * Holds no puzzle and starts no generation. The board is a screen away and a second or two of work,
- * and starting it here would spend that on every player who opened the tab to look at their streak.
+ * Holds no puzzle, but orders today's from [eu.andret.ravel.game.PuzzleCache] while the player is
+ * still looking at the calendar. This used to start nothing, on the argument that the board was "a
+ * second or two of work" and not worth spending on a player who only came to check their streak.
+ * On a phone it is several seconds, and the cache keeps what it builds, so the only waste left is
+ * a board for a player who never presses play - against a spinner for every one who does.
+ *
+ * Not ordered for a day already solved: its board is only ever opened for review, and a review is
+ * not worth a core on the chance somebody wants one.
  *
  * [today] is fixed when the menu opens, for the same reason [DailyViewModel] fixes its date: a
  * calendar that moved its "today" ring under a player at midnight would be stranger than one that
@@ -24,6 +34,19 @@ class DailyMenuViewModel(application: Application) : AndroidViewModel(applicatio
     private val progress = (application as RavelApplication).progress
 
     val today: Long = DailyDate.today()
+
+    init {
+        val puzzles = (application as RavelApplication).puzzles
+        // Collected for the reason every board's view model collects it: the view model outlives
+        // the activity a language switch recreates, and the switch empties the cache.
+        viewModelScope.launch {
+            (application as RavelApplication).language.current.collect { playing ->
+                if (!progress.state.value.isSolved(today)) {
+                    puzzles.prefetch(PuzzleId(PuzzleMode.DAILY, today), playing)
+                }
+            }
+        }
+    }
 
     val state: StateFlow<DailyProgressState> = progress.state
 

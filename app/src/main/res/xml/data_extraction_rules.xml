@@ -28,6 +28,14 @@
 
     See AdAllowance.remainingFrom, which is where all three of those actually live.
 
+    ## ravel-boards, which is derivable and is here anyway
+
+    Built boards, kept until solved (see PuzzleCache). Every one of them could be rebuilt from its
+    seed, which is the argument for leaving it out - and the argument against is that some of them
+    cannot be rebuilt on the phone inside the player's deadline at all. A restore that brought back
+    the level without its board would put the player in front of a spinner that fails every time.
+    It is a handful of entries of under a kilobyte each.
+
     ## The one thing this cannot defend, and when to come back
 
     A restored balance is a restored balance. Once coins can be bought with real money, "spend, then
@@ -43,6 +51,7 @@
         <include domain="sharedpref" path="ravel-daily.xml" />
         <include domain="sharedpref" path="ravel-settings.xml" />
         <include domain="sharedpref" path="ravel-ads.xml" />
+        <include domain="sharedpref" path="ravel-boards.xml" />
     </cloud-backup>
     <!--
         Device-to-device transfer, which is a different path with the same answer. It is a copy onto
@@ -56,5 +65,6 @@
         <include domain="sharedpref" path="ravel-daily.xml" />
         <include domain="sharedpref" path="ravel-settings.xml" />
         <include domain="sharedpref" path="ravel-ads.xml" />
+        <include domain="sharedpref" path="ravel-boards.xml" />
     </device-transfer>
 </data-extraction-rules>
