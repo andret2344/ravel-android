@@ -66,6 +66,24 @@ The median came down from 0.8 s when the length band opened: more, shorter paths
 easily than a full set of twelve-letter ones. **The tail did not move** — it is the uniqueness search,
 not the partition, and it is still the number to design against.
 
+**Revisited: the tail is the partition, and it was the layout budget.** `:app:sweepLevels` over
+levels 1-300 put 99% of every slow board in layout, with uniqueness at about a millisecond. Each
+failed layout ran `SearchBudget.LAYOUT_NODES` (500 000) to exhaustion, ~175 ms on a 10x10, and the
+slow levels were simply the ones that drew many failures. Desktop JVM, one run per level, ms:
+
+| `LAYOUT_NODES` | 10x10 median | 10x10 p90 | 10x10 max | 9x9 max | 8x8 max | over 2 s |
+|---|---|---|---|---|---|---|
+| 500 000 | 703 | 3018 | 5791 | 1164 | 713 | 6 of 300 |
+| 20 000 | 240 | 876 | 1383 | 381 | 155 | 0 of 300 |
+
+On the 46 boards of 9x9 and up: 100 000 left a 3.2 s worst case, 30 000 1.7 s, 20 000 0.8 s and
+10 000 0.8 s, with English following Polish. 10 000 was rejected on board shape, not speed: an
+exhausted budget counts as an unshapeable layout, and 200 of those (`LAYOUTS_BEFORE_EASING`) loosen
+the path-shape ceilings. The worst level reached 164 at 10 000 and 86 at 20 000.
+
+This reissued every board in both modes (see "What reissuing has already cost"). The phone numbers
+quoted in `PuzzleCache` and `Puzzles` predate it.
+
 Dictionaries cost 23–33 MB at the shipped `HARD`, which is why they are cached per (language,
 difficulty) and why `RavelApplication.onTrimMemory` calls `Ravel.forget()`. `Difficulty.HARD.maxRank`
 is 35 000 for that reason as much as for what lies past it — `DictionaryFootprint` asserts the
@@ -246,6 +264,8 @@ Board identity is really *(id, generator version)*.
 - **Narrowing the daily's spec** reissued every daily ever played. `DailyViewModel.restored` drops
   saved marks that no longer fit, so nothing crashes, but reviewing an old day now shows a different
   board than was solved.
+- **`LAYOUT_NODES` 500 000 to 20 000** reissued every puzzle in both modes, before any release
+  (`versionName` 0.1.0), which is the only reason it cost nothing. See "Generation cost, measured".
 
 ### Why `DayResult.wordCount` is a record, not a derivation, and is `Int?`
 
@@ -514,6 +534,58 @@ answers winding the clock back.
 **The commit that adds in-app purchases has to revisit this**: a restored balance is a restored
 balance, and "spend, then restore" can only really be answered by a server.
 
+### Coins for real money: planned, after accounts
+
+Decided 2026-10-11, not built. Coins will be sold through Google Play Billing, as three consumable
+packs (around 500 / 1 500 / 4 000 coins - 5 / 15 / 40 word hints - with the bonus on the larger
+ones; prices live in the Play Console, the code knows only product ids).
+
+- **Verified on a server, not on the phone.** Purchases wait for the account layer (Firebase Auth +
+  Firestore, see the privacy policy). Checking on the device alone was the faster option and was
+  turned down: a patched client grants itself coins, and a refunded purchase keeps them, with
+  nothing on the device able to notice either.
+- **`ravel-wallet` stays in the backup rules until then.** A consumable cannot be restored from the
+  store, so dropping the wallet from backup would make a paying player lose what they bought on
+  every new phone. "Spend, then restore an older backup" stays possible until the balance is
+  server-owned, and it is the cheater's own game it spoils.
+- Open when this is built: whether buying requires signing in (sign-in is optional, and a server
+  balance needs an account to hang on), what happens to a device balance on first sign-in, and
+  the privacy-policy and Data safety changes purchases bring.
+- *Revisited 2026-10-11:* the buyer is identified through **Play Games Services** automatic sign-in,
+  handed to Firebase as a `PlayGamesAuthProvider` credential. Chosen over an invisible Firebase
+  anonymous account created at the first purchase: an anonymous account belongs to one device and
+  is lost with it unless linked to Google first, which is exactly the paying player's coins. Play
+  Games follows the player to a new phone with nothing to remember. **Signed in silently at
+  launch**, as many games do, with no sign-in button in front of the game.
+
+### Progress reset: one ladder, and no second payout
+
+Decided 2026-10-11, not built. A reset clears the current language's ladder and nothing else. The
+coins, the daily history, the streak and the lifetime word and time totals survive it.
+
+The trap it is built around: `Rewards.FOR_COMPLETING` is paid per level, and the first levels are
+5x5 boards solved in seconds, so a reset that paid again would be a coin farm with a button. A
+per-language best level is kept, and replaying anything at or below it pays nothing. The wallet is
+not reset either way - a reset to `STARTING_BALANCE` would refill a spent wallet.
+
+### Sharing from `review`: the last solved day only
+
+Decided 2026-10-11, not built. `review` gets the `ShareButton` for the day `shareFor` still holds a
+card for, which is the last day solved. Per-day cards were reconsidered (about 30 bytes a day) and
+left out on the argument in "Why `ShareCard` is one slot": nobody posts last March.
+
+### The tutorial is a handmade level 0, and gates Daily and Shop
+
+Decided 2026-10-11, not built. Generated boards cannot teach: a lesson needs to know which word is
+laid backwards and which one is left for elimination. So level 0 is a fixed 4x4 per language, kept
+as a constant with a test that proves it unique, and it is **not a `PuzzleMode`** - a third mode
+would have to choose a size ramp and a rank cap for one board.
+
+Skippable, because a player who already knows the rules should not be held. Pays and costs nothing,
+because a tutorial that pays invites skipping back into it, and one that charges for a hint teaches
+the economy as a toll. **Daily and Shop stay locked until it is finished or skipped**: the daily is
+the one board everybody compares, and it should not be anybody's first contact with the rules.
+
 ---
 
 ## Ads and consent
@@ -576,6 +648,15 @@ board is 144 cells.
 Accessibility **off** the board still applies in full: `ui/Coins.kt`, `CalendarCard.kt`,
 `StreakCard.kt`, `SettingsScreen.kt` and the rest carry semantics, and new screens are expected to.
 
+### No skip, no give-up, no free reveal
+
+Decided 2026-10-11. Being stuck on a board is the game asking the player to think, and a way past it
+that costs nothing would answer the question for them. The only exit is hints, paid for in coins.
+
+This does not undo "Why the hint prices came down alone": that was about the *price* of the exit
+being a grind, not about there being one. Skipping was also ruled out structurally before this -
+`LevelProgress` has no setter, see "Why `LevelProgress` has no setter".
+
 ---
 
 ## Known gaps that are not decisions
@@ -584,11 +665,8 @@ Recorded so they are not rediscovered as news, and not defended as intentional.
 
 - **No tutorial.** The game's only clue is a list of lengths, and nothing on any screen explains that
   paths are orthogonal, traceable from either end, and tile the free cells exactly once.
-- **No way out of a stuck board.** No skip, no give-up, no reveal. The only exit is hints, paid for
-  with coins, and the coin faucet is capped at `ADS_PER_DAY` watches plus whatever solving pays.
 - **Re-opening a solved day goes to `review`, which has no footer and so no share button.**
 - **No instrumented or Compose UI tests** (`app/src/androidTest` does not exist). The navigation
   graph's five back stacks, rotation during generation, process death mid-board, and every one of the
   wide layouts are covered by nothing.
-- **No in-app theme override.** `isSystemInDarkTheme` only.
 - **No progress reset** short of clearing app data.

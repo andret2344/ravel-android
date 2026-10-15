@@ -56,8 +56,19 @@ internal class SearchBudget(private var remaining: Long) {
          */
         const val INTERRUPT_CHECK_NODES = 4096
 
-        /** Layouts are cheap when they work at all; a bound of this size binds only on hopeless ones. */
-        const val LAYOUT_NODES = 500_000L
+        /**
+         * Layouts are cheap when they work at all, so this binds only on hopeless ones - and every
+         * node spent on a hopeless one is wasted, which is why it is small. At 500 000 a failed
+         * 10x10 layout cost ~175 ms and failed layouts were nearly all of generation time; 20 000
+         * cut the 10x10 worst case of levels 1-300 from 5.8 s to 1.4 s on a desktop JVM.
+         *
+         * Not lower: an exhausted budget counts as an unshapeable layout, and
+         * `LAYOUTS_BEFORE_EASING` of those loosen the path-shape ceilings. At 10 000 the worst level
+         * reached 164 of that 200; at 20 000 it reaches 86. Lower trades board shape for speed.
+         *
+         * Changing it reissues every board. See `docs/DECISIONS.md`, "Generation cost, measured".
+         */
+        const val LAYOUT_NODES = 20_000L
 
         /** Uniqueness checks on real boards finish in milliseconds, so this is pure insurance. */
         const val UNIQUENESS_NODES = 20_000_000L

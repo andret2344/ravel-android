@@ -166,6 +166,10 @@
 
     <string name="settings_feedback">Reakcje</string>
     <string name="settings_haptics">Wibracje na planszy</string>
+    <string name="settings_theme">Motyw</string>
+    <string name="settings_theme_system">Jak w telefonie</string>
+    <string name="settings_theme_light">Jasny</string>
+    <string name="settings_theme_dark">Ciemny</string>
     <string name="settings_haptics_note">Krótka wibracja przy każdej literze, znalezionym słowie i ukończonej planszy. Reakcja haptyczna w ustawieniach telefonu też musi być włączona.</string>
 
     <string name="settings_privacy">Prywatność</string>

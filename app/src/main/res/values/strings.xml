@@ -274,6 +274,10 @@
     -->
     <string name="settings_feedback">Feedback</string>
     <string name="settings_haptics">Vibration on the board</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_system">Same as the phone</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
     <string name="settings_haptics_note">A short vibration for each letter, a word found and a finished board. Your phone\'s own touch feedback setting has to be on as well.</string>
 
     <!--

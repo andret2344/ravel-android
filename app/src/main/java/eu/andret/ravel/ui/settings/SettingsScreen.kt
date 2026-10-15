@@ -34,15 +34,17 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import eu.andret.ravel.R
 import eu.andret.ravel.generator.Language
+import eu.andret.ravel.settings.ThemeChoice
 import eu.andret.ravel.ui.AdaptiveScreen
 import eu.andret.ravel.ui.about.Licence
 import java.util.Locale
 
 /**
- * The switches. There are two of them, and on some devices a third.
+ * The switches. There are three of them, and on some devices a fourth.
  *
  * The order is what the player is most likely to have come for: the language, then the haptics, then
- * the ad privacy row. Haptics are second rather than first because they are the setting somebody
+ * the theme, then the ad privacy row. The theme comes after the haptics because a phone already has
+ * a dark mode the game follows by default, so it is the setting fewest players need. Haptics are second rather than first because they are the setting somebody
  * arrives at having already felt the thing they want changed, while the language is the one people
  * go looking for before the game has told them anything.
  *
@@ -84,6 +86,7 @@ fun SettingsScreen(
     val unfinished by viewModel.unfinished.collectAsStateWithLifecycle()
     val privacyOptions by viewModel.privacyOptions.collectAsStateWithLifecycle()
     val hapticsEnabled by viewModel.hapticsEnabled.collectAsStateWithLifecycle()
+    val theme by viewModel.theme.collectAsStateWithLifecycle()
 
     // Null under a preview, and the consent form has nowhere to open without one - so the row that
     // opens it is not offered rather than offered and dead.
@@ -177,6 +180,29 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
+    }
+
+    // Laid out rather than behind a picker like the language: three short options that never grow,
+    // and a player choosing between light and dark wants to see the screen change under the list.
+    val themeSection: @Composable () -> Unit = {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = stringResource(R.string.settings_theme),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.selectableGroup()) {
+                    ThemeChoice.entries.forEach { choice ->
+                        Option(
+                            label = stringResource(labelOf(choice)),
+                            selected = choice == theme,
+                            onSelect = { viewModel.chooseTheme(choice) },
+                        )
+                    }
+                }
+            }
         }
     }
 
@@ -297,6 +323,7 @@ fun SettingsScreen(
                     ) {
                         languageSection()
                         feedbackSection()
+                        themeSection()
                         privacySection()
                     }
                     Column(
@@ -310,6 +337,7 @@ fun SettingsScreen(
             } else {
                 languageSection()
                 feedbackSection()
+                themeSection()
                 privacySection()
                 sourcesSection()
                 licenceSection()
@@ -391,7 +419,7 @@ private fun LanguageDialog(
         text = {
             Column(modifier = Modifier.selectableGroup()) {
                 Language.entries.forEach { language ->
-                    LanguageOption(
+                    Option(
                         label = nameOf(language),
                         selected = language == selected,
                         onSelect = { onPick(language) },
@@ -450,12 +478,19 @@ private fun SourceRow(licence: Licence, onOpen: () -> Unit) {
     }
 }
 
+private fun labelOf(choice: ThemeChoice): Int = when (choice) {
+    ThemeChoice.SYSTEM -> R.string.settings_theme_system
+    ThemeChoice.LIGHT -> R.string.settings_theme_light
+    ThemeChoice.DARK -> R.string.settings_theme_dark
+}
+
+/** One radio option, for the language picker and the theme. */
 @Composable
-private fun LanguageOption(label: String, selected: Boolean, onSelect: () -> Unit) {
+private fun Option(label: String, selected: Boolean, onSelect: () -> Unit) {
     Row(
         // The whole row is the target, and the button is drawn rather than clicked: a radio button
         // is a few millimetres of a row that is a finger tall, and a player who taps the word is
-        // choosing the language as much as one who hits the circle.
+        // choosing it as much as one who hits the circle.
         modifier = Modifier
             .fillMaxWidth()
             .selectable(selected = selected, onClick = onSelect, role = Role.RadioButton)

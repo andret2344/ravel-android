@@ -14,6 +14,7 @@ import eu.andret.ravel.settings.LevelProgress
 import eu.andret.ravel.settings.StoredDailyProgress
 import eu.andret.ravel.settings.StoredBoards
 import eu.andret.ravel.settings.StoredLevelProgress
+import eu.andret.ravel.settings.ThemeSettings
 import eu.andret.ravel.settings.Wallet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -69,6 +70,9 @@ class RavelApplication : Application() {
      * [eu.andret.ravel.settings.SETTINGS_FILE].
      */
     val haptics: HapticSettings by lazy { HapticSettings(this) }
+
+    /** Light, dark or the phone's, read by the activity and written by the options tab. */
+    val theme: ThemeSettings by lazy { ThemeSettings(this) }
 
     /**
      * The daily history and the board in progress, for the same reason and with the same lifetime

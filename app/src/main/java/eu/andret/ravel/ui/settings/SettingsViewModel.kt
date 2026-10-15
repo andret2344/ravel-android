@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import eu.andret.ravel.RavelApplication
 import eu.andret.ravel.generator.Language
+import eu.andret.ravel.settings.ThemeChoice
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -37,6 +38,13 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     /** Whether the board buzzes. See [eu.andret.ravel.settings.HapticSettings]. */
     val hapticsEnabled: StateFlow<Boolean> = haptics.enabled
+
+    private val themes = (application as RavelApplication).theme
+
+    val theme: StateFlow<ThemeChoice> = themes.choice
+
+    /** Applies at once, on every screen; nothing is lost by it, so nothing is confirmed. */
+    fun chooseTheme(choice: ThemeChoice) = themes.choose(choice)
 
     /**
      * Whether this device is one that has to be offered a way back into the consent form.

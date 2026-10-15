@@ -1,14 +1,18 @@
 package eu.andret.ravel
 
 import android.content.Context
+import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import eu.andret.ravel.settings.LanguageSettings
+import eu.andret.ravel.settings.ThemeChoice
 import eu.andret.ravel.ui.LoadingScreen
 import eu.andret.ravel.ui.RavelApp
 import eu.andret.ravel.ui.theme.RavelTheme
@@ -45,13 +49,31 @@ class MainActivity : ComponentActivity() {
         setContent {
             val current by language.current.collectAsStateWithLifecycle()
             val settled by ravel.consent.settled.collectAsStateWithLifecycle()
+            val theme by ravel.theme.choice.collectAsStateWithLifecycle()
+            val dark = when (theme) {
+                ThemeChoice.SYSTEM -> isSystemInDarkTheme()
+                ThemeChoice.LIGHT -> false
+                ThemeChoice.DARK -> true
+            }
+            // The bars' icons follow the palette the game is drawn in, not the phone's. Left to
+            // enableEdgeToEdge's own detection they follow the phone, which on a light game over a
+            // dark phone is white clock and battery icons on a white bar. Scrims are the activity
+            // library's own defaults, which it does not expose.
+            LaunchedEffect(dark) {
+                enableEdgeToEdge(
+                    statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) {
+                        dark
+                    },
+                    navigationBarStyle = SystemBarStyle.auto(LIGHT_SCRIM, DARK_SCRIM) { dark },
+                )
+            }
             // Recreated rather than restarted, so the navigation state survives the switch: the
             // player who changes the language from the options tab is still on the options tab
             // afterwards, reading it in the language they just picked.
             LaunchedEffect(current) {
                 if (current != built) recreate()
             }
-            RavelTheme {
+            RavelTheme(darkTheme = dark) {
                 /*
                  * Nothing of the game is drawn until the consent question has been settled.
                  *
@@ -70,5 +92,11 @@ class MainActivity : ComponentActivity() {
                 if (settled) RavelApp() else LoadingScreen()
             }
         }
+    }
+
+    private companion object {
+        /** `androidx.activity`'s private `DefaultLightScrim` and `DefaultDarkScrim`. */
+        val LIGHT_SCRIM = Color.argb(0xe6, 0xFF, 0xFF, 0xFF)
+        val DARK_SCRIM = Color.argb(0x80, 0x1b, 0x1b, 0x1b)
     }
 }

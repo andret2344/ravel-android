@@ -34,6 +34,71 @@ Two Gradle modules:
   runs and tests on a desktop JVM.
 - **`:app`** — the Android app (Compose, single activity). Depends on `:generator`.
 
+## Status: 0.1.0, not released
+
+Three lists, kept current: what exists, what is decided but not built, and what still needs a
+decision before the first release. **Move an item between them in the same commit that changes it**
+- a feature that ships leaves "Planned", a decision that is made leaves "Open". The rules for each
+area are in the sections further down; these lists only say where things stand.
+
+### Built
+
+- **Two modes.** Endless: a ladder of levels, sizes and vocabulary ramped by `PuzzleSpec`. Daily:
+  one board a day, same for everyone, with a calendar, a streak and a shareable result.
+- **Hints and coins.** A letter (40) or a word (100); coins from solving, the streak and rewarded
+  ads. Shop tab with the ad card.
+- **Rewarded ads only**, behind UMP consent gathered before the game is drawn.
+- **Stats tab**; **Options tab**: language (Polish / English - dictionary and UI together), board
+  haptics, theme (phone / light / dark), ad privacy (where required), word sources and licences.
+- **Boards built ahead and kept until solved** (`PuzzleCache`, `StoredBoards`): two levels of
+  lookahead, today's daily from its menu, a "this one is slow" message after 30 s.
+- **Wide layouts** for every screen, through `AdaptiveScreen`.
+- **Backup** of every preference file; **debug-only** level jump.
+
+### Planned - decided, not built
+
+Each of these has requirements already fixed; build to them, do not reopen them.
+
+- **Accounts** - Google sign-in through Firebase Auth, optional. Every requirement in "Commitments
+  made in the privacy policy" below applies.
+- **Leaderboard** - anonymous nickname chosen by the player, opt-out toggle shipped with it.
+- **Analytics** - Firebase, 14-month retention, its own consent.
+- **Coins for real money** - after accounts; three consumable packs (~500 / 1 500 / 4 000), verified
+  on a server with a server-owned balance. **The buyer is identified through Play Games Services,
+  signed in silently at launch** (Firebase `PlayGamesAuthProvider`). The privacy policy and the Data
+  safety form change in the same commit - they still promise optional Google OAuth sign-in. See
+  "The economy".
+- **Tutorial: a handmade "level 0".** 4x4, three or four words, one board per language, a constant in
+  code with a test proving it unique - **not a `PuzzleMode`**. Steps: a word is a path of
+  side-touching cells (shown, then traced); either end works (one word laid backwards); every cell
+  belongs to exactly one word and only lengths are listed; the last word by elimination; hints and
+  coins. Text above and below the board, never over it. Shown before level 1 on first launch and
+  again from Options ("How to play"). **Skippable, pays nothing, costs nothing. Daily and Shop stay
+  locked until it is finished or skipped.** "Seen" is stored **once per player, not per language**,
+  in a backed-up preference file, and moves to the account when accounts exist. No grandfathering of
+  earlier installs - nothing has been released.
+- **Progress reset** - from Options, **the current language's ladder only**. A per-language best
+  level is kept, and **levels at or below it pay nothing when replayed** (otherwise a reset is a coin
+  farm). The wallet, daily history, streak and lifetime word and time totals are untouched; that
+  language's shelved boards are dropped. It does not bring the tutorial back.
+- **Share button on `review`** - for the day `shareFor` still holds a card for (the last solved
+  day) only. No per-day cards.
+- **A release smoke test** - no instrumented or Compose UI tests exist at all.
+
+### Release channels
+
+**Until 1.0.0 the game ships on the alpha and beta tracks only, and boards and the economy may still
+change there** - the store description says so. Generator changes (search order, difficulty
+constants, the length band, `LAYOUT_NODES`, a dictionary) and `Wallet.STARTING_BALANCE` are free to
+move until then. **From 1.0.0 the rules below on reissuing and on the starting balance bind.**
+
+### Open - to decide
+
+- **CRITICAL before the beta: phone measurements.** Measure generation on a real device with the
+  current generator, record it in `DECISIONS.md`, then remove the temporary `RavelGen` log in
+  `Puzzles.generate`. The cache, the lookahead and the 30-second message are all sized by numbers
+  measured on the old generator.
+
 ## Commands
 
 On Windows use `gradlew.bat`; the paths below use the POSIX wrapper.
@@ -102,7 +167,9 @@ Rules:
 - **Generation blocks and must be called inside `runInterruptible`** so cancelling its coroutine
   stops the search - a screen's own build when the screen goes, a cache build on eviction or a
   language switch. Design against the tail, not the median — and against a phone, not the desktop table
-  (10x10 worst 2.7 s there; an order of magnitude more on a mid-range phone).
+  (10x10 worst 1.4 s there over levels 1-300; an order of magnitude more on a mid-range phone).
+- **The tail is the layout search, not uniqueness.** `SearchBudget.LAYOUT_NODES` (20 000) bounds
+  each failed layout; lowering it further trips the shape easing (`LAYOUTS_BEFORE_EASING`).
 - Dictionaries are cached per (language, difficulty); `RavelApplication.onTrimMemory` calls
   `Ravel.forget()`. `DictionaryFootprint` asserts the heap budget — `generator/DICTIONARY.md`
   explains the 35 000 cap.
@@ -130,7 +197,7 @@ This is the part most easily broken by an innocent-looking change.
 - **Board identity is really *(id, generator version)*** — except for a board already on the shelf,
   which stays the board the player started across an update. Changing search order, a difficulty
   constant, the length band or the dictionary reissues every other puzzle — a deliberate decision
-  every time, never a side effect.
+  every time, never a side effect. Before 1.0.0 that decision is cheap; see "Release channels".
 - **`DayResult.wordCount` is a record, not a derivation, and `Int?` means "nobody counted".** Never
   default it to `0`. `complete` takes a `ShareCard`, so a solved day cannot be recorded without one
   entry per word.
@@ -152,15 +219,15 @@ This is the part most easily broken by an innocent-looking change.
 - **The squares must never go into `strings.xml`.** The surrounding layout (`share_text`) is
   translatable; the colours are not.
 - Reachable from exactly two places, both via `ShareButton`: the completion dialog and the calendar's
-  day card. `review` has none — a gap, not a decision.
+  day card. `review` has none — planned, see "Status".
 
 ### App layer
 
 `Puzzle` (game/Puzzle.kt) is immutable; every move returns a new puzzle and **every route into the
 board — drag, tap, hint — funnels through `withPath`**. The whole rule set is testable with no device.
 
-`RavelApplication` holds the process-wide singletons — `wallet`, `language`, `progress` (daily),
-`levels`, `puzzles`. **Screens reach them through their `AndroidViewModel`, never by constructing their own.**
+`RavelApplication` holds the process-wide singletons — `wallet`, `language`, `haptics`, `theme`,
+`progress` (daily), `levels`, `puzzles`. **Screens reach them through their `AndroidViewModel`, never by constructing their own.**
 
 `RavelApp.kt` is the whole navigation graph: five tabs, each keeping its own back stack. Screens live
 under `ui/<area>/` as `XScreen.kt` + `XViewModel.kt`; board rendering splits across `ui/board/`
@@ -248,10 +315,12 @@ share card's squares, and the `translatable="false"` licence notices.
 
 - **Never move one alone.** Three ratios are the design, guarded by `StreakTest` (as a band) and
   `PuzzleTest` (as a pair of inequalities).
-- **`Wallet.STARTING_BALANCE` cannot be raised after release** — that silently grants coins. Write a
+- **`Wallet.STARTING_BALANCE` cannot be raised after 1.0.0** — that silently grants coins. Write a
   grant instead.
 - **If the game turns out winnable through the shop, drop `ADS_PER_DAY` to 2 rather than putting the
   hint prices back.**
+- **Coins for real money are verified on a server and wait for accounts.** Never ship a
+  device-only purchase flow. Three consumable packs; prices live in the Play Console.
 
 ### Showing a coin
 
@@ -335,9 +404,6 @@ Absences that are decisions. **Do not report these as gaps or defects.** Reasoni
 - **No screen-reader support on the board.** `ui/board/BoardGrid.kt` is a bare `Canvas` by design.
   Accessibility everywhere *else* in the app still applies in full and new screens are expected to
   carry semantics.
+- **No skip, give-up or free reveal on a stuck board.** Being stuck is meant to make the player
+  think; the only exit is paid hints.
 
-## Known gaps
-
-Real, unresolved, and listed so they are neither rediscovered as news nor defended as intentional:
-no tutorial; no skip or give-up on a stuck board; no share button on `review`; no instrumented or
-Compose UI tests at all; no in-app theme override; no progress reset.
