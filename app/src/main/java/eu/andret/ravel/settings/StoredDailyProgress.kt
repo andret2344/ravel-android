@@ -131,6 +131,19 @@ class StoredDailyProgress(
         _state.value = next
     }
 
+    /**
+     * Forgets every day, the streak, the board in progress and the share card, in every language -
+     * the whole file, since the daily history is not kept per language. The player's "reset
+     * progress", and nothing else.
+     *
+     * On the concrete store and not on [DailyProgress], for the reason
+     * [StoredLevelProgress.clear] gives.
+     */
+    fun clear() {
+        preferences.edit { this.clear() }
+        _state.value = read()
+    }
+
     private fun read(): DailyProgressState {
         val board = storedBoard()?.takeIf { it.language == language.value }
         val share = storedShare()

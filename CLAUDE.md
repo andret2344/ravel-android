@@ -15,8 +15,9 @@ somebody is about to change something.
 ## What this is
 
 Ravel is an Android word puzzle. The player is shown a grid of letters, a list of word *lengths*,
-and nothing else; each hidden word is a path of orthogonally adjacent cells, traced from either end,
-and the free cells tile exactly once. A board is only publishable when that tiling is unique.
+and nothing else; each hidden word is a path of orthogonally adjacent cells, traced from its first
+letter, and the free cells tile exactly once. A board is only publishable when that tiling is unique
+(proved with words read in either direction, which is stricter than what the player may trace).
 
 Two Gradle modules:
 
@@ -246,20 +247,22 @@ share card's squares, and the `translatable="false"` licence notices.
 
 ## Commitments made in the privacy policy
 
-`docs/privacy-policy.md` is the published policy (GitHub Pages, `main` + `/docs`). It describes an
-account layer that **does not exist in the code yet**. Everything below is a promise already made in
-writing — a requirement on the feature that implements it, not a preference to revisit. Changing any
-of it means changing the policy and the Play Console Data safety form in the same breath.
+`docs/privacy-policy.md` is the published policy (GitHub Pages, `main` + `/docs`). Since 2026-11-06 it
+describes only what ships: data on the device, rewarded AdMob ads and the UMP consent form - no
+accounts, no server, no analytics. Changing what the app collects or sends means changing the policy
+and the Play Console Data safety form in the same breath, **before** the release that does it.
 
 - **The policy URL is in the Play listing: never rename the `ravel-android` repository.** GitHub
   redirects a renamed repository, but not its GitHub Pages site, so the link in Play would break.
-- **To do, not urgent: reconcile the policy with the shipped app before the next Play review.** It
-  describes sign-in, cloud sync, leaderboards, Analytics and Crashlytics as working, while the app
-  ships only rewarded ads and the consent form, and the Data safety form has to describe what the
-  app does today. Either move the unbuilt parts out of the policy until the release that ships them,
-  or keep them and make sure the policy and the Data safety form do not contradict each other.
+- **Ads are rewarded only.** No banners, no interstitials, nothing unsolicited.
+- **EEA/UK/CH consent before personalised ads**, through a Google-certified CMP (UMP SDK), changeable
+  afterwards from settings. See "Ads and consent" above.
+- **The policy names what is stored on the device.** A new kind of locally stored data (a new
+  preference file or key family) goes into section 3 of the policy.
 
-Not yet built:
+Planned, and taken out of the policy until it ships. These were published once, so a player may
+have read them; they remain the requirements for the feature that brings each back, and go back into
+the policy with it:
 
 - **Sign-in is Google OAuth through Firebase Auth, and optional.** The game stays fully playable with
   no account, storing nothing on a server.
@@ -268,15 +271,10 @@ Not yet built:
 - **The leaderboard needs an opt-out toggle in settings.** Ship it with the leaderboard, not after.
 - **Firestore security rules must scope a signed-in user to their own data.**
 - **Firebase Analytics retention must be set to 14 months** in the console; the project default is 2.
+  Analytics consent ships with analytics.
 - **Account deletion is by email only** (andret2344@gmail.com), within 30 days, removing the account,
   its game data and its leaderboard entries. If a Play review rejects the app over the missing in-app
   path, an in-app delete button is the fix — not a change to *what* gets deleted.
-
-Built — see "Ads and consent" above:
-
-- **Ads are rewarded only.** No banners, no interstitials, nothing unsolicited.
-- **EEA/UK/CH consent before personalised ads**, through a Google-certified CMP (UMP SDK), changeable
-  afterwards from settings. Analytics consent ships with analytics, which is not in the project yet.
 
 ## Attribution
 
@@ -311,10 +309,11 @@ Absences that are decisions. **Do not report these as gaps or defects.** Reasoni
 - **No screen-reader support on the board.** `ui/board/BoardGrid.kt` is a bare `Canvas` by design.
   Accessibility everywhere *else* in the app still applies in full and new screens are expected to
   carry semantics.
+- **No skip or give-up on a stuck board.** The way out is a paid hint. Do not add one without being
+  asked.
 
 ## Known gaps
 
 Real, unresolved, and listed so they are neither rediscovered as news nor defended as intentional:
-no skip or give-up on a stuck board; no share button on `review`; no instrumented or
-Compose UI tests at all; no in-app theme override; no progress reset; on Polish boards every `ć`
+no share button on `review`; no instrumented or Compose UI tests at all; on Polish boards every `ć`
 marks the end of a path.

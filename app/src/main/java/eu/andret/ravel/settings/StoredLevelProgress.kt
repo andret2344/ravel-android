@@ -127,6 +127,20 @@ class StoredLevelProgress(
         write(LevelProgressState(completed = level - 1))
     }
 
+    /**
+     * Sends every language's ladder back to level one and zeroes the lifetime totals - the whole
+     * file. The player's "reset progress", and nothing else.
+     *
+     * On the concrete store and not on [LevelProgress], beside [jumpTo]: the interface has no way to
+     * move the ladder, and the one move a player is allowed to make - all the way back - is made by
+     * the application, which is the one holder of this type outside `src/debug`.
+     */
+    fun clear() {
+        preferences.edit { this.clear() }
+        _state.value = read(language.value)
+        _totals.value = readTotals()
+    }
+
     override fun saveBoard(board: SavedBoard) {
         preferences.edit { putString(key(KEY_BOARD), SavedBoards.toJson(board).toString()) }
         _state.value = _state.value.copy(board = board)

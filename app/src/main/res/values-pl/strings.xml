@@ -170,6 +170,17 @@
     <string name="settings_tutorial">Samouczek</string>
     <string name="settings_tutorial_replay">Pokaż samouczek</string>
     <string name="settings_tutorial_note">Zasady gry na małej planszy, którą rozwiązujesz sam. Możesz go pominąć w każdej chwili.</string>
+    <string name="settings_theme">Motyw</string>
+    <string name="settings_theme_system">Jak w telefonie</string>
+    <string name="settings_theme_light">Jasny</string>
+    <string name="settings_theme_dark">Ciemny</string>
+    <string name="settings_progress">Postęp</string>
+    <string name="settings_reset">Resetuj postęp</string>
+    <string name="settings_reset_note">Poziomy we wszystkich językach, historia wyzwań dnia z serią oraz statystyki. Monety zostają.</string>
+    <string name="settings_reset_title">Zresetować cały postęp?</string>
+    <string name="settings_reset_body">Poziomy we wszystkich językach wrócą do poziomu 1, a historia wyzwań dnia, seria i statystyki zostaną usunięte. Monety i ustawienia zostają. Tego nie da się cofnąć.</string>
+    <string name="settings_reset_confirm">Resetuj</string>
+    <string name="settings_reset_cancel">Anuluj</string>
     <string name="tutorial_title">Jak grać</string>
     <string name="tutorial_skip">Pomiń</string>
     <string name="tutorial_start">Zaczynamy</string>

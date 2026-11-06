@@ -5,6 +5,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import eu.andret.ravel.RavelApplication
+import eu.andret.ravel.settings.ThemeChoice
 import eu.andret.ravel.generator.Language
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -33,6 +34,11 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val haptics = (application as RavelApplication).haptics
 
     private val tutorial = (application as RavelApplication).tutorial
+
+    private val theme = (application as RavelApplication).theme
+
+    /** The colours the player picked. See [eu.andret.ravel.settings.ThemeSettings]. */
+    val themeChoice: StateFlow<ThemeChoice> = theme.choice
 
     /** The language being played and read in, which is what the picker marks as chosen. */
     val language: StateFlow<Language> = settings.current
@@ -89,6 +95,14 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     /** Puts the tutorial back over the game, at once. See [eu.andret.ravel.settings.TutorialSettings]. */
     fun replayTutorial() = tutorial.restart()
+
+    fun chooseTheme(choice: ThemeChoice) = theme.choose(choice)
+
+    /**
+     * Wipes all progress, after the screen has had it confirmed. What survives, and why the coins
+     * must, is [RavelApplication.resetProgress]'s to say.
+     */
+    fun resetProgress() = getApplication<RavelApplication>().resetProgress()
 
     /**
      * Reopens the consent form.

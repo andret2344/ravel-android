@@ -588,6 +588,12 @@ board is 144 cells.
 Accessibility **off** the board still applies in full: `ui/Coins.kt`, `CalendarCard.kt`,
 `StreakCard.kt`, `SettingsScreen.kt` and the rest carry semantics, and new screens are expected to.
 
+### No skip or give-up on a stuck board
+
+Decided 2026-11-06, moved here from the known gaps by the owner as an architectural decision. The
+way out of a stuck board is a hint, paid in coins; the coin faucet is capped at `ADS_PER_DAY` watches
+plus whatever solving pays. Do not add a skip, a give-up or a free reveal without being asked.
+
 ---
 
 ## Known gaps that are not decisions
@@ -597,16 +603,24 @@ Recorded so they are not rediscovered as news, and not defended as intentional.
 - ~~**No tutorial.**~~ Closed 2026-11-06 — see "The tutorial" under App layer. The original entry said
   paths are "traceable from either end"; the app has never accepted that (`matchesPlacement` compares
   in order), and the tutorial teaches what the app does.
-- **No way out of a stuck board.** No skip, no give-up, no reveal. The only exit is hints, paid for
-  with coins, and the coin faucet is capped at `ADS_PER_DAY` watches plus whatever solving pays.
+- ~~**No way out of a stuck board.**~~ A decision since 2026-11-06 — see "No skip or give-up on a
+  stuck board" under Deliberate omissions.
 - **Re-opening a solved day goes to `review`, which has no footer and so no share button.**
 - **No instrumented or Compose UI tests** (`app/src/androidTest` does not exist). The navigation
   graph's five back stacks, rotation during generation, process death mid-board, and every one of the
   wide layouts are covered by nothing.
-- **No in-app theme override.** `isSystemInDarkTheme` only.
-- **No progress reset** short of clearing app data.
+- ~~**No in-app theme override.**~~ Closed 2026-11-06: System / Light / Dark in the options tab
+  (`settings/ThemeSettings.kt`), applied in `MainActivity`, which also re-styles the system bars so
+  a forced theme does not draw dark icons on a dark background.
+- ~~**No progress reset.**~~ Closed 2026-11-06: `RavelApplication.resetProgress`, behind a
+  confirmation. It wipes both level ladders, the daily history with the streak, and the lifetime
+  statistics, in every language - the daily history and the statistics are not kept per language, so
+  a per-language reset was considered and dropped. **Coins and today's ad allowance stay**: a reset
+  that refilled the starting balance would be a coin faucet. The clearing methods sit on the concrete
+  stores, not on `LevelProgress` / `DailyProgress`, which keep no way to move the ladder.
 - **On Polish boards every `ć` marks the end of a path.** Measured 2026-11-06: 1249 of the 3877
   words of 4–12 letters within rank 4000 end in `ć` (infinitives), and the letter almost never
   occurs mid-word, so each one hands the player a path end for free. A sample 6x6 showed three, i.e.
-  three of its eight ends. The obvious fix is capping infinitives per board; it was left alone on
-  purpose for now, which is why this is listed rather than rediscovered.
+  three of its eight ends; two sample 10x10s showed six of nine words and seven of eight, since the
+  long Polish words are mostly verbs. The obvious fix is capping infinitives per board; it was left
+  alone on purpose for now, which is why this is listed rather than rediscovered.

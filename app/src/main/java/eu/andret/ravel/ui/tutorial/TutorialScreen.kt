@@ -15,7 +15,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -93,10 +95,19 @@ fun TutorialScreen(viewModel: TutorialViewModel = viewModel()) {
             footer = {
                 TracedWord(puzzle, trace)
                 CluesRow(puzzle.clues)
-                if (step == TutorialStep.DONE) {
-                    Button(onClick = viewModel::finish) {
-                        Text(stringResource(R.string.tutorial_start))
-                    }
+                // Laid out from the first step and only shown on the last. The board is sized from
+                // what the footer leaves, so a button that arrived with the last word moved the
+                // grid up under the player's eyes; held in place, nothing moves. Hidden from
+                // screen readers too until it means something.
+                val done = step == TutorialStep.DONE
+                Button(
+                    onClick = viewModel::finish,
+                    enabled = done,
+                    modifier = Modifier
+                        .alpha(if (done) 1f else 0f)
+                        .then(if (done) Modifier else Modifier.clearAndSetSemantics {}),
+                ) {
+                    Text(stringResource(R.string.tutorial_start))
                 }
             },
         )

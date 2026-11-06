@@ -34,6 +34,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import eu.andret.ravel.R
 import eu.andret.ravel.generator.Language
+import eu.andret.ravel.settings.ThemeChoice
 import eu.andret.ravel.ui.AdaptiveScreen
 import eu.andret.ravel.ui.about.Licence
 import java.util.Locale
@@ -84,6 +85,10 @@ fun SettingsScreen(
     val unfinished by viewModel.unfinished.collectAsStateWithLifecycle()
     val privacyOptions by viewModel.privacyOptions.collectAsStateWithLifecycle()
     val hapticsEnabled by viewModel.hapticsEnabled.collectAsStateWithLifecycle()
+    val themeChoice by viewModel.themeChoice.collectAsStateWithLifecycle()
+
+    /** Whether the reset confirmation is open. */
+    var resetting by remember { mutableStateOf(false) }
 
     // Null under a preview, and the consent form has nowhere to open without one - so the row that
     // opens it is not offered rather than offered and dead.
@@ -180,6 +185,29 @@ fun SettingsScreen(
         }
     }
 
+    // Three options in the card itself rather than behind a dialog like the language: three short
+    // words fit, and the effect is instant, so the player sees each one by tapping through them.
+    val themeSection: @Composable () -> Unit = {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = stringResource(R.string.settings_theme),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.selectableGroup()) {
+                    ThemeChoice.entries.forEach { choice ->
+                        RadioRow(
+                            label = stringResource(labelOf(choice)),
+                            selected = choice == themeChoice,
+                            onSelect = { viewModel.chooseTheme(choice) },
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     // One row and one tap: the tutorial opens over this tab immediately, with no confirmation,
     // because nothing is lost by opening it - it can be skipped at once and closes back onto here.
     val tutorialSection: @Composable () -> Unit = {
@@ -205,6 +233,38 @@ fun SettingsScreen(
             }
             Text(
                 text = stringResource(R.string.settings_tutorial_note),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+
+    // In the error colour and behind a confirmation, because it is the one row on this tab that
+    // cannot be taken back. The note says what survives before the dialog has to.
+    val progressSection: @Composable () -> Unit = {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = stringResource(R.string.settings_progress),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { resetting = true }
+                        .padding(horizontal = 12.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.settings_reset),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
+            Text(
+                text = stringResource(R.string.settings_reset_note),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -303,9 +363,11 @@ fun SettingsScreen(
                         verticalArrangement = Arrangement.spacedBy(20.dp),
                     ) {
                         languageSection()
+                        themeSection()
                         feedbackSection()
                         tutorialSection()
                         privacySection()
+                        progressSection()
                     }
                     Column(modifier = Modifier.weight(1f)) {
                         sourcesSection()
@@ -313,12 +375,40 @@ fun SettingsScreen(
                 }
             } else {
                 languageSection()
+                themeSection()
                 feedbackSection()
                 tutorialSection()
                 privacySection()
+                progressSection()
                 sourcesSection()
             }
         }
+    }
+
+    if (resetting) {
+        AlertDialog(
+            onDismissRequest = { resetting = false },
+            title = { Text(stringResource(R.string.settings_reset_title)) },
+            text = { Text(stringResource(R.string.settings_reset_body)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        resetting = false
+                        viewModel.resetProgress()
+                    },
+                ) {
+                    Text(
+                        text = stringResource(R.string.settings_reset_confirm),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { resetting = false }) {
+                    Text(stringResource(R.string.settings_reset_cancel))
+                }
+            },
+        )
     }
 
     if (picking) {
@@ -395,7 +485,7 @@ private fun LanguageDialog(
         text = {
             Column(modifier = Modifier.selectableGroup()) {
                 Language.entries.forEach { language ->
-                    LanguageOption(
+                    RadioRow(
                         label = nameOf(language),
                         selected = language == selected,
                         onSelect = { onPick(language) },
@@ -454,8 +544,15 @@ private fun SourceRow(licence: Licence, onOpen: () -> Unit) {
     }
 }
 
+private fun labelOf(choice: ThemeChoice): Int = when (choice) {
+    ThemeChoice.SYSTEM -> R.string.settings_theme_system
+    ThemeChoice.LIGHT -> R.string.settings_theme_light
+    ThemeChoice.DARK -> R.string.settings_theme_dark
+}
+
+/** One radio row, for a language in the picker and for a theme in its card alike. */
 @Composable
-private fun LanguageOption(label: String, selected: Boolean, onSelect: () -> Unit) {
+private fun RadioRow(label: String, selected: Boolean, onSelect: () -> Unit) {
     Row(
         // The whole row is the target, and the button is drawn rather than clicked: a radio button
         // is a few millimetres of a row that is a finger tall, and a player who taps the word is

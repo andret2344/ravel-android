@@ -13,6 +13,7 @@ import eu.andret.ravel.settings.LanguageSettings
 import eu.andret.ravel.settings.LevelProgress
 import eu.andret.ravel.settings.StoredDailyProgress
 import eu.andret.ravel.settings.StoredLevelProgress
+import eu.andret.ravel.settings.ThemeSettings
 import eu.andret.ravel.settings.TutorialSettings
 import eu.andret.ravel.settings.Wallet
 import kotlinx.coroutines.CoroutineScope
@@ -70,6 +71,9 @@ class RavelApplication : Application() {
      */
     val haptics: HapticSettings by lazy { HapticSettings(this) }
 
+    /** The theme the player picked, applied by the activity and chosen in the options tab. */
+    val theme: ThemeSettings by lazy { ThemeSettings(this) }
+
     /**
      * Whether the tutorial is owed, read by the shell that shows it and written by the options tab
      * that replays it - two places, one answer, as with [haptics]. A player who has already solved
@@ -85,13 +89,36 @@ class RavelApplication : Application() {
      * The daily history and the board in progress, for the same reason and with the same lifetime
      * as [wallet]: the menu draws the calendar from it while the board is writing today into it.
      */
-    val progress: DailyProgress by lazy {
+    val progress: DailyProgress get() = storedProgress
+
+    /** How far through the main mode the player is, on the same terms as [progress]. */
+    val levels: LevelProgress get() = storedLevels
+
+    // The concrete stores, kept to this class. Every screen is typed against the two interfaces,
+    // which have no way to move the ladder; resetProgress is the one caller that needs more.
+    private val storedProgress: StoredDailyProgress by lazy {
         StoredDailyProgress(this, language.current, scope)
     }
 
-    /** How far through the main mode the player is, on the same terms as [progress]. */
-    val levels: LevelProgress by lazy {
+    private val storedLevels: StoredLevelProgress by lazy {
         StoredLevelProgress(this, language.current, scope)
+    }
+
+    /**
+     * Wipes all progress in every language: both level ladders, the daily history with its streak,
+     * and the lifetime statistics. The options tab's "reset progress", after a confirmation.
+     *
+     * **Coins stay, and so does today's ad allowance.** Putting the balance back to the starting
+     * amount would turn the reset into a coin faucet - spend, reset, spend again - which is the grant
+     * `Wallet.STARTING_BALANCE` must never become. Settings stay too: they are preferences, not
+     * progress.
+     *
+     * A board open on another tab finds out the way it does after a language switch: the level's
+     * screen sees its level is no longer the one on offer and closes itself.
+     */
+    fun resetProgress() {
+        storedLevels.clear()
+        storedProgress.clear()
     }
 
     /**
