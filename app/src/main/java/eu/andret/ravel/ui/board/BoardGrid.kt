@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
@@ -24,9 +23,10 @@ import eu.andret.ravel.game.Puzzle
  * the header and the clues and be certain nothing overflows.
  *
  * The marked path lives in [puzzle] rather than here, because it outlives the gesture that drew it:
- * lifting a finger leaves the cells marked, and the next gesture or tap continues from them. Only
- * the movement currently under the finger belongs to this composable, in [TraceState].
+ * lifting a finger leaves the cells marked, and the next gesture or tap continues from them. The
+ * movement currently under the finger is in [trace], which the screen owns so it can spell it.
  *
+ * @param trace from [rememberTraceState], for the same board.
  * @param onPathTraced the cells the finger covered, in order, when it lifts.
  * @param onTap the cell tapped, for the corrections a tap makes - see [Puzzle.tapped].
  * @param hapticsEnabled whether the player has left board haptics on. Passed down from the screen's
@@ -34,8 +34,9 @@ import eu.andret.ravel.game.Puzzle
  *   would be the second answer to a question the process already has one owner for.
  */
 @Composable
-fun BoardGrid(
+internal fun BoardGrid(
     puzzle: Puzzle,
+    trace: TraceState,
     onPathTraced: (List<Int>) -> Unit,
     onTap: (Int) -> Unit,
     hapticsEnabled: Boolean,
@@ -45,7 +46,6 @@ fun BoardGrid(
     val textMeasurer = rememberTextMeasurer()
     val palette = rememberBoardPalette()
     val haptics = rememberBoardHaptics(hapticsEnabled)
-    val trace = remember(board) { TraceState(haptics) }
     // The gesture handlers are set up once per board and would otherwise capture the first state
     // and callbacks they ever saw, which go stale as soon as the screen recomposes.
     val current by rememberUpdatedState(puzzle)
@@ -86,7 +86,7 @@ fun BoardGrid(
     }
 
     val view = BoardView(
-        path = if (trace.active) trace.cells else puzzle.path,
+        path = trace.shownPath(puzzle),
         solvedPaths = puzzle.solvedPaths,
         solvedCells = puzzle.solvedCells,
         hintedCells = puzzle.hintedCells,

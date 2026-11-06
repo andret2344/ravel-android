@@ -1,12 +1,23 @@
 package eu.andret.ravel.generator
 
+import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
 /**
  * @param minWallRatio lower bound on the share of cells left blocked. Walls are not decoration:
  *   they cut the number of alternative tilings, so a board with none is far harder to make unique.
- *   They are kept few and always symmetric, because scattered walls read as damage.
+ *   They are always symmetric, because scattered walls read as damage.
+ *
+ *   **18..28% up to 7x7, 8..18% above**, and the split is the same one as [maxLengthRepeats]. Up
+ *   to 7x7 every length must differ, and distinct lengths inside the length band only fit a smaller
+ *   free area: a 6x6 a tenth walled can hold four of them only as something like 6, 7, 8, 11, a
+ *   fifth walled gives 5, 7, 8, 9. Above 7x7 lengths may repeat, so the walls have no such job and
+ *   keep the share they always had.
+ *
+ *   **Not more.** 28..40% everywhere was tried and lasted one look at a board: walls in the
+ *   middle of the grid left a third of the free cells with two free neighbours or fewer, so the
+ *   corridors spelled out the paths and the letters were no longer needed to find the words.
  * @param maxWallRatio upper bound on the same share.
  * @param minTurnRatio how much the words must wind, see [turnRatioOf]. Layouts below this are
  *   discarded and redrawn.
@@ -31,8 +42,8 @@ import kotlin.random.Random
 data class BoardSpec(
     val width: Int,
     val height: Int,
-    val minWallRatio: Double = 0.08,
-    val maxWallRatio: Double = 0.18,
+    val minWallRatio: Double = if (width * height <= DISTINCT_LENGTHS_UP_TO_CELLS) 0.18 else 0.08,
+    val maxWallRatio: Double = if (width * height <= DISTINCT_LENGTHS_UP_TO_CELLS) 0.28 else 0.18,
     val minTurnRatio: Double = 0.0,
     val maxTurnRatio: Double = 1.0,
     val maxDirectness: Double = 1.0,
@@ -102,13 +113,27 @@ data class BoardSpec(
      * cells for at least one word.
      *
      * With the word count computed per board there is no shape the band cannot serve, because the
-     * count adapts to whatever the walls leave behind.
+     * count adapts to whatever the walls leave behind - except a grid so small that the band's
+     * lowest count already leaves less than a word. A 3x1 asked for a third walled is one wall and
+     * two letters, so both ends are first capped at what still leaves a word, which there means no
+     * walls at all. Under the old 8..18% band that case happened to round to zero by itself.
      */
     internal fun wallCounts(): List<Int> {
-        val lowest = (minWallRatio * cellCount).roundToInt()
-        val highest = (maxWallRatio * cellCount).roundToInt()
-        return (lowest..highest).filter { cellCount - it >= MIN_WORD_LENGTH }
+        val mostAllowed = cellCount - MIN_WORD_LENGTH
+        val lowest = minOf((minWallRatio * cellCount).roundToInt(), mostAllowed)
+        val highest = minOf((maxWallRatio * cellCount).roundToInt(), mostAllowed)
+        return (lowest..highest).toList()
     }
+
+    /**
+     * How many times one word length may appear on the board: once up to 7x7, twice above.
+     * See the rules on `BoardGenerator.lengthsFor` for why, and for why there is no third step.
+     *
+     * Decided by area rather than by side, because what makes distinct lengths reachable is how
+     * many cells the words must fill; a 10x4 has the area of a 6x7 and the same arithmetic.
+     */
+    internal val maxLengthRepeats: Int
+        get() = if (cellCount <= DISTINCT_LENGTHS_UP_TO_CELLS) 1 else 2
 
     /** @throws IllegalArgumentException when the grid is too small to hold a single word. */
     fun validate() {
@@ -130,6 +155,9 @@ data class BoardSpec(
          * generator has to fight for.
          */
         const val WORD_LENGTH_PER_SIDE = 1.0
+
+        /** The largest area, 7x7, on which every word length must be different. */
+        const val DISTINCT_LENGTHS_UP_TO_CELLS = 7 * 7
 
         private fun ceilDiv(value: Int, divisor: Int) = (value + divisor - 1) / divisor
 
@@ -241,8 +269,7 @@ class BoardGenerator(
                 val walls = symmetricWalls(grid, wallCounts.random(random)) ?: continue
                 val freeCount = grid.cellCount - walls.count { it }
                 val wordCount = spec.wordCountFor(freeCount, random)
-                val wordLengths =
-                    randomComposition(wordCount, freeCount, spec.requiredLongestWord) ?: continue
+                val wordLengths = lengthsFor(wordCount, freeCount, spec) ?: continue
                 val layoutStartedAt = System.nanoTime()
                 val paths = Partitioner(
                     grid, walls, random,
@@ -333,8 +360,8 @@ class BoardGenerator(
      *
      * Walls go in whole symmetry orbits, so the pattern is symmetric by construction. Growing the
      * *free* region instead - the previous approach - guaranteed connectivity but produced ragged
-     * blobs where a third of a row could vanish, which reads as damage rather than design. With
-     * walls this sparse, connectivity is common enough to get by redrawing.
+     * blobs where a third of a row could vanish, which reads as damage rather than design. Even at
+     * a quarter of the grid walled, connectivity is common enough to get by redrawing.
      *
      * The unit placed is a domino rather than a single cell, because that is what the reference
      * board uses: one horizontal pair on the mirror axis and a mirrored vertical pair either side.
@@ -399,7 +426,13 @@ class BoardGenerator(
      *
      * Symmetry alone does not save a pattern: two dominoes landing side by side blank four of a
      * row's six cells, and mirrored or not, that reads as a missing row rather than as a block.
+     *
      * The reference board's longest run is two.
+     *
+     * Three was tried alongside a 28..40% wall share, to stop the extra orbits colliding. At the
+     * 18..28% that replaced it, three bought nothing measurable over two - a 6x6 walled 18% against
+     * 17%, with the same share of corridor cells - and it had cost an occasional broken column of
+     * single walls, so the cap went back.
      */
     private fun maxWallRun(grid: Grid): Int = maxOf(2, minOf(grid.width, grid.height) / 3)
 
@@ -473,94 +506,93 @@ class BoardGenerator(
     }
 
     /**
-     * Word lengths in `$MIN_WORD_LENGTH..$MAX_WORD_LENGTH` summing to [total], at least one of them
-     * reaching [longest].
+     * Word lengths summing to [total], drawn uniformly from every list that obeys three rules:
      *
-     * Lengths start from an even split and then spread over a band, rather than being handed out at
-     * random: an unconstrained split leaves three-letter stubs next to the long word whatever the
-     * grid, and the long word is the one that has to survive.
+     * 1. **The band: no word shorter than half the longest.** Its floor used to be one letter
+     *    below the mean, which let a 10x10 produce only 9..12 - six twelve-letter words out of
+     *    eight, a list of lengths that carried no information although it is **the only clue this
+     *    game gives**, drawn from the thinnest bands of the dictionary. The per-word fold gate in
+     *    [PathShape.accepts] is what keeps short words from coming out as squat blocks, so a
+     *    near-flat list was a second defence that cost more than it bought.
+     * 2. **One word reaches [BoardSpec.requiredLongestWord]**, so something crosses the grid.
+     * 3. **No length is used more than [BoardSpec.maxLengthRepeats] times** - once on boards up to
+     *    7x7, twice above. The clue list is a set of keys: when every length is different, each one
+     *    names exactly one word, so a word found is a word *identified*, and the list reads as a
+     *    designed staircase (4, 5, 6, 7) instead of a tally (7, 7, 8, 8). Measured on 60 boards of
+     *    the game this one descends from, 57 had every length different; this generator managed
+     *    under a fifth of its 6x6 boards and almost none of its 7x7 ones before the rule. Above 7x7 the band leaves too few distinct
+     *    lengths: 8x8 could hold only five words with a twelve-letter one on almost every board, and
+     *    10x10 has no distinct list at all, since 6..12 is seven values for eight or more words.
      *
-     * **The band is `half the longest .. the longest`, and the floor used to be one letter below
-     * the mean.** That old floor was written when short words were the problem - they came out as
-     * squat little blocks in a corner - and it stopped being the thing protecting against that: the
-     * per-word fold gate does, at every length, and [PathShape.accepts] says so in as many words
-     * about the 2x2 block a four-cell word makes. A near-flat length list was the second layer of a
-     * defence that only ever needed one, and on a large grid it cost more than it bought:
+     * Enumerating every list and picking one replaced an even split followed by random swaps and a
+     * donor loop that paid for the long word. That loop had to be taught the band's floor
+     * separately, and broke it on a 10x4 when it was not; here a list outside the rules is never
+     * built, so there is no second route for a length to escape by.
      *
-     * - a 10x10 could only produce lengths 9..12, so six of its eight words were often twelve
-     *   letters and the list of lengths - **the only clue this game gives** - carried almost no
-     *   information. A list that repeats one number is not a clue.
-     * - those are the thinnest bands of the dictionary. Within rank 4000 Polish has 574 five-letter
-     *   lemmas and 93 twelve-letter ones, so the biggest boards drew from the narrowest pool while
-     *   the most recognisable vocabulary in the language never appeared on them at all.
-     *
-     * The mean is untouched, and so is the word count that comes from it: this widens what the
-     * lengths may be, not how many there are. [BoardSpec.requiredLongestWord] still forces one word
-     * to cross the grid, which is the guarantee the flat list was standing in for.
+     * The word count asked for is a preference, not a promise: distinct lengths in a band are a
+     * narrow target, and a 6x6 that cannot hold five of them can usually hold four. Counts are
+     * tried nearest first, fewer before more at equal distance, for the reason [BoardSpec.wordCountFor]
+     * gives for its own spread: an extra word is paid for out of every other word. Null means no count fits at all, and the caller redraws the walls - the
+     * rule is not eased, because a board that sometimes repeats a length on a 6x6 is the board
+     * this replaced.
      */
-    private fun randomComposition(parts: Int, total: Int, longest: Int): IntArray? {
-        if (parts < 1) return null
-        if (total < MIN_WORD_LENGTH * parts) return null
-        if (total > MAX_WORD_LENGTH * parts) return null
-
-        val lengths = IntArray(parts) { total / parts }
-        repeat(total % parts) { lengths[it]++ }
-        if (lengths.any { it !in MIN_WORD_LENGTH..MAX_WORD_LENGTH }) return null
-
-        // The band the lengths may spread over: no word shorter than half the longest one.
-        //
-        // The floor is taken from the ceiling rather than from the longest length the board actually
-        // ends up with, because that one is not known until this function has finished. The ceiling
-        // is an upper bound on it, so a floor derived from the ceiling satisfies the rule whatever
-        // the board settles on - it can only ever be stricter than needed, never looser.
-        //
-        // The rule scales by itself and that is why it is a ratio rather than a constant. The
-        // longest word grows with the grid, so the floor does too: a 5x5 keeps the 4..7 band it
-        // already had, an 8x8 opens from 7..10 to 5..10, and a 10x10 from 9..12 to 6..12. There is
-        // no size threshold to justify anywhere, and nothing that plays noticeably differently on
-        // either side of one.
-        //
-        // The even split can never start below the floor: with a mean of `m` the ceiling is at most
-        // `m + 2`, so the floor is at most `(m + 3) / 2`, which is `<= m` for every `m` from
-        // [MIN_WORD_LENGTH] up. The check above has already established that much.
-        val ceiling = minOf(MAX_WORD_LENGTH, total / parts + 2)
-        val floor = maxOf(MIN_WORD_LENGTH, (ceiling + 1) / 2)
-
-        // The long word has to be paid for out of the others, and only cells above the *floor* are
-        // available - not, as this used to say, cells above [MIN_WORD_LENGTH]. Taking a donor below
-        // the floor would break the band by the one route that does not go through the wobble below,
-        // and it is the route the awkward shapes take: a 10x4 grid wants a seven-letter word out of
-        // a mean of six, so somebody has to pay for it. Paying down to three would put a
-        // three-letter word next to a seven-letter one, which is the shape of list this band exists
-        // to rule out.
-        //
-        // When the floor leaves nobody able to pay, this returns null and the caller draws a fresh
-        // layout - walls, word count and all. That is cheap and already how an impossible split is
-        // handled; it is not a reason to quietly break the rule instead.
-        val target = minOf(longest, MAX_WORD_LENGTH, total - floor * (parts - 1))
-        if (target < MIN_WORD_LENGTH) return null
-        while (lengths[0] < target) {
-            val donor = (1 until parts).filter { lengths[it] > floor }.randomOrNull(random)
-                ?: return null
-            lengths[donor]--
-            lengths[0]++
+    private fun lengthsFor(preferredCount: Int, total: Int, spec: BoardSpec): IntArray? {
+        val counts = (1..total / MIN_WORD_LENGTH)
+            .sortedWith(compareBy({ abs(it - preferredCount) }, { it }))
+        for (count in counts) {
+            val options = lengthListsFor(count, total, spec.requiredLongestWord, spec.maxLengthRepeats)
+            if (options.isNotEmpty()) return options[random.nextInt(options.size)].copyOf()
         }
+        return null
+    }
 
-        // Enough swaps to actually reach the ends of the band. The old loop moved one letter per
-        // iteration and ran `parts` times, which was sized for a band one letter wide; against a
-        // band six wide it would leave the lengths sitting where the even split put them and the
-        // widening would be invisible. Proportional to the area to be filled, and cheap - this is
-        // integer arithmetic over an array of about ten.
-        repeat(parts * maxOf(1, ceiling - floor)) {
-            val from = random.nextInt(parts)
-            val to = random.nextInt(parts)
-            val keeps = if (from == 0) lengths[from] - 1 >= target else lengths[from] - 1 >= floor
-            if (from != to && keeps && lengths[to] < ceiling) {
-                lengths[from]--
-                lengths[to]++
+    /**
+     * Every descending list of [parts] lengths obeying the rules of [lengthsFor], cached because a
+     * board draws many layouts with the same few totals and the lists never change. Small: the
+     * widest case, a 12x12 allowing pairs, is a few thousand lists.
+     */
+    private fun lengthListsFor(parts: Int, total: Int, longest: Int, maxRepeats: Int): List<IntArray> =
+        lengthLists.getOrPut(LengthQuery(parts, total, longest, maxRepeats)) {
+            val found = ArrayList<IntArray>()
+            for (top in maxOf(longest, MIN_WORD_LENGTH)..minOf(MAX_WORD_LENGTH, total)) {
+                val lengths = IntArray(parts)
+                lengths[0] = top
+                val floor = maxOf(MIN_WORD_LENGTH, (top + 1) / 2)
+                collectLengths(lengths, 1, total - top, floor, maxRepeats, found)
             }
+            found
         }
-        return lengths
+
+    private val lengthLists = HashMap<LengthQuery, List<IntArray>>()
+
+    private data class LengthQuery(val parts: Int, val total: Int, val longest: Int, val maxRepeats: Int)
+
+    /**
+     * Fills [lengths] from [filled] on, in descending order, so that equal lengths sit next to each
+     * other and a repeat is caught by looking [maxRepeats] places back.
+     */
+    private fun collectLengths(
+        lengths: IntArray,
+        filled: Int,
+        remaining: Int,
+        floor: Int,
+        maxRepeats: Int,
+        found: MutableList<IntArray>,
+    ) {
+        val left = lengths.size - filled
+        if (left == 0) {
+            if (remaining == 0) found.add(lengths.copyOf())
+            return
+        }
+        if (floor * left > remaining) return
+        for (length in minOf(lengths[filled - 1], remaining) downTo floor) {
+            // Descending, so every later length is at most this one: if this cannot reach the total
+            // neither can anything smaller.
+            if (length * left < remaining) break
+            if (filled >= maxRepeats && lengths[filled - maxRepeats] == length) continue
+            lengths[filled] = length
+            collectLengths(lengths, filled + 1, remaining - length, floor, maxRepeats, found)
+        }
     }
 
     /** One random word per path. Repeats are avoided but not forbidden - a short length may have few candidates. */

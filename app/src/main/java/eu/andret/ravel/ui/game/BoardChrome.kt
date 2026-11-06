@@ -29,6 +29,7 @@ import eu.andret.ravel.game.Hint
 import eu.andret.ravel.game.Puzzle
 import eu.andret.ravel.ui.CoinAmount
 import eu.andret.ravel.ui.board.BoardGrid
+import eu.andret.ravel.ui.board.TraceState
 
 /**
  * Everything a board screen is made of except the board and the mode's own headline.
@@ -98,6 +99,7 @@ internal fun BoardTopBar(balance: Int, elapsed: Int?, onClose: () -> Unit, onSho
 @Composable
 internal fun PlayableBoard(
     puzzle: Puzzle,
+    trace: TraceState,
     onPathTraced: (List<Int>) -> Unit,
     onTap: (Int) -> Unit,
     hapticsEnabled: Boolean,
@@ -109,6 +111,7 @@ internal fun PlayableBoard(
     )
     BoardGrid(
         puzzle = puzzle,
+        trace = trace,
         onPathTraced = onPathTraced,
         onTap = onTap,
         hapticsEnabled = hapticsEnabled,

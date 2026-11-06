@@ -27,6 +27,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import eu.andret.ravel.R
 import eu.andret.ravel.game.Puzzle
 import eu.andret.ravel.ui.CoinAmount
+import eu.andret.ravel.ui.board.rememberTraceState
 import eu.andret.ravel.ui.game.BoardLayout
 import eu.andret.ravel.ui.game.BoardState
 import eu.andret.ravel.ui.game.BoardTopBar
@@ -36,6 +37,7 @@ import eu.andret.ravel.ui.game.FailedBoard
 import eu.andret.ravel.ui.game.GeneratingBoard
 import eu.andret.ravel.ui.game.HintRow
 import eu.andret.ravel.ui.game.PlayableBoard
+import eu.andret.ravel.ui.game.TracedWord
 import eu.andret.ravel.ui.game.asClock
 import eu.andret.ravel.ui.theme.goldColors
 
@@ -65,6 +67,8 @@ fun LevelScreen(
     val elapsed by viewModel.elapsed.collectAsStateWithLifecycle()
     val unreachable by viewModel.unreachable.collectAsStateWithLifecycle()
     val hapticsEnabled by viewModel.hapticsEnabled.collectAsStateWithLifecycle()
+    // Out here rather than inside the grid, because the word strip in the footer spells it too.
+    val trace = rememberTraceState((state as? BoardState.Playing)?.puzzle?.board, hapticsEnabled)
 
     // A language switch moves the player onto that language's ladder, which this level may be far
     // ahead of - see LevelViewModel.unreachable. The board behind them is not theirs to be on, so
@@ -113,6 +117,7 @@ fun LevelScreen(
                 is BoardState.Failed -> FailedBoard(current.reason, viewModel::generate)
                 is BoardState.Playing -> PlayableBoard(
                     puzzle = current.puzzle,
+                    trace = trace,
                     onPathTraced = viewModel::trace,
                     onTap = viewModel::tap,
                     hapticsEnabled = hapticsEnabled,
@@ -121,6 +126,7 @@ fun LevelScreen(
         },
         footer = {
             (state as? BoardState.Playing)?.puzzle?.let { puzzle ->
+                TracedWord(puzzle, trace)
                 CluesRow(puzzle.clues)
                 HintRow(
                     complete = puzzle.isComplete,

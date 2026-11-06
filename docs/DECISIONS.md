@@ -33,6 +33,83 @@ route the wobble never touches. And `BoardSpec.wordCountFor` must keep enough wo
 *reachable*, or the band is a promise the arithmetic cannot keep — measured: with the old `fewest`, a
 10x10 came out as seven twelve-letter words with the band wide open and unusable.
 
+*2026-11-06:* the donor loop is gone. `lengthsFor` enumerates every list that obeys the band and draws
+one, so a list outside it is never built; the `wordCountFor` half still stands.
+
+### Distinct word lengths, and the walls that make room for them
+
+Decided 2026-11-06, after measuring 60 solved boards of LinkedIn's Wend — the game Ravel descends
+from — against 40 of ours per size (English, rank 4000):
+
+| | Wend | Ravel 5x5 | 6x6 | 7x7 |
+|---|---|---|---|---|
+| every length different | 57 of 60 | 22% | 17% | 2.5% |
+
+The clue list is a set of keys only when no two lengths are equal: then each length names one word,
+a word found is a word identified, and the list reads as a designed staircase (4, 5, 6, 7) rather
+than a tally (7, 7, 8, 8).
+
+**Why it needed walls.** With the band kept, distinct lengths only fit a small free area. At the old
+8–18% walls a 6x6 could hold four distinct lengths only as something like 6, 7, 8, 11, and an 8x8
+had no list at all; at about a third walled the same boards give 4, 6, 7, 8 and 5..10. Wend walls a
+similar share. So the band went to 28–40% and `maxWallRun` from 2 to 3 — two kept colliding with the
+larger orbit count. Even so the share achieved runs below the band asked for (about 25% on 6x6),
+and an occasional broken column of single walls appears; seen on printed boards and accepted.
+
+**Why only up to 7x7.** Above it the band leaves too few distinct values: strict lengths on 8x8 meant
+five words with a twelve-letter one on nearly every board (mean 9.2), and 10x10 has no distinct list
+at all — 6..12 is seven values for eight or more words. Above 49 cells each length may appear twice.
+The threshold is area, not side, because what decides it is the number of cells the words fill.
+
+**Never eased.** When no list fits, the walls are redrawn. A 6x6 that sometimes repeats a length is
+the board this replaced.
+
+**Rejected, with the same data:**
+
+- *Lowering the band floor* so short words could join (Wend has a three-letter word on a third of its
+  boards and breaks our band on 28%) — kept by decision.
+- *Themed word sets* (one letter shared by every word: JOB JUMP EJECT ADJUST) — looked common, measured
+  weak: an uncommon letter in ≥75% of the words on 30% of Wend boards against 23% for random words of
+  the same lengths. Shared letters would also raise uniqueness rejections, which is the tail.
+- *Favouring j/q/x/z* — Wend shows them twice as often as chance (38% vs 20%), but a rare letter is
+  an anchor that makes a board easier, not better.
+
+**Costs.** Fewer words: 3.8 on 6x6 (was 4.9), 4.2 on 7x7 (was 5.6), and mean length up by about half
+a letter. Reissued every board in both modes — see "What reissuing has already cost".
+
+**Revised the same day: 28–40% was too many walls.** The first board looked at on a device (an 8x8,
+level 75) needed no letters to solve: the walls cut the grid into corridors that spelled out every
+path. Measured on 30 boards per size, the share of free cells with two free neighbours or fewer —
+cells a path can cross only one way — went from 16% to 35% on 8x8 and from 20% to 39% on 6x6, with
+about half the walls in the middle of the grid rather than at its edge. (One Wend board measured 55%
+such cells, but 86% of its walls on the border: it trims the outline and leaves the middle open.)
+
+Two mistakes in the first version, both fixed:
+
+- **Above 7x7 the walls had no job.** Lengths may repeat there, so nothing needs the free area
+  smaller; 8x8 and up went back to 8–18%. The distinct-length table above that called 8x8 at 10%
+  walls impossible was for *strict* lengths, which 8x8 does not use.
+- **Up to 7x7, 18–28% is enough.** A fifth walled still fits distinct lengths inside the band (6x6:
+  5, 7, 8, 9), and the corridor share comes down to 27–31% on 6x6 and 7x7. `maxWallRun` went back
+  to two: at this share three bought nothing measurable (6x6 walled 18% against 17%, same corridor
+  share) and had cost an occasional broken column of single walls.
+
+After the revision, 30 boards per size, rank 4000:
+
+| | 5x5 | 6x6 | 7x7 | 8x8 | 10x10 |
+|---|---|---|---|---|---|
+| walls | 17% | 18% | 18–20% | 11% | 11–12% |
+| corridor cells | 36% | 30% | 27–29% | 17% | 13–14% |
+| words | 3.0 | 4.1–4.2 | 4.9 | 6.6 | 8.8 |
+| mean length | 6.9 | 7.1 | 8.0–8.2 | 8.5 | 10.0 |
+| worst time | 72–260 ms | 79–131 ms | 0.6–0.9 s | 0.55 s | 2.0–2.8 s |
+
+Still open: on 10x10 the "at most twice" rule draws pairs climbing to the ceiling — 8, 9, 9, 10, 10,
+11, 11, 12, 12 is the typical list, so two twelve-letter words on most boards. And the corridor share
+on 5x5 (36%) is the highest left; nobody has looked at one on a device yet. If boards still read as
+given away, the measured next step is a gate on how many letter-free tilings the walls allow, not
+another guess at a ratio.
+
 ### Shape first, words second
 
 `Partitioner` splits the free cells into disjoint paths of the chosen lengths before any word is
@@ -65,6 +142,19 @@ averaging and post-hoc checking each produced — both were tried.
 The median came down from 0.8 s when the length band opened: more, shorter paths partition more
 easily than a full set of twelve-letter ones. **The tail did not move** — it is the uniqueness search,
 not the partition, and it is still the number to design against.
+
+*Re-measured 2026-11-06* after distinct lengths and the wider wall band, 30 boards per size at rank
+4000 (the table above is not comparable: it predates the rank cap). Same machine, same seeds:
+
+| board | before: median / worst | after, en | after, pl |
+|---|---|---|---|
+| 6x6 | 5 ms / 119 ms | 6 ms / 89 ms | 10 ms / 82 ms |
+| 7x7 | 16 ms / 203 ms | 29 ms / 258 ms | 16 ms / 338 ms |
+| 8x8 | 31–49 ms / 0.84–1.2 s | 50 ms / 0.40 s | 37 ms / 0.36 s |
+| 10x10 | 0.77 s / 4.4 s | 0.54 s / 2.2 s | 0.41 s / 3.0 s |
+
+Run-to-run noise on the old 8x8 tail was ±40%, so read only the order of magnitude: nothing got
+slower in a way a player would see.
 
 Dictionaries cost 23–33 MB at the shipped `HARD`, which is why they are cached per (language,
 difficulty) and why `RavelApplication.onTrimMemory` calls `Ravel.forget()`. `Difficulty.HARD.maxRank`
@@ -156,6 +246,9 @@ Board identity is really *(id, generator version)*.
 - **Narrowing the daily's spec** reissued every daily ever played. `DailyViewModel.restored` drops
   saved marks that no longer fit, so nothing crashes, but reviewing an old day now shows a different
   board than was solved.
+- **Distinct lengths and the 28–40% wall band** (2026-11-06) reissued every puzzle in both modes
+  again, already-played dailies included, on the same terms. Accepted explicitly before the change.
+  Its same-day revision to 18–28% / 8–18% reissued everything a second time.
 
 ### Why `DayResult.wordCount` is a record, not a derivation, and is `Int?`
 
@@ -490,3 +583,8 @@ Recorded so they are not rediscovered as news, and not defended as intentional.
   wide layouts are covered by nothing.
 - **No in-app theme override.** `isSystemInDarkTheme` only.
 - **No progress reset** short of clearing app data.
+- **On Polish boards every `ć` marks the end of a path.** Measured 2026-11-06: 1249 of the 3877
+  words of 4–12 letters within rank 4000 end in `ć` (infinitives), and the letter almost never
+  occurs mid-word, so each one hands the player a path end for free. A sample 6x6 showed three, i.e.
+  three of its eight ends. The obvious fix is capping infinitives per board; it was left alone on
+  purpose for now, which is why this is listed rather than rediscovered.

@@ -2,15 +2,18 @@ package eu.andret.ravel.ui.board
 
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.Density
+import eu.andret.ravel.game.Puzzle
 import eu.andret.ravel.game.areAdjacent
 import eu.andret.ravel.generator.Board
 
@@ -64,7 +67,30 @@ internal fun Modifier.boardGestures(
     }
 
 /**
- * The movement under the finger right now, which is the only board state this package owns.
+ * The cells a screen should show as the word being spelled: the trace under the finger while there
+ * is one, otherwise the path [puzzle] keeps marked after the finger lifts - the same choice
+ * [BoardGrid] draws from, so the strip under the board and the grid can never disagree.
+ */
+internal fun TraceState.shownPath(puzzle: Puzzle): List<Int> = if (active) cells else puzzle.path
+
+/**
+ * A [TraceState] for [board], made by the screen rather than by [BoardGrid] so that something
+ * outside the grid - the word strip under it - can read the trace while the finger is still moving.
+ *
+ * Keyed on the board, so a board regenerated under the same screen starts with nothing traced.
+ */
+@Composable
+internal fun rememberTraceState(board: Board?, hapticsEnabled: Boolean): TraceState {
+    val haptics = rememberBoardHaptics(hapticsEnabled)
+    return remember(board, haptics) { TraceState(haptics) }
+}
+
+/**
+ * The movement under the finger right now: the only board state that is not in the puzzle.
+ *
+ * Created by the screen through [rememberTraceState] and handed to [BoardGrid]. It used to be made
+ * inside the grid, which was enough while only the grid drew it; hoisting it is what lets the word
+ * strip spell the trace letter by letter instead of only after the finger lifts.
  *
  * A snapshot list, so each cell the finger picks up redraws the canvas without waiting for the
  * gesture to end. [active] is separate from the list being empty: a gesture that began on a wall

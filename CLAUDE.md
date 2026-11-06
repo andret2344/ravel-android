@@ -85,12 +85,17 @@ Rules:
 - **How much dictionary is loaded (`Difficulty`) and how obscure a board's words may be
   (`BoardSpec.maxWordRank`) are two separate axes.** Loading less weakens the uniqueness claim; it
   does not make boards easier.
-- **The word lengths span a band: none shorter than half the longest** (`randomComposition`). The
-  ratio is load-bearing in the donor loop and in `BoardSpec.wordCountFor` — see `DECISIONS.md`.
+- **The word lengths span a band: none shorter than half the longest** (`lengthsFor`). The ratio is
+  load-bearing in `BoardSpec.wordCountFor` — see `DECISIONS.md`.
+- **Up to 7x7 (by area) every word length is different; above, none appears more than twice**
+  (`BoardSpec.maxLengthRepeats`). The rule is never eased: no fitting list means new walls.
+- **Walls take 18–28% of the grid up to 7x7 and 8–18% above** (`BoardSpec.minWallRatio`). The
+  higher share is what lets distinct lengths fit inside the band; do not raise it further — walls
+  in the middle of the grid turn into corridors that give the words away.
 - **Path shape (`turnRatio`, `directness`, `foldRatio`, all in `Board.kt`) is enforced per word
   during enumeration and against the worst word**, never on the finished board, never as an average.
 - **Generation blocks and must be called inside `runInterruptible`** so leaving a screen cancels the
-  search. Design against the tail (10x10 worst 2.7 s), not the median.
+  search. Design against the tail (10x10 worst ~3 s), not the median.
 - Dictionaries are cached per (language, difficulty); `RavelApplication.onTrimMemory` calls
   `Ravel.forget()`. `DictionaryFootprint` asserts the heap budget — `generator/DICTIONARY.md`
   explains the 35 000 cap.
@@ -242,6 +247,14 @@ account layer that **does not exist in the code yet**. Everything below is a pro
 writing — a requirement on the feature that implements it, not a preference to revisit. Changing any
 of it means changing the policy and the Play Console Data safety form in the same breath.
 
+- **The policy URL is in the Play listing: never rename the `ravel-android` repository.** GitHub
+  redirects a renamed repository, but not its GitHub Pages site, so the link in Play would break.
+- **To do, not urgent: reconcile the policy with the shipped app before the next Play review.** It
+  describes sign-in, cloud sync, leaderboards, Analytics and Crashlytics as working, while the app
+  ships only rewarded ads and the consent form, and the Data safety form has to describe what the
+  app does today. Either move the unbuilt parts out of the policy until the release that ships them,
+  or keep them and make sure the policy and the Data safety form do not contradict each other.
+
 Not yet built:
 
 - **Sign-in is Google OAuth through Firebase Auth, and optional.** The game stays fully playable with
@@ -299,4 +312,5 @@ Absences that are decisions. **Do not report these as gaps or defects.** Reasoni
 
 Real, unresolved, and listed so they are neither rediscovered as news nor defended as intentional:
 no tutorial; no skip or give-up on a stuck board; no share button on `review`; no instrumented or
-Compose UI tests at all; no in-app theme override; no progress reset.
+Compose UI tests at all; no in-app theme override; no progress reset; on Polish boards every `ć`
+marks the end of a path.

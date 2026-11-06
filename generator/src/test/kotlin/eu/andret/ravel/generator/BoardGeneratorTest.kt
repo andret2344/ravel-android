@@ -111,14 +111,12 @@ class BoardGeneratorTest {
 
     @Test
     fun `no word is shorter than half the longest one`() {
-        // The length band. Stated over the finished board rather than over randomComposition,
-        // because the composition is not the only thing that decides a length list - the long word
-        // is pushed up afterwards, out of the others, and that push is where the rule was broken
-        // when it was first written.
+        // The length band. Stated over the finished board rather than over lengthsFor, because the
+        // rule was first broken outside the function meant to hold it: an older version pushed the
+        // long word up afterwards, out of the others, and that push took them under the floor.
         //
         // Awkward shapes are in the list on purpose: a 10x4 wants a seven-letter word out of a mean
-        // of six, so it is the case where somebody has to pay for the long word and the payment can
-        // take them under the floor.
+        // of six, so it is the case where somebody has to pay for the long word.
         listOf(5 to 5, 6 to 6, 8 to 8, 9 to 9, 10 to 10, 10 to 4, 8 to 5).forEach { (width, height) ->
             val spec = BoardSpec.forDifficulty(width, height, Difficulty.HARD)
             val generator = BoardGenerator(dictionary, Random(414))
@@ -148,6 +146,40 @@ class BoardGeneratorTest {
         // Four letters of spread on average. The old behaviour averaged under three and could not
         // exceed three at all, so this fails outright on a revert rather than drifting.
         assertTrue(spreads.average() >= 4.0, "spreads went $spreads")
+    }
+
+    @Test
+    fun `boards up to 7x7 never repeat a length`() {
+        // Each length on the clue list names exactly one word only when no two are equal. The
+        // threshold is area rather than side, so 10x4 (forty cells) is held to the strict rule, and
+        // 4x3 is the small awkward shape where the word count has to bend furthest to find a list.
+        listOf(5 to 5, 6 to 6, 7 to 7, 10 to 4, 4 to 3).forEach { (width, height) ->
+            val spec = BoardSpec.forDifficulty(width, height, Difficulty.HARD)
+            val generator = BoardGenerator(dictionary, Random(717))
+            repeat(SMALL_SAMPLE) {
+                val board = assertNotNull(generator.generate(spec), "no board for ${width}x$height")
+                val lengths = board.wordLengths
+                assertEquals(lengths.distinct(), lengths, "${width}x$height produced $lengths")
+            }
+        }
+    }
+
+    @Test
+    fun `larger boards use no length more than twice`() {
+        // Above 7x7 the band leaves too few distinct lengths for the words a board needs - 10x10 has
+        // none at all - so pairs are allowed, and nothing more.
+        listOf(8 to 8, 10 to 10).forEach { (width, height) ->
+            val spec = BoardSpec.forDifficulty(width, height, Difficulty.HARD)
+            val generator = BoardGenerator(dictionary, Random(727))
+            repeat(SMALL_SAMPLE) {
+                val board = assertNotNull(generator.generate(spec), "no board for ${width}x$height")
+                val lengths = board.wordLengths
+                assertTrue(
+                    lengths.groupingBy { it }.eachCount().values.all { it <= 2 },
+                    "${width}x$height produced $lengths",
+                )
+            }
+        }
     }
 
     @Test

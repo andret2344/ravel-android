@@ -32,6 +32,8 @@ import eu.andret.ravel.game.Hint
 import eu.andret.ravel.game.Puzzle
 import eu.andret.ravel.settings.DayResult
 import eu.andret.ravel.ui.CoinAmount
+import eu.andret.ravel.ui.board.TraceState
+import eu.andret.ravel.ui.board.rememberTraceState
 import eu.andret.ravel.ui.game.BoardLayout
 import eu.andret.ravel.ui.game.BoardState
 import eu.andret.ravel.ui.game.BoardTopBar
@@ -41,6 +43,7 @@ import eu.andret.ravel.ui.game.FailedBoard
 import eu.andret.ravel.ui.game.GeneratingBoard
 import eu.andret.ravel.ui.game.HintRow
 import eu.andret.ravel.ui.game.PlayableBoard
+import eu.andret.ravel.ui.game.TracedWord
 import eu.andret.ravel.ui.game.asClock
 import eu.andret.ravel.ui.theme.goldColors
 import java.util.Date
@@ -95,6 +98,8 @@ fun DailyScreen(
     }
 
     val puzzle = (state as? BoardState.Playing)?.puzzle
+    // Out here rather than inside the grid, because the word strip in the footer spells it too.
+    val trace = rememberTraceState(puzzle?.board, hapticsEnabled)
 
     BoardLayout(
         modifier = modifier,
@@ -117,6 +122,7 @@ fun DailyScreen(
                 is BoardState.Failed -> FailedBoard(current.reason, viewModel::generate)
                 is BoardState.Playing -> PlayableBoard(
                     puzzle = current.puzzle,
+                    trace = trace,
                     onPathTraced = viewModel::trace,
                     onTap = viewModel::tap,
                     hapticsEnabled = hapticsEnabled,
@@ -130,6 +136,7 @@ fun DailyScreen(
                 } else {
                     Footer(
                         puzzle = it,
+                        trace = trace,
                         bought = bought,
                         // The view model takes the coins if there are any; if there are not, the
                         // player wanted to spend and could not, which is the one moment the shop is
@@ -241,9 +248,13 @@ private fun Earned(label: String, amount: Int) {
     }
 }
 
-/** The lengths still to find, the two ways to stop looking for one, and what the day has cost. */
+/**
+ * The word being traced, the lengths still to find, the two ways to stop looking for one, and what
+ * the day has cost. [Reviewed] has no word strip: a finished board has nothing left to trace.
+ */
 @Composable
-private fun Footer(puzzle: Puzzle, bought: DayResult, onHint: (Hint) -> Unit) {
+private fun Footer(puzzle: Puzzle, trace: TraceState, bought: DayResult, onHint: (Hint) -> Unit) {
+    TracedWord(puzzle, trace)
     CluesRow(puzzle.clues)
     HintRow(complete = puzzle.isComplete, onHint = onHint)
     // The day's tally and not the board's: the board is thrown away every time this screen closes
