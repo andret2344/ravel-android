@@ -275,6 +275,16 @@
     <string name="settings_feedback">Feedback</string>
     <string name="settings_haptics">Vibration on the board</string>
     <string name="settings_haptics_note">A short vibration for each letter, a word found and a finished board. Your phone\'s own touch feedback setting has to be on as well.</string>
+    <string name="settings_tutorial">Tutorial</string>
+    <string name="settings_tutorial_replay">Show the tutorial</string>
+    <string name="settings_tutorial_note">The rules, on a small board you play. You can skip it at any point.</string>
+    <string name="tutorial_title">How to play</string>
+    <string name="tutorial_skip">Skip</string>
+    <string name="tutorial_start">Let\'s play</string>
+    <string name="tutorial_step_first">Every word is a path through neighboring letters: across or up and down, never diagonally. Drag your finger from the outlined letter.</string>
+    <string name="tutorial_step_second">A word counts only when traced from its first letter. Went wrong? Slide back along your trail, or tap a letter to cut the path back to it.</string>
+    <string name="tutorial_step_last">Below the board you only get the word lengths, and every letter belongs to exactly one word. Find the last one on your own.</string>
+    <string name="tutorial_step_done">That\'s it! When you get stuck, a hint reveals a letter or a whole word for coins.</string>
 
     <!--
         Where the words come from, listed on the settings tab and opened one at a time.

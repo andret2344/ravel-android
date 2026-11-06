@@ -13,6 +13,7 @@ import eu.andret.ravel.settings.LanguageSettings
 import eu.andret.ravel.settings.LevelProgress
 import eu.andret.ravel.settings.StoredDailyProgress
 import eu.andret.ravel.settings.StoredLevelProgress
+import eu.andret.ravel.settings.TutorialSettings
 import eu.andret.ravel.settings.Wallet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -68,6 +69,17 @@ class RavelApplication : Application() {
      * [eu.andret.ravel.settings.SETTINGS_FILE].
      */
     val haptics: HapticSettings by lazy { HapticSettings(this) }
+
+    /**
+     * Whether the tutorial is owed, read by the shell that shows it and written by the options tab
+     * that replays it - two places, one answer, as with [haptics]. A player who has already solved
+     * something counts as taught; see [TutorialSettings.pendingFrom].
+     */
+    val tutorial: TutorialSettings by lazy {
+        TutorialSettings(this) {
+            levels.totals.value.levelsCompleted > 0 || progress.state.value.solved.isNotEmpty()
+        }
+    }
 
     /**
      * The daily history and the board in progress, for the same reason and with the same lifetime

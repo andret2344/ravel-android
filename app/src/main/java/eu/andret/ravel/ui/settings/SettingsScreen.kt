@@ -180,6 +180,37 @@ fun SettingsScreen(
         }
     }
 
+    // One row and one tap: the tutorial opens over this tab immediately, with no confirmation,
+    // because nothing is lost by opening it - it can be skipped at once and closes back onto here.
+    val tutorialSection: @Composable () -> Unit = {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = stringResource(R.string.settings_tutorial),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(onClick = viewModel::replayTutorial)
+                        .padding(horizontal = 12.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.settings_tutorial_replay),
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                }
+            }
+            Text(
+                text = stringResource(R.string.settings_tutorial_note),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+
     val privacySection: @Composable () -> Unit = {
         if (privacyOptions && activity != null) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -273,6 +304,7 @@ fun SettingsScreen(
                     ) {
                         languageSection()
                         feedbackSection()
+                        tutorialSection()
                         privacySection()
                     }
                     Column(modifier = Modifier.weight(1f)) {
@@ -282,6 +314,7 @@ fun SettingsScreen(
             } else {
                 languageSection()
                 feedbackSection()
+                tutorialSection()
                 privacySection()
                 sourcesSection()
             }

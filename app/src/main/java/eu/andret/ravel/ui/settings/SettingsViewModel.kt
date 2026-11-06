@@ -32,6 +32,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     private val haptics = (application as RavelApplication).haptics
 
+    private val tutorial = (application as RavelApplication).tutorial
+
     /** The language being played and read in, which is what the picker marks as chosen. */
     val language: StateFlow<Language> = settings.current
 
@@ -84,6 +86,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
      * middle of, since the setting is a flow the board is reading rather than a value it copied.
      */
     fun setHaptics(value: Boolean) = haptics.setEnabled(value)
+
+    /** Puts the tutorial back over the game, at once. See [eu.andret.ravel.settings.TutorialSettings]. */
+    fun replayTutorial() = tutorial.restart()
 
     /**
      * Reopens the consent form.

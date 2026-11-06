@@ -163,6 +163,10 @@ Persistence is SharedPreferences plus JSON (`settings/SavedBoards.kt`, single-le
 
 - **`LevelProgress` has no method for setting the level and must not gain one.** The debug hatch is
   `StoredLevelProgress.jumpTo`, on the concrete store, reachable only from `src/debug`.
+- **The tutorial boards are hand-made per language (`game/Tutorial.kt`) and `TutorialTest` proves each
+  unique against the shipped dictionary.** If a dictionary rebuild breaks that test, pick a new board.
+- **Skipping the tutorial counts as finishing it**; the options tab replays it in one tap.
+- **A word is accepted only traced from its first letter** (`matchesPlacement`), not from either end.
 - **Every screen that lays out differently on its side asks `AdaptiveScreen { wide -> }`
   (`ui/Adaptive.kt`), never the device.** Material's window size classes are deliberately unused.
 - **`BoardLayout` is shared by both board screens.** Do not re-copy it.
@@ -311,6 +315,6 @@ Absences that are decisions. **Do not report these as gaps or defects.** Reasoni
 ## Known gaps
 
 Real, unresolved, and listed so they are neither rediscovered as news nor defended as intentional:
-no tutorial; no skip or give-up on a stuck board; no share button on `review`; no instrumented or
+no skip or give-up on a stuck board; no share button on `review`; no instrumented or
 Compose UI tests at all; no in-app theme override; no progress reset; on Polish boards every `ć`
 marks the end of a path.

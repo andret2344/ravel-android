@@ -28,6 +28,12 @@ class RavelAppViewModel(application: Application) : AndroidViewModel(application
 
     private val progress = (application as RavelApplication).progress
 
+    /**
+     * Whether the tutorial is over the shell. Live, unlike [prompt]: it is replayed from the options
+     * tab in the middle of a session, and closed by the player rather than by a launch ending.
+     */
+    val tutorial: StateFlow<Boolean> = (application as RavelApplication).tutorial.pending
+
     /** The day the prompt is about, fixed here as every other screen fixes it. */
     val today: Long = DailyDate.today()
 

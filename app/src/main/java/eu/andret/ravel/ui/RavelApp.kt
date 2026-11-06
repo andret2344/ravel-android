@@ -11,6 +11,7 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.calculateEndPadding
@@ -53,6 +54,7 @@ import eu.andret.ravel.ui.level.LevelScreen
 import eu.andret.ravel.ui.settings.SettingsScreen
 import eu.andret.ravel.ui.shop.ShopScreen
 import eu.andret.ravel.ui.stats.StatsScreen
+import eu.andret.ravel.ui.tutorial.TutorialScreen
 
 /** The routes with no screen file of their own, kept beside [DailyRoute] for the same reason. */
 private const val SHOP_ROUTE = "shop"
@@ -107,166 +109,175 @@ fun RavelApp(
     val selected = tabOf(entry?.destination?.route)
     val prompt by viewModel.prompt.collectAsStateWithLifecycle()
     val remind by viewModel.remind.collectAsStateWithLifecycle()
+    val tutorial by viewModel.tutorial.collectAsStateWithLifecycle()
 
-    /*
-     * Where the five destinations live depends on the shape of the window, not on the device.
-     *
-     * A bottom bar spends height, and height is the dimension a wide window has least of: on a phone
-     * lying on its side the bar and its labels are about a fifth of the screen, taken off the top of
-     * the one thing a board screen is for. Down the side it costs width instead, which the same
-     * window has to spare - and which the board cannot use anyway, being square.
-     *
-     * The question is [AdaptiveScreen]'s, the same one every screen with two arrangements asks.
-     */
-    AdaptiveScreen(modifier = modifier) { wide ->
-        Scaffold(
-            modifier = Modifier.fillMaxSize(),
-            // Emitting nothing rather than not being there at all. Scaffold measures an empty slot
-            // at no height and still reports the system's own bottom inset in its padding, so the
-            // screens below keep clear of the gesture bar in both arrangements.
-            bottomBar = {
-                if (!wide) {
-                    NavigationBar {
-                        RavelTab.entries.forEach { tab ->
-                            NavigationBarItem(
-                                selected = tab == selected,
-                                onClick = { navController.switchTo(tab) },
-                                enabled = tab.enabled,
-                                icon = { TabGlyph(tab) },
-                                label = { Text(stringResource(tab.label)) },
-                            )
+    // The tutorial is laid over the shell rather than swapped in for it, so the tabs keep their back
+    // stacks underneath: replayed from the options tab, closing it lands back on the options tab.
+    Box(modifier = modifier.fillMaxSize()) {
+        /*
+         * Where the five destinations live depends on the shape of the window, not on the device.
+         *
+         * A bottom bar spends height, and height is the dimension a wide window has least of: on a
+         * phone lying on its side the bar and its labels are about a fifth of the screen, taken off
+         * the top of the one thing a board screen is for. Down the side it costs width instead,
+         * which the same window has to spare - and which the board cannot use anyway, being square.
+         *
+         * The question is [AdaptiveScreen]'s, the same one every screen with two arrangements asks.
+         */
+        AdaptiveScreen(modifier = Modifier) { wide ->
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                // Emitting nothing rather than not being there at all. Scaffold measures an empty slot
+                // at no height and still reports the system's own bottom inset in its padding, so the
+                // screens below keep clear of the gesture bar in both arrangements.
+                bottomBar = {
+                    if (!wide) {
+                        NavigationBar {
+                            RavelTab.entries.forEach { tab ->
+                                NavigationBarItem(
+                                    selected = tab == selected,
+                                    onClick = { navController.switchTo(tab) },
+                                    enabled = tab.enabled,
+                                    icon = { TabGlyph(tab) },
+                                    label = { Text(stringResource(tab.label)) },
+                                )
+                            }
                         }
                     }
+                },
+            ) { insets ->
+                // The rail sits inside the content area and covers the start edge, applying the system's
+                // start inset itself - so the screens beside it are given every inset except that one.
+                // Handing them the whole set would indent them a second time, by the width of a cutout
+                // the rail is already standing in front of.
+                val direction = LocalLayoutDirection.current
+                val content = if (wide) {
+                    Modifier.padding(
+                        top = insets.calculateTopPadding(),
+                        bottom = insets.calculateBottomPadding(),
+                        end = insets.calculateEndPadding(direction),
+                    )
+                } else {
+                    Modifier.padding(insets)
                 }
-            },
-        ) { insets ->
-            // The rail sits inside the content area and covers the start edge, applying the system's
-            // start inset itself - so the screens beside it are given every inset except that one.
-            // Handing them the whole set would indent them a second time, by the width of a cutout
-            // the rail is already standing in front of.
-            val direction = LocalLayoutDirection.current
-            val content = if (wide) {
-                Modifier.padding(
-                    top = insets.calculateTopPadding(),
-                    bottom = insets.calculateBottomPadding(),
-                    end = insets.calculateEndPadding(direction),
-                )
-            } else {
-                Modifier.padding(insets)
-            }
 
-            Row(modifier = Modifier.fillMaxSize()) {
-                if (wide) {
-                    // The same five items in the same order, in the other of Material's two
-                    // containers for them. It is a second copy of the loop because a bar arranges its
-                    // items across a row and a rail down a column, and there is no shape both scopes
-                    // accept - so the glyph, which is the part with a decision behind it, is shared
-                    // and the four wiring arguments are not.
-                    NavigationRail {
-                        // Centred by the two spacers rather than by an arrangement, so it does not
-                        // matter which end Material's own default hangs the items from.
-                        Spacer(Modifier.weight(1f))
-                        RavelTab.entries.forEach { tab ->
-                            NavigationRailItem(
-                                selected = tab == selected,
-                                onClick = { navController.switchTo(tab) },
-                                enabled = tab.enabled,
-                                icon = { TabGlyph(tab) },
-                                label = { Text(stringResource(tab.label)) },
+                Row(modifier = Modifier.fillMaxSize()) {
+                    if (wide) {
+                        // The same five items in the same order, in the other of Material's two
+                        // containers for them. It is a second copy of the loop because a bar arranges its
+                        // items across a row and a rail down a column, and there is no shape both scopes
+                        // accept - so the glyph, which is the part with a decision behind it, is shared
+                        // and the four wiring arguments are not.
+                        NavigationRail {
+                            // Centred by the two spacers rather than by an arrangement, so it does not
+                            // matter which end Material's own default hangs the items from.
+                            Spacer(Modifier.weight(1f))
+                            RavelTab.entries.forEach { tab ->
+                                NavigationRailItem(
+                                    selected = tab == selected,
+                                    onClick = { navController.switchTo(tab) },
+                                    enabled = tab.enabled,
+                                    icon = { TabGlyph(tab) },
+                                    label = { Text(stringResource(tab.label)) },
+                                )
+                            }
+                            Spacer(Modifier.weight(1f))
+                        }
+                    }
+                    NavHost(
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        navController = navController,
+                        // The game opens on the main mode and not on the daily, because the ladder is
+                        // the mode a player can always spend an evening in, while the daily is one board
+                        // that is often already done. The day they have not done it, the prompt below
+                        // says so - which reaches them wherever they were going, rather than putting a
+                        // solved board in front of everyone who was not.
+                        startDestination = LevelRoute.MENU,
+                        enterTransition = { tabShift()?.let(::slideIn) ?: DEEPER_IN },
+                        exitTransition = { tabShift()?.let(::slideOut) ?: DEEPER_OUT },
+                        popEnterTransition = { tabShift()?.let(::slideIn) ?: BACK_IN },
+                        popExitTransition = { tabShift()?.let(::slideOut) ?: BACK_OUT },
+                    ) {
+                        composable(DailyRoute.MENU) {
+                            DailyMenuScreen(
+                                onOpen = { ordinal, review ->
+                                    navController.navigate(DailyRoute.board(ordinal, review))
+                                },
+                                onShop = { navController.switchTo(RavelTab.SHOP) },
+                                modifier = content,
                             )
                         }
-                        Spacer(Modifier.weight(1f))
-                    }
-                }
-                NavHost(
-                    modifier = Modifier.weight(1f).fillMaxHeight(),
-                    navController = navController,
-                    // The game opens on the main mode and not on the daily, because the ladder is
-                    // the mode a player can always spend an evening in, while the daily is one board
-                    // that is often already done. The day they have not done it, the prompt below
-                    // says so - which reaches them wherever they were going, rather than putting a
-                    // solved board in front of everyone who was not.
-                    startDestination = LevelRoute.MENU,
-                    enterTransition = { tabShift()?.let(::slideIn) ?: DEEPER_IN },
-                    exitTransition = { tabShift()?.let(::slideOut) ?: DEEPER_OUT },
-                    popEnterTransition = { tabShift()?.let(::slideIn) ?: BACK_IN },
-                    popExitTransition = { tabShift()?.let(::slideOut) ?: BACK_OUT },
-                ) {
-                    composable(DailyRoute.MENU) {
-                        DailyMenuScreen(
-                            onOpen = { ordinal, review ->
-                                navController.navigate(DailyRoute.board(ordinal, review))
-                            },
-                            onShop = { navController.switchTo(RavelTab.SHOP) },
-                            modifier = content,
-                        )
-                    }
-                    composable(
-                        route = DailyRoute.BOARD,
-                        arguments = listOf(
-                            navArgument(DailyRoute.ARG_ORDINAL) { type = NavType.LongType },
-                            navArgument(DailyRoute.ARG_REVIEW) { type = NavType.BoolType },
-                        ),
-                    ) {
-                        DailyScreen(
-                            onBack = { navController.popBackStack() },
-                            onShop = { navController.switchTo(RavelTab.SHOP) },
-                            modifier = content,
-                        )
-                    }
-                    composable(LevelRoute.MENU) {
-                        LevelMenuScreen(
-                            onPlay = { level -> navController.navigate(LevelRoute.board(level)) },
-                            onShop = { navController.switchTo(RavelTab.SHOP) },
-                            modifier = content,
-                        )
-                    }
-                    composable(
-                        route = LevelRoute.BOARD,
-                        arguments = listOf(
-                            navArgument(LevelRoute.ARG_LEVEL) { type = NavType.IntType },
-                        ),
-                    ) {
-                        LevelScreen(
-                            // The finished board takes the next one's place instead of stacking
-                            // under it, so backing out of level eight lands on the ladder rather
-                            // than walking back down through every grid already solved.
-                            onNext = { level ->
-                                navController.navigate(LevelRoute.board(level)) {
-                                    popUpTo(LevelRoute.MENU)
-                                }
-                            },
-                            onMenu = { navController.popBackStack() },
-                            onShop = { navController.switchTo(RavelTab.SHOP) },
-                            modifier = content,
-                        )
-                    }
-                    composable(SHOP_ROUTE) { ShopScreen(modifier = content) }
-                    composable(STATS_ROUTE) { StatsScreen(modifier = content) }
-                    composable(SETTINGS_ROUTE) {
-                        SettingsScreen(
-                            onLicence = { navController.navigate(LicenceRoute.of(it)) },
-                            modifier = content,
-                        )
-                    }
-                    composable(
-                        route = LicenceRoute.DETAIL,
-                        arguments = listOf(
-                            navArgument(LicenceRoute.ARG_LICENCE) { type = NavType.StringType },
-                        ),
-                    ) { entry ->
-                        LicenceScreen(
-                            licence = LicenceRoute.from(entry),
-                            onBack = { navController.popBackStack() },
-                            modifier = content,
-                        )
+                        composable(
+                            route = DailyRoute.BOARD,
+                            arguments = listOf(
+                                navArgument(DailyRoute.ARG_ORDINAL) { type = NavType.LongType },
+                                navArgument(DailyRoute.ARG_REVIEW) { type = NavType.BoolType },
+                            ),
+                        ) {
+                            DailyScreen(
+                                onBack = { navController.popBackStack() },
+                                onShop = { navController.switchTo(RavelTab.SHOP) },
+                                modifier = content,
+                            )
+                        }
+                        composable(LevelRoute.MENU) {
+                            LevelMenuScreen(
+                                onPlay = { level -> navController.navigate(LevelRoute.board(level)) },
+                                onShop = { navController.switchTo(RavelTab.SHOP) },
+                                modifier = content,
+                            )
+                        }
+                        composable(
+                            route = LevelRoute.BOARD,
+                            arguments = listOf(
+                                navArgument(LevelRoute.ARG_LEVEL) { type = NavType.IntType },
+                            ),
+                        ) {
+                            LevelScreen(
+                                // The finished board takes the next one's place instead of stacking
+                                // under it, so backing out of level eight lands on the ladder rather
+                                // than walking back down through every grid already solved.
+                                onNext = { level ->
+                                    navController.navigate(LevelRoute.board(level)) {
+                                        popUpTo(LevelRoute.MENU)
+                                    }
+                                },
+                                onMenu = { navController.popBackStack() },
+                                onShop = { navController.switchTo(RavelTab.SHOP) },
+                                modifier = content,
+                            )
+                        }
+                        composable(SHOP_ROUTE) { ShopScreen(modifier = content) }
+                        composable(STATS_ROUTE) { StatsScreen(modifier = content) }
+                        composable(SETTINGS_ROUTE) {
+                            SettingsScreen(
+                                onLicence = { navController.navigate(LicenceRoute.of(it)) },
+                                modifier = content,
+                            )
+                        }
+                        composable(
+                            route = LicenceRoute.DETAIL,
+                            arguments = listOf(
+                                navArgument(LicenceRoute.ARG_LICENCE) { type = NavType.StringType },
+                            ),
+                        ) { entry ->
+                            LicenceScreen(
+                                licence = LicenceRoute.from(entry),
+                                onBack = { navController.popBackStack() },
+                                modifier = content,
+                            )
+                        }
                     }
                 }
             }
         }
+
+        if (tutorial) TutorialScreen()
     }
 
-    if (prompt) {
+    // Not while the tutorial is up. A dialog is a window of its own and would sit on top of the
+    // lesson, asking a player who has not yet traced a word whether they want today's puzzle.
+    if (prompt && !tutorial) {
         DailyPromptDialog(
             started = viewModel.started,
             remind = remind,

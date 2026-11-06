@@ -429,6 +429,27 @@ caller holding the concrete store, and the only such caller is in `src/debug`.
 
 The moment the setter is on the interface, "no skipping ahead" is a convention rather than a fact.
 
+### The tutorial
+
+Decided 2026-11-06. Four choices, each with its rejected alternative:
+
+- **An interactive board, not pages or tips.** The game is a gesture, and reading about a gesture
+  teaches it worse than making it. Tips over level 1 were rejected because a generated board changes
+  with every generator change and could not be pointed at.
+- **Hand-made boards, one per language** (`game/Tutorial.kt`), picked from generator output at rank
+  700 and proved unique against the full shipped dictionary by `TutorialTest`. That test is the reason
+  a dictionary rebuild can break the tutorial: if it fails, pick a new board, do not loosen the test.
+- **Shown on the first launch, after consent, over the whole shell** — not a nav destination, so a
+  replay closes back onto the options tab with every tab's back stack intact. The daily prompt is
+  held back while it is up.
+- **Skipping is finishing.** Skip, the back gesture and the final button all write `tutorial_done`.
+  A replay from the options tab is one tap with no confirmation and is not written down, so closing
+  the app mid-replay does not bring it back on the next launch.
+
+Players who already solved a level or a day when the tutorial shipped are treated as taught
+(`TutorialSettings.pendingFrom`). Note that `levelsCompleted` in the lifetime totals skips levels
+passed with the debug jump, so a debug install that only ever jumped counts as new.
+
 ---
 
 ## Economy
@@ -573,8 +594,9 @@ Accessibility **off** the board still applies in full: `ui/Coins.kt`, `CalendarC
 
 Recorded so they are not rediscovered as news, and not defended as intentional.
 
-- **No tutorial.** The game's only clue is a list of lengths, and nothing on any screen explains that
-  paths are orthogonal, traceable from either end, and tile the free cells exactly once.
+- ~~**No tutorial.**~~ Closed 2026-11-06 — see "The tutorial" under App layer. The original entry said
+  paths are "traceable from either end"; the app has never accepted that (`matchesPlacement` compares
+  in order), and the tutorial teaches what the app does.
 - **No way out of a stuck board.** No skip, no give-up, no reveal. The only exit is hints, paid for
   with coins, and the coin faucet is capped at `ADS_PER_DAY` watches plus whatever solving pays.
 - **Re-opening a solved day goes to `review`, which has no footer and so no share button.**
