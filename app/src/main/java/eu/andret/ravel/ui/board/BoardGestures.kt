@@ -34,11 +34,17 @@ internal fun Modifier.boardGestures(
     solvedCells: () -> Set<Int>,
     onPathTraced: (List<Int>) -> Unit,
     onTap: (Int) -> Unit,
+    onTapOffGrid: () -> Unit,
 ): Modifier = this
     .pointerInput(board) {
         val density: Density = this
         detectTapGestures { position ->
-            BoardMetrics.of(board, size.width, size.height, density).cellAt(position)?.let(onTap)
+            // The canvas is square and a board need not be, so there is margin inside it that is
+            // not a cell. To the player that margin is the screen around the board, and a tap there
+            // means what a tap on the screen means. This detector consumes the tap either way, so
+            // the screen's own detector never hears it - it has to be passed on from here.
+            val cell = BoardMetrics.of(board, size.width, size.height, density).cellAt(position)
+            if (cell != null) onTap(cell) else onTapOffGrid()
         }
     }
     .pointerInput(board) {

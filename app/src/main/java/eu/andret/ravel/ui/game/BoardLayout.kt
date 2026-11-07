@@ -1,5 +1,6 @@
 package eu.andret.ravel.ui.game
 
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,8 +13,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import eu.andret.ravel.ui.AdaptiveScreen
 
@@ -65,6 +69,7 @@ import eu.andret.ravel.ui.AdaptiveScreen
  *   and centred in it either way.
  * @param footer the clues, the prices and the tally. Emitted straight into the surrounding column, so
  *   its own children are spaced by that column and not by a wrapper of their own.
+ * @param onTapOffBoard a tap on the screen that nothing else took - see [offBoardTaps].
  */
 @Composable
 internal fun BoardLayout(
@@ -72,9 +77,18 @@ internal fun BoardLayout(
     title: @Composable () -> Unit,
     board: @Composable () -> Unit,
     footer: @Composable () -> Unit,
+    onTapOffBoard: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    AdaptiveScreen(modifier = modifier.padding(horizontal = 20.dp, vertical = 12.dp)) { wide ->
+    // Handed over as state rather than as the lambda: the pointer block is set up once and would
+    // otherwise keep calling the first callback it saw, bound to whichever board was on screen then.
+    val currentOnTapOffBoard = rememberUpdatedState(onTapOffBoard)
+    // Before the padding, so the 20dp gutter down each side - the part of the screen a thumb rests
+    // on most - counts as off the board too.
+    val screen = modifier
+        .offBoardTaps(currentOnTapOffBoard)
+        .padding(horizontal = 20.dp, vertical = 12.dp)
+    AdaptiveScreen(modifier = screen) { wide ->
         if (wide) {
             Wide(topBar = topBar, title = title, board = board, footer = footer)
         } else {
@@ -154,6 +168,25 @@ private fun Wide(
         }
     }
 }
+
+/**
+ * Reports a tap that landed on the screen itself rather than on anything in it.
+ *
+ * Put on the outermost box, which is what makes it the last to hear a tap: Compose offers each touch
+ * to the innermost element first, and anything that acts on a tap - a button, the grid's own
+ * detector - consumes it there. This detector waits for an unconsumed press and gives up on a
+ * consumed release, so what reaches it is exactly what nothing else wanted: the background, the
+ * gutters, the heading, the clue lengths, the spelled word. A scroll in the wide column consumes its
+ * movement as well, so a flick through the clues does not count as a tap either.
+ *
+ * The one hole is the margin inside the grid's square that holds no cell. The grid's detector takes
+ * that tap before it can get here, so the grid passes it on itself (`onTapOffGrid`).
+ *
+ * No ripple and no semantics: there is nothing here to press, only an absence of anything pressed,
+ * and a screen reader has the first-cell tap for the same correction.
+ */
+private fun Modifier.offBoardTaps(onTap: State<() -> Unit>): Modifier =
+    pointerInput(Unit) { detectTapGestures { onTap.value() } }
 
 /**
  * The biggest square that fits in whatever this is given.

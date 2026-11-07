@@ -65,6 +65,23 @@ class PuzzleTest {
     }
 
     @Test
+    fun `clearing drops the marked path`() {
+        assertEquals(emptyList<Int>(), fresh.withPath(listOf(3, 7, 11)).cleared().path)
+    }
+
+    @Test
+    fun `clearing keeps revealed cells revealed`() {
+        val state = fresh.withPath(listOf(5)).hinted(Hint.LETTER).cleared()
+        assertEquals(emptyList<Int>(), state.path)
+        assertTrue(state.hintedCells.isNotEmpty())
+    }
+
+    @Test
+    fun `clearing with nothing marked changes nothing`() {
+        assertTrue(fresh.cleared() === fresh)
+    }
+
+    @Test
     fun `tapping a marked cell cuts the path back to it`() {
         val state = fresh.withPath(listOf(3, 7, 11, 10, 9)).tapped(7)
         assertEquals(listOf(3, 7), state.path)

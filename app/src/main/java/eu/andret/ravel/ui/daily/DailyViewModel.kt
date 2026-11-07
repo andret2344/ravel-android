@@ -185,6 +185,16 @@ class DailyViewModel(
     fun tap(cell: Int) = play { it.tapped(cell) }
 
     /**
+     * See [Puzzle.cleared]. Skipped when nothing is marked, which is most taps on the screen around
+     * the board: [play] writes the board down on every move, and a move that changed nothing is not
+     * worth a write.
+     */
+    fun deselect() {
+        val playing = _state.value as? BoardState.Playing ?: return
+        if (playing.puzzle.path.isNotEmpty()) play { it.cleared() }
+    }
+
+    /**
      * Buys [hint] and applies it, or reports that the player cannot afford it.
      *
      * The coins are taken first and only then is the move made, so a hint that turns out to have

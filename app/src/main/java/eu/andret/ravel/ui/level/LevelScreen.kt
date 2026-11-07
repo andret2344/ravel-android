@@ -106,6 +106,8 @@ fun LevelScreen(
     }
 
     BoardLayout(
+
+        onTapOffBoard = viewModel::deselect,
         modifier = modifier,
         // No confirmation on the way out. Every move is written down as it is made, so leaving a
         // half-solved level loses nothing: the same board, with the same words found and the same
@@ -123,6 +125,7 @@ fun LevelScreen(
                     trace = trace,
                     onPathTraced = viewModel::trace,
                     onTap = viewModel::tap,
+                    onTapOffGrid = viewModel::deselect,
                     hapticsEnabled = hapticsEnabled,
                 )
             }

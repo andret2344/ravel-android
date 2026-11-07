@@ -51,6 +51,9 @@ class TutorialViewModel(application: Application) : AndroidViewModel(application
 
     fun tap(cell: Int) = _puzzle.update { guided(it.tapped(cell)) }
 
+    /** See [Puzzle.cleared]. */
+    fun deselect() = _puzzle.update { guided(it.cleared()) }
+
     /** Finishing and skipping are one answer: done, until asked for again. */
     fun finish() = tutorial.markDone()
 

@@ -29,6 +29,7 @@ import eu.andret.ravel.game.Puzzle
  * @param trace from [rememberTraceState], for the same board.
  * @param onPathTraced the cells the finger covered, in order, when it lifts.
  * @param onTap the cell tapped, for the corrections a tap makes - see [Puzzle.tapped].
+ * @param onTapOffGrid a tap inside the canvas but on no cell - see [Puzzle.cleared].
  * @param hapticsEnabled whether the player has left board haptics on. Passed down from the screen's
  *   view model rather than read here, because a composable that fetched its own copy of a setting
  *   would be the second answer to a question the process already has one owner for.
@@ -39,6 +40,7 @@ internal fun BoardGrid(
     trace: TraceState,
     onPathTraced: (List<Int>) -> Unit,
     onTap: (Int) -> Unit,
+    onTapOffGrid: () -> Unit,
     hapticsEnabled: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -51,6 +53,7 @@ internal fun BoardGrid(
     val current by rememberUpdatedState(puzzle)
     val currentOnPathTraced by rememberUpdatedState(onPathTraced)
     val currentOnTap by rememberUpdatedState(onTap)
+    val currentOnTapOffGrid by rememberUpdatedState(onTapOffGrid)
 
     /*
      * The two heavier events, watched on the puzzle rather than raised where they happen.
@@ -110,6 +113,9 @@ internal fun BoardGrid(
                     if (current.accepts(cell)) haptics.cell()
                     currentOnTap(cell)
                 },
+                // No tick, matching the tap on the screen around the board that this stands in for:
+                // that one happens outside the grid, where there is no board haptics to fire.
+                onTapOffGrid = { currentOnTapOffGrid() },
             ),
     ) {
         BoardPainter(

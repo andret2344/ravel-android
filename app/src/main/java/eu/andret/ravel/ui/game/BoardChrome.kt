@@ -104,6 +104,7 @@ internal fun PlayableBoard(
     trace: TraceState,
     onPathTraced: (List<Int>) -> Unit,
     onTap: (Int) -> Unit,
+    onTapOffGrid: () -> Unit,
     hapticsEnabled: Boolean,
 ) {
     val description = stringResource(
@@ -116,6 +117,7 @@ internal fun PlayableBoard(
         trace = trace,
         onPathTraced = onPathTraced,
         onTap = onTap,
+        onTapOffGrid = onTapOffGrid,
         hapticsEnabled = hapticsEnabled,
         modifier = Modifier.semantics { contentDescription = description },
     )

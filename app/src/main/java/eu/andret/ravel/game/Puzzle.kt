@@ -106,6 +106,19 @@ data class Puzzle(
     }
 
     /**
+     * The same puzzle with nothing marked - what a tap anywhere off the letters does.
+     *
+     * The first-cell tap in [tapped] already clears a path, but only for a player who knows it is
+     * there and can find that cell again; a tap on empty screen is the gesture people reach for
+     * without being taught. Revealed cells stay revealed, as with every other way of clearing: they
+     * live in [hints], not in [path].
+     *
+     * The very same instance when nothing is marked, so a caller can tell a tap that changed nothing
+     * from one that did by identity and skip writing the board down for it.
+     */
+    fun cleared(): Puzzle = if (path.isEmpty()) this else withPath(emptyList())
+
+    /**
      * Gives away part or all of the word the player is closest to finishing.
      *
      * "Closest" counts a word's revealed cells and however much of the current path already runs

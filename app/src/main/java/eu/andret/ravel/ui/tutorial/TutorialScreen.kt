@@ -55,6 +55,7 @@ fun TutorialScreen(viewModel: TutorialViewModel = viewModel()) {
 
     Surface(modifier = Modifier.fillMaxSize()) {
         BoardLayout(
+            onTapOffBoard = viewModel::deselect,
             modifier = Modifier.safeDrawingPadding(),
             topBar = {
                 Row(
@@ -89,6 +90,7 @@ fun TutorialScreen(viewModel: TutorialViewModel = viewModel()) {
                     trace = trace,
                     onPathTraced = viewModel::trace,
                     onTap = viewModel::tap,
+                    onTapOffGrid = viewModel::deselect,
                     hapticsEnabled = hapticsEnabled,
                 )
             },

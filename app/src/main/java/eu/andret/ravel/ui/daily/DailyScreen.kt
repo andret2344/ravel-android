@@ -104,6 +104,8 @@ fun DailyScreen(
     val trace = rememberTraceState(puzzle?.board, hapticsEnabled)
 
     BoardLayout(
+
+        onTapOffBoard = viewModel::deselect,
         modifier = modifier,
         // No confirmation on the way out any more, and no red on the button. Every move is written
         // down as it is made, so leaving a half-solved board loses nothing: the same board, with the
@@ -127,6 +129,7 @@ fun DailyScreen(
                     trace = trace,
                     onPathTraced = viewModel::trace,
                     onTap = viewModel::tap,
+                    onTapOffGrid = viewModel::deselect,
                     hapticsEnabled = hapticsEnabled,
                 )
             }
