@@ -444,6 +444,11 @@ question nobody asks about last March.
 The slot is checked against the day being asked about (`shareFor`), exactly like `board`, so a stale
 card ages out by never matching rather than by anything waking up at midnight.
 
+The same slot decides sharing from `review` (2026-11-07): a reread day gets the `ShareButton` only
+when it is the day `shareFor` holds a card for, which is the last day solved. Per-day cards were
+reconsidered (about 30 bytes a day) and left out on the argument above. The card carries lengths and
+marks only, so showing it on a reread board gives nobody else an answer.
+
 ### Why the card records language and size rather than deriving them
 
 **Language**, because the same date in two dictionaries is two unrelated grids and a card shared
@@ -488,11 +493,13 @@ bullet says otherwise.
 - **Level menu** — the play card takes a full-height column, and the road becomes three rows of three
   beside it. The block is sized as *one square that the nine rungs divide*, the same trick the board
   uses — sized off the width its bottom row is cut, sized off the height alone it is a narrow band
-  down the middle of a wide column. **Both roads hold an odd number of levels** (seven across in
+  down the middle of a wide column. **Both roads hold an odd number of levels** (five across in
   tall, nine as a block in wide) so that the level on offer has a middle square to sit in, with as
   many levels behind it as ahead; the strip was eight and put the player one place left of centre.
   That is the one thing the two counts have to agree on, and `firstOf` takes half the size rather
-  than a constant of its own so they cannot drift apart.
+  than a constant of its own so they cannot drift apart. The strip went from seven to five on
+  2026-11-07 because the squares carry numbers: at seven a four-digit level (~33dp) did not fit a
+  ~39dp square at larger font scales or on narrow phones; five gives ~57dp on a 360dp phone.
 - **Daily menu** — heading, run and the three tiles down the left, the week's ladder filling the
   right, and **no scroll at all**, which was the point: stacked on its side the tab came to nearly
   twice the height available, putting the play tile — the reason the tab exists — behind a scroll.
@@ -587,6 +594,83 @@ only traced from its first letter, and that stays the rule the tutorial teaches;
 no grandfathering since nothing is released, but skipping players who already solved something
 stays. Note that `levelsCompleted` in the lifetime totals skips levels
 passed with the debug jump, so a debug install that only ever jumped counts as new.
+
+Kept from the first plan (2026-10-11): the board is **not a `PuzzleMode`** - a third mode would have
+to choose a size ramp and a rank cap for one board - and it **pays and costs nothing**, because a
+tutorial that pays invites skipping back into it, and one that charges for a hint teaches the economy
+as a toll. Dropped from it: a lesson on a word laid backwards, since the game accepts a word only from
+its first letter, and **locking Daily and Shop until the tutorial is done**, which the overlay over
+the whole shell makes moot - every tab waits for it, the daily included, so the daily is still nobody's
+first contact with the rules.
+
+### The tutorial's decoy
+
+Decided 2026-11-07. Players meet real words of a fitting length that the game refuses on every board,
+and nothing told them why. The tutorial now makes them trace one ("paw" / "man") after the first word
+and explains it, with a button to move on.
+
+- **No new boards.** Both boards already hold a dozen real words outside the answer. The catch was
+  order: every four- and five-letter decoy runs through a cell of the three-letter answer, so with
+  the short word taught first no decoy fitted a length still on the list. The four-letter word is now
+  taught first, which retired the old "shortest word first" test.
+- **The step is skipped, not forced,** when the player's own order has already taken the decoy's cells
+  or its length - the lesson bends the way the outline already did.
+- **The decoy is not outlined:** the outline is a hint and hints index the answer. The text names it.
+
+### Hard mode
+
+Decided 2026-11-07. A switch on the levels tab hides the word lengths and their count; found words'
+lengths appear as they are found. Pays `FOR_COMPLETING_HARD` (45). Levels only.
+
+- **UI only, knowing the cost.** Uniqueness is proved for the shown length multiset (`Solver`), so a
+  board may admit a second tiling into real words once the lengths are hidden. Not measured. Accepted
+  because the player's experience of it - a real word refused - is the one ordinary boards already
+  give; the difference is only that it can no longer be reasoned out. Making hard boards unique without
+  lengths would have made the mode part of a board's identity.
+- **Frozen at first open, not first move.** A player who looked, backed out and switched would be paid
+  for lengths already read. A level already started before the mode existed is frozen as ordinary.
+  A change made on the tab applies from the next level, and the switch says so.
+- **Giving up is allowed, on the board, never on the tab.** Hard to ordinary mid-level is not an
+  exploit - the player pays with the bonus - and it is the one exit from a board chosen blind besides
+  paid hints. A "Show lengths" button under the clue row asks first (it cannot be undone and costs
+  coins). The tab's switch does not touch the open level, or setting the next level's mode would
+  silently cost the current one its bonus. Hints bought before giving up change nothing. It is in
+  effect the cheapest help in the game (20 against a 40 letter), but only for players who chose to
+  play without what everyone else is given for free.
+- **45: started at 40, 55 turned down.** The switch is flipped once and then sets the rate for every
+  level after. 55 (asked for, to make the switch tempting) would have made a letter hint cheaper than
+  one level and an ad worth under two - the stuck player's way out made cheap, against "being stuck is
+  meant to cost". 40 was the first figure; 45 is the owner's compromise. How much harder a board is
+  without lengths is unmeasured - on a 5x5, barely - and raising a reward later is a gift where
+  lowering it is a nerf. The switch shows the extra (+20), not the total: "+40" was read as on top.
+- **Hints do not forfeit the bonus.** The extra 20 is below the cheapest hint (40), so no purchase can
+  come out ahead; a forfeit rule would need explaining for nothing.
+- **The card marks a hard level with a red badge** (`HardColors`, not `error`, which the "in progress"
+  dot already wears), on a line laid out whether shown or not, so flipping the switch does not grow
+  the card and move the switch from under the finger.
+- **The full clue row is still laid out, invisibly,** so the footer and the board keep the size they
+  have in an ordinary level. It leaks how many lines the row wraps to, which only says a long list is
+  long.
+
+### Progress reset, and why nothing pays twice
+
+Built 2026-11-06: `RavelApplication.resetProgress`, behind a confirmation, wipes both level ladders,
+the daily history with the streak, and the lifetime statistics, in every language. **Coins, today's ad
+allowance and settings stay.** The clearing methods sit on the concrete stores, not on
+`LevelProgress` / `DailyProgress`, which keep no way to move the ladder.
+
+- **Every language, not one.** The first plan (2026-10-11) reset the current language's ladder and
+  nothing else. Dropped because the daily history and the statistics are not kept per language, so a
+  per-language reset could not clear what a player sees as their progress.
+- **The wallet is not reset.** A reset to `STARTING_BALANCE` would refill a spent wallet.
+- **Nothing pays twice.** `Rewards.FOR_COMPLETING` is paid per level and the first levels are 5x5
+  boards solved in seconds, so a reset that paid again is a coin farm with a button - and as first
+  built, it was one: every level up to where the player had been paid again, and today's daily paid
+  its board and streak again after every reset. Closed the same day with the guard the first plan
+  already had: each language's best level (`StoredLevelProgress`, `best`) and the latest day that
+  paid (`StoredDailyProgress`, `lastPaid`) survive `clear`, and a replay at or below them pays
+  nothing. Both are seeded from the ladder and the record on `clear`, for installs from before the
+  keys existed.
 
 ---
 
@@ -700,34 +784,6 @@ ones; prices live in the Play Console, the code knows only product ids).
   Games follows the player to a new phone with nothing to remember. **Signed in silently at
   launch**, as many games do, with no sign-in button in front of the game.
 
-### Progress reset: one ladder, and no second payout
-
-Decided 2026-10-11, not built. A reset clears the current language's ladder and nothing else. The
-coins, the daily history, the streak and the lifetime word and time totals survive it.
-
-The trap it is built around: `Rewards.FOR_COMPLETING` is paid per level, and the first levels are
-5x5 boards solved in seconds, so a reset that paid again would be a coin farm with a button. A
-per-language best level is kept, and replaying anything at or below it pays nothing. The wallet is
-not reset either way - a reset to `STARTING_BALANCE` would refill a spent wallet.
-
-### Sharing from `review`: the last solved day only
-
-Decided 2026-10-11, not built. `review` gets the `ShareButton` for the day `shareFor` still holds a
-card for, which is the last day solved. Per-day cards were reconsidered (about 30 bytes a day) and
-left out on the argument in "Why `ShareCard` is one slot": nobody posts last March.
-
-### The tutorial is a handmade level 0, and gates Daily and Shop
-
-Decided 2026-10-11, not built. Generated boards cannot teach: a lesson needs to know which word is
-laid backwards and which one is left for elimination. So level 0 is a fixed 4x4 per language, kept
-as a constant with a test that proves it unique, and it is **not a `PuzzleMode`** - a third mode
-would have to choose a size ramp and a rank cap for one board.
-
-Skippable, because a player who already knows the rules should not be held. Pays and costs nothing,
-because a tutorial that pays invites skipping back into it, and one that charges for a hint teaches
-the economy as a toll. **Daily and Shop stay locked until it is finished or skipped**: the daily is
-the one board everybody compares, and it should not be anybody's first contact with the rules.
-
 ---
 
 ## Ads and consent
@@ -801,41 +857,12 @@ being a grind, not about there being one. Skipping was also ruled out structural
 
 Reconfirmed 2026-11-06, when it was briefly listed as a known gap.
 
----
+### On Polish boards every `ć` marks the end of a path
 
-## Known gaps that are not decisions
+Measured 2026-11-06: 1249 of the 3877 words of 4–12 letters within rank 4000 end in `ć`
+(infinitives), and the letter almost never occurs mid-word, so each one hands the player a path end
+for free. A sample 6x6 showed three, i.e. three of its eight ends; two sample 10x10s showed six of
+nine words and seven of eight, since the long Polish words are mostly verbs.
 
-Recorded so they are not rediscovered as news, and not defended as intentional.
-
-- ~~**No tutorial.**~~ Closed 2026-11-06 — see "The tutorial" under App layer. The original entry said
-  paths are "traceable from either end"; the app has never accepted that (`matchesPlacement` compares
-  in order), and the tutorial teaches what the app does.
-- ~~**No way out of a stuck board.**~~ A decision since 2026-11-06 — see "No skip or give-up on a
-  stuck board" under Deliberate omissions.
-- ~~**Re-opening a solved day goes to `review`, which has no footer and so no share button.**~~
-  Closed 2026-11-07: `review` shows `ShareButton` for the day `shareFor` holds a card for. The card
-  carries word lengths and marks only, so it gives no one else an answer.
-- **No instrumented or Compose UI tests** (`app/src/androidTest` does not exist). The navigation
-  graph's five back stacks, rotation during generation, process death mid-board, and every one of the
-  wide layouts are covered by nothing.
-- ~~**No in-app theme override.**~~ Closed 2026-11-06: System / Light / Dark in the options tab
-  (`settings/ThemeSettings.kt`), applied in `MainActivity`, which also re-styles the system bars so
-  a forced theme does not draw dark icons on a dark background.
-- ~~**No progress reset.**~~ Closed 2026-11-06: `RavelApplication.resetProgress`, behind a
-  confirmation. It wipes both level ladders, the daily history with the streak, and the lifetime
-  statistics, in every language - the daily history and the statistics are not kept per language, so
-  a per-language reset was considered and dropped. **Coins and today's ad allowance stay**: a reset
-  that refilled the starting balance would be a coin faucet. The clearing methods sit on the concrete
-  stores, not on `LevelProgress` / `DailyProgress`, which keep no way to move the ladder.
-  *Revised the same day:* as first built the reset was a coin faucet - every level up to where the
-  player had been paid `FOR_COMPLETING` again, and today's daily paid its board and streak again
-  after every reset. Closed with the guard the earlier plan had for a one-language reset: each
-  language's best level (`StoredLevelProgress`, `best`) and the latest day that paid
-  (`StoredDailyProgress`, `lastPaid`) survive `clear`, and a replay at or below them pays nothing.
-  Both are seeded from the ladder and the record on `clear`, for installs from before the keys.
-- **On Polish boards every `ć` marks the end of a path.** Measured 2026-11-06: 1249 of the 3877
-  words of 4–12 letters within rank 4000 end in `ć` (infinitives), and the letter almost never
-  occurs mid-word, so each one hands the player a path end for free. A sample 6x6 showed three, i.e.
-  three of its eight ends; two sample 10x10s showed six of nine words and seven of eight, since the
-  long Polish words are mostly verbs. The obvious fix is capping infinitives per board; it was left
-  alone on purpose for now, which is why this is listed rather than rediscovered.
+The obvious fix is capping infinitives per board. Left alone on purpose, the owner's decision of
+2026-11-06.

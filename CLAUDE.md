@@ -37,52 +37,9 @@ Two Gradle modules:
 
 ## Status: 0.1.0, not released
 
-Three lists, kept current: what exists, what is decided but not built, and what still needs a
-decision before the first release. **Move an item between them in the same commit that changes it**
-- a feature that ships leaves "Planned", a decision that is made leaves "Open". The rules for each
-area are in the sections further down; these lists only say where things stand.
-
-### Built
-
-- **Two modes.** Endless: a ladder of levels, sizes and vocabulary ramped by `PuzzleSpec`. Daily:
-  one board a day, same for everyone, with a calendar, a streak and a shareable result.
-- **Hints and coins.** A letter (40) or a word (100); coins from solving, the streak and rewarded
-  ads. Shop tab with the ad card.
-- **Rewarded ads only**, behind UMP consent gathered before the game is drawn.
-- **Stats tab**; **Options tab**: language (Polish / English - dictionary and UI together), board
-  haptics, theme (phone / light / dark), ad privacy (where required), word sources and licences.
-- **Boards built ahead and kept until solved** (`PuzzleCache`, `StoredBoards`): two levels of
-  lookahead, today's daily from its menu, a "this one is slow" message after 30 s.
-- **Wide layouts** for every screen, through `AdaptiveScreen`.
-- **Backup** of every preference file; **debug-only** level jump.
-- **Tutorial** - a handmade 4x4 board per language (`game/Tutorial.kt`, proved unique by
-  `TutorialTest`), laid over the whole shell on first launch after consent, so every tab waits for
-  it. Replayed from Options in one tap. Skipping counts as finishing; pays and costs nothing.
-  "Done" is stored once per player in the backed-up settings file. Players who had already solved a
-  level or a day count as taught. Teaches tracing from the first letter only, which is the rule.
-- **Progress reset** - from Options, behind a confirmation: both level ladders, the daily history
-  with the streak, and lifetime statistics, in every language. Coins, today's ad allowance and
-  settings stay. **Nothing pays twice**: each language's best level and the last day that paid
-  survive the reset, and replays at or below them pay nothing.
-- **Word strip** under the board spelling the traced word as tiles, live.
-- **Share button on `review`**, for the day `shareFor` still holds a card for (the last solved day)
-  only. No per-day cards.
-
-### Planned - decided, not built
-
-Each of these has requirements already fixed; build to them, do not reopen them.
-
-- **Accounts** - Google sign-in through Firebase Auth, optional. Every requirement in "Commitments
-  made in the privacy policy" below applies.
-- **Leaderboard** - anonymous nickname chosen by the player, opt-out toggle shipped with it.
-- **Analytics** - Firebase, 14-month retention, its own consent.
-- **Coins for real money** - after accounts; three consumable packs (~500 / 1 500 / 4 000), verified
-  on a server with a server-owned balance. **The buyer is identified through Play Games Services,
-  signed in silently at launch** (Firebase `PlayGamesAuthProvider`). The privacy policy and the Data
-  safety form change in the same commit - since 2026-11-06 neither mentions accounts at all. See
-  "The economy".
-- **Tutorial "done" moves to the account** when accounts exist.
-- **A release smoke test** - no instrumented or Compose UI tests exist at all.
+**Work left is in `docs/TODO.md`**: what blocks the beta, code still owed, and features already
+decided (build to their fixed requirements, do not reopen them). Delete an item in the commit that
+finishes it; add one in the commit that leaves something for later.
 
 ### Release channels
 
@@ -90,13 +47,6 @@ Each of these has requirements already fixed; build to them, do not reopen them.
 change there** - the store description says so. Generator changes (search order, difficulty
 constants, the length band, `LAYOUT_NODES`, a dictionary) and `Wallet.STARTING_BALANCE` are free to
 move until then. **From 1.0.0 the rules below on reissuing and on the starting balance bind.**
-
-### Open - to decide
-
-- **CRITICAL before the beta: phone measurements.** Measure generation on a real device with the
-  current generator, record it in `DECISIONS.md`, then remove the temporary `RavelGen` log in
-  `Puzzles.generate`. The cache, the lookahead and the 30-second message are all sized by numbers
-  measured on the old generator.
 
 ## Commands
 
@@ -123,6 +73,9 @@ CI (`.github/workflows/tests.yml`) runs exactly those four, in that order, on JD
 ./gradlew :app:printPuzzle --args="--level 12"
 ./gradlew :app:printPuzzle --args="--daily today --quiet"
 
+# Time the whole ladder, CSV on stdout and the summary on stderr
+./gradlew :app:sweepLevels --args="--to 300" --quiet > sweep.csv
+
 # The generator directly: a width and a seed, for experiments with the difficulty dials
 ./gradlew :generator:run --args="--width 8 --language en --difficulty hard --count 5"
 
@@ -132,8 +85,8 @@ CI (`.github/workflows/tests.yml`) runs exactly those four, in that order, on JD
 
 - `buildDictionaryPl` prints a per-length histogram at each rank tier. **Read it before moving any
   cap in `PuzzleSpec.rankFor`**: the binding constraint is always the *shortest* words.
-- `printPuzzle` lives in `:app`'s **test** source set (`app/src/test/.../tools/PrintPuzzle.kt`) so a
-  developer tool is never packaged into the APK. Gradle's own `--quiet` would silence the board along
+- `printPuzzle` and `sweepLevels` live in `:app`'s **test** source set (`app/src/test/.../tools/`)
+  so a developer tool is never packaged into the APK. Gradle's own `--quiet` would silence the board along
   with Gradle — pass `--quiet` inside `--args` instead.
 - **"Debug: jump to level"** is a *pair* of source-set files, `app/src/debug/.../debug/LevelJump.kt`
   and `app/src/release/...` with an empty body. **Edit both or neither.** Its strings are hard-coded
@@ -235,7 +188,8 @@ This is the part most easily broken by an innocent-looking change.
 board — drag, tap, hint — funnels through `withPath`**. The whole rule set is testable with no device.
 
 `RavelApplication` holds the process-wide singletons — `wallet`, `language`, `haptics`, `theme`,
-`progress` (daily), `levels`, `puzzles`. **Screens reach them through their `AndroidViewModel`, never by constructing their own.**
+`progress` (daily), `levels`, `puzzles`, `tutorial`. **Screens reach them through their
+`AndroidViewModel`, never by constructing their own.**
 
 `RavelApp.kt` is the whole navigation graph: five tabs, each keeping its own back stack. Screens live
 under `ui/<area>/` as `XScreen.kt` + `XViewModel.kt`; board rendering splits across `ui/board/`
@@ -261,16 +215,25 @@ Boards are built ahead in `PuzzleCache` (`game/PuzzleCache.kt`, held by `RavelAp
 - **Every built board goes on the shelf (`StoredBoards`, `ravel-boards`) until solved**: prefetches
   on completion, a screen's own build through `keep`, removal through `solved`. A daily *review*
   is never kept — it would take today's one slot.
-- **The `RavelGen` log line in `Puzzles.generate` is temporary**: remove it once the device numbers
-  are in `DECISIONS.md`.
 
 Persistence is SharedPreferences plus JSON (`settings/SavedBoards.kt`, single-letter keys).
 `LevelProgress` and `DailyProgress` are interfaces because storage is expected to become an account.
 
 - **`LevelProgress` has no method for setting the level and must not gain one.** The debug hatch is
   `StoredLevelProgress.jumpTo`, on the concrete store, reachable only from `src/debug`.
+- **A progress reset never pays twice.** `RavelApplication.resetProgress` clears every language;
+  each language's best level (`StoredLevelProgress`, `best`) and the last day that paid
+  (`StoredDailyProgress`, `lastPaid`) survive it, and a replay at or below them pays nothing. Coins,
+  today's ad allowance and settings are never reset. The clearing methods stay on the concrete
+  stores, off `LevelProgress` / `DailyProgress`.
 - **The tutorial boards are hand-made per language (`game/Tutorial.kt`) and `TutorialTest` proves each
   unique against the shipped dictionary.** If a dictionary rebuild breaks that test, pick a new board.
+- **Each tutorial board has a decoy (`Tutorial.decoyFor`) listing every placement of its word**, and
+  the four-letter word is taught first so the decoy's length is still open. `TutorialTest` holds both.
+- **Hard mode hides lengths in the UI only; the board and its identity are the same.** A level's mode
+  is frozen when its board first comes up (`LevelProgress.open`) and never read from the switch
+  again; the switch acts from the next unopened level. The one change is giving hard mode up on the
+  board (`LevelProgress.dropHard`), never the other way. Levels only - the daily has no hard mode.
 - **Skipping the tutorial counts as finishing it**; the options tab replays it in one tap.
 - **A word is accepted only traced from its first letter** (`matchesPlacement`), not from either end.
 - **Every screen that lays out differently on its side asks `AdaptiveScreen { wide -> }`
@@ -323,7 +286,9 @@ share card's squares, and the `translatable="false"` licence notices.
 ### The economy
 
 **Four numbers, tuned as a set**: `Rewards.FOR_COMPLETING` (25), `Streak.DAY` (25, `SEVENTH` =
-`5 * DAY`), `Rewards.FOR_WATCHING_AD` (100), against the `Hint` prices (40 / 100).
+`5 * DAY`), `Rewards.FOR_WATCHING_AD` (100), against the `Hint` prices (40 / 100). Plus
+`Rewards.FOR_COMPLETING_HARD` (45), which must stay above `FOR_COMPLETING` by less than the cheapest
+hint - `PuzzleTest` holds it; that is what lets hints leave the hard bonus alone.
 
 - **Never move one alone.** Three ratios are the design, guarded by `StreakTest` (as a band) and
   `PuzzleTest` (as a pair of inequalities).

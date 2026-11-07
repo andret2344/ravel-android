@@ -47,6 +47,7 @@ class LevelViewModel(
     private val wallet = (application as RavelApplication).wallet
     private val progress = (application as RavelApplication).levels
     private val puzzles = (application as RavelApplication).puzzles
+    private val hardMode = (application as RavelApplication).hardMode
 
     /** The level this board is, counting from one. */
     val level: Int = checkNotNull(handle.get<Int>(LevelRoute.ARG_LEVEL)) {
@@ -105,6 +106,26 @@ class LevelViewModel(
     val unreachable: StateFlow<Boolean> = progress.state
         .map { level > it.current }
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    private val _hard = MutableStateFlow(false)
+
+    /**
+     * Whether this level is played without its lengths. Decided when the board comes up and never
+     * after - see [eu.andret.ravel.settings.LevelProgress.open] - so false until there is a board.
+     */
+    val hard: StateFlow<Boolean> = _hard.asStateFlow()
+
+    /**
+     * Shows the lengths on a hard level and gives up its bonus - see
+     * [eu.andret.ravel.settings.LevelProgress.dropHard]. Asked for through a confirmation on the
+     * screen; a finished board has nothing left to give up.
+     */
+    fun dropHard() {
+        val playing = _state.value as? BoardState.Playing ?: return
+        if (!_hard.value || playing.puzzle.isComplete) return
+        progress.dropHard(level)
+        _hard.value = false
+    }
 
     private val _completion = MutableStateFlow<LevelCompletion?>(null)
 
@@ -183,6 +204,9 @@ class LevelViewModel(
             }
             warning.cancel()
             _slow.value = false
+            // Frozen before the board is shown, so there is no frame in which the lengths are on
+            // screen for a level about to be counted as hard.
+            if (next is BoardState.Playing) _hard.value = progress.open(level, hardMode.enabled.value)
             _state.value = next
             // There is a board now, or there is not. Either way the clock's answer just changed.
             syncClock()
@@ -316,7 +340,11 @@ class LevelViewModel(
         _sealed.value = progress.state.value.cost()
         val counted = progress.complete(level, wordCount)
         puzzles.solved(id, language.current.value)
-        val coins = if (counted) Rewards.FOR_COMPLETING else 0
+        val coins = when {
+            !counted -> 0
+            _hard.value -> Rewards.FOR_COMPLETING_HARD
+            else -> Rewards.FOR_COMPLETING
+        }
         if (coins > 0) wallet.earn(coins)
 
         _completion.value = LevelCompletion(level = level, coins = coins, seconds = seconds)

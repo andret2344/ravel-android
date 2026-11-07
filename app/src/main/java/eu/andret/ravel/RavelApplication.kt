@@ -9,6 +9,7 @@ import eu.andret.ravel.generator.Ravel
 import eu.andret.ravel.settings.AdAllowance
 import eu.andret.ravel.settings.DailyProgress
 import eu.andret.ravel.settings.HapticSettings
+import eu.andret.ravel.settings.HardModeSettings
 import eu.andret.ravel.settings.LanguageSettings
 import eu.andret.ravel.settings.LevelProgress
 import eu.andret.ravel.settings.StoredDailyProgress
@@ -71,6 +72,12 @@ class RavelApplication : Application() {
      * [eu.andret.ravel.settings.SETTINGS_FILE].
      */
     val haptics: HapticSettings by lazy { HapticSettings(this) }
+
+    /**
+     * Whether the player wants levels without lengths, chosen on the main tab and read by a level
+     * when its board comes up - see [eu.andret.ravel.settings.LevelProgress.open].
+     */
+    val hardMode: HardModeSettings by lazy { HardModeSettings(this) }
 
     /** The theme the player picked, applied by the activity and chosen in the options tab. */
     val theme: ThemeSettings by lazy { ThemeSettings(this) }

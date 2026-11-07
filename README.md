@@ -22,10 +22,16 @@ Two languages, Polish and English, each with its own bundled dictionary of base 
   calendar of past days. A solved day can be shared as a picture of its word lengths (`4🟥 5🟩 9🟨`)
   and nothing else.
 - **Levels** — an endless ladder. Grid size ramps to 10×10 by level 250; how obscure the words may
-  be keeps climbing to level 2500.
+  be keeps climbing to level 2500. A hard-mode switch on the levels tab hides the word lengths and
+  their count, for a larger reward; a level keeps the mode it was first opened in.
 
 Hints cost coins, earned by completing puzzles, by keeping a daily streak, and by watching rewarded
-ads in the shop.
+ads in the shop. Ads are rewarded only, shown when the player asks for one.
+
+A short interactive tutorial on a hand-made board opens on first launch - including one real word
+that lies on the board and still does not count; it can be skipped and
+replayed from the options tab. The options tab also holds the language, board haptics, the theme
+(system, light or dark) and a progress reset that never pays the same level or day twice.
 
 ## Modules
 
@@ -76,6 +82,7 @@ CI (`.github/workflows/tests.yml`) runs exactly those four, in that order.
 
 - `CLAUDE.md` — the rules: what to do and what never to do, for anyone working in this repo.
 - `docs/DECISIONS.md` — the arguments behind those rules: what was measured, tried, and rejected.
+- `docs/TODO.md` — work left before the beta, code still owed, and features already decided.
 - `generator/DICTIONARY.md` — dictionary sources, licences, and how the word lists are built.
 - `docs/privacy-policy.md` — the published privacy policy.
 

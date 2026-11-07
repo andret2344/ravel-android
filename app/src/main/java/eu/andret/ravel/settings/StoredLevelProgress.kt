@@ -158,6 +158,21 @@ class StoredLevelProgress(
         _totals.value = readTotals()
     }
 
+    override fun open(level: Int, hard: Boolean): Boolean {
+        val current = _state.value
+        if (level != current.current) return false
+        current.hardFor(level)?.let { return it }
+        val frozen = hard && current.boardFor(level) == null
+        write(current.copy(opened = OpenedLevel(level, frozen)))
+        return frozen
+    }
+
+    override fun dropHard(level: Int) {
+        val current = _state.value
+        if (level != current.current || current.hardFor(level) != true) return
+        write(current.copy(opened = OpenedLevel(level, hard = false)))
+    }
+
     override fun saveBoard(board: SavedBoard) {
         preferences.edit { putString(key(KEY_BOARD), SavedBoards.toJson(board).toString()) }
         _state.value = _state.value.copy(board = board)
@@ -203,6 +218,13 @@ class StoredLevelProgress(
             } else {
                 putString(key(KEY_BOARD), SavedBoards.toJson(next.board).toString())
             }
+            if (next.opened == null) {
+                remove(key(KEY_OPENED))
+                remove(key(KEY_OPENED_HARD))
+            } else {
+                putInt(key(KEY_OPENED), next.opened.level)
+                putBoolean(key(KEY_OPENED_HARD), next.opened.hard)
+            }
         }
         _state.value = next
         // Levels completed is summed from what was just written, so the totals have to be re-read
@@ -241,6 +263,11 @@ class StoredLevelProgress(
             boughtLetters = preferences.getInt(key(KEY_LETTERS, language), 0),
             boughtWords = preferences.getInt(key(KEY_WORDS, language), 0),
             seconds = preferences.getInt(key(KEY_SECONDS, language), 0),
+            // Kept only for the level on offer, as the board is: a record left behind by a level
+            // already finished would freeze the next one in a mode nobody chose for it.
+            opened = preferences.getInt(key(KEY_OPENED, language), 0)
+                .takeIf { it == completed + 1 }
+                ?.let { OpenedLevel(it, preferences.getBoolean(key(KEY_OPENED_HARD, language), false)) },
         )
     }
 
@@ -269,6 +296,8 @@ class StoredLevelProgress(
         const val KEY_LETTERS = "letters"
         const val KEY_WORDS = "words"
         const val KEY_SECONDS = "seconds"
+        const val KEY_OPENED = "opened"
+        const val KEY_OPENED_HARD = "openedHard"
         const val KEY_TOTAL_FOUND = "totalFound"
         const val KEY_TOTAL_SECONDS = "totalSeconds"
         const val KEY_TOTAL_LETTERS = "totalLetters"

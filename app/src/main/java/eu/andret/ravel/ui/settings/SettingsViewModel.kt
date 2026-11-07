@@ -69,7 +69,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
      * refunding the coins, would make a language switch a way to undo a purchase.
      */
     val unfinished: StateFlow<Boolean> = combine(levels.state, daily.state) { level, day ->
-        level.started || day.board != null
+        level.boardFor(level.current) != null || day.board != null
     }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     /**

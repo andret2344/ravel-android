@@ -26,6 +26,8 @@ import kotlinx.coroutines.flow.StateFlow
  * @param boughtLetters letters bought on [current], across every visit to it.
  * @param boughtWords whole words bought on [current], across every visit to it.
  * @param seconds time spent looking at [current], summed across every visit.
+ * @param opened the mode [current] was frozen in when its board first came up, or null while it has
+ *   not been opened. See [LevelProgress.open].
  */
 data class LevelProgressState(
     val completed: Int = 0,
@@ -33,6 +35,7 @@ data class LevelProgressState(
     val boughtLetters: Int = 0,
     val boughtWords: Int = 0,
     val seconds: Int = 0,
+    val opened: OpenedLevel? = null,
 ) {
     /** The only level that can be played: the one after the last one finished. */
     val current: Int get() = completed + 1
@@ -64,9 +67,29 @@ data class LevelProgressState(
 
     fun secondsFor(level: Int): Int = if (isCurrent(level)) seconds else 0
 
-    /** Whether [current] has been started and left, which is what the tile has to say "finish" to. */
-    val started: Boolean get() = boardFor(current) != null
+    /**
+     * Whether [current] has been started and left, which is what the tile has to say "finish" to.
+     * Opening the board is enough - the player has seen it and the clock has run - so a level with
+     * a recorded mode counts even with nothing traced on it yet.
+     */
+    val started: Boolean get() = boardFor(current) != null || hardFor(current) != null
+
+    /**
+     * Whether [level] is being played without lengths, or null when its mode is not decided yet.
+     *
+     * Checked against the level for the reason [boardFor] is: the record can outlive its level by
+     * one write.
+     */
+    fun hardFor(level: Int): Boolean? = opened?.takeIf { it.level == level }?.hard
 }
+
+/**
+ * The mode a level was frozen in when its board first came up.
+ *
+ * @param hard whether the lengths are hidden on it, and so whether it pays
+ *   [eu.andret.ravel.game.Rewards.FOR_COMPLETING_HARD].
+ */
+data class OpenedLevel(val level: Int, val hard: Boolean)
 
 /**
  * What the main mode has come to across every language, and every level, ever.
@@ -137,4 +160,33 @@ interface LevelProgress {
 
     /** Writes down where the player has got to, so closing the screen is not losing the level. */
     fun saveBoard(board: SavedBoard)
+
+    /**
+     * Fixes the mode [level] is played in, the first time its board is on screen, and returns it.
+     *
+     * The first answer stands for the rest of the level. Hard mode pays for not having seen the
+     * lengths, so the moment that matters is the first time they could have been seen - opening
+     * the board, not the first move on it: a player who looked, backed out, switched to hard and
+     * came back would be paid for lengths they had already read. The other way round is closed too,
+     * because a level's mode does not move under it.
+     *
+     * A level already part-way through with no mode recorded - started before the mode existed -
+     * is frozen as an ordinary one, whatever [hard] says, for the same reason.
+     *
+     * @param hard what the player has chosen for levels not yet opened.
+     * @return the level's mode: true for hard. False, writing nothing, for any level that is not
+     *   the current one.
+     */
+    fun open(level: Int, hard: Boolean): Boolean
+
+    /**
+     * Gives up hard mode on [level], for good: the lengths come back and the level pays the ordinary
+     * amount.
+     *
+     * The one way a level's mode may move, and only downwards. A player stuck on a board they chose
+     * to play blind can buy their way out with the bonus rather than with the level; going the other
+     * way would be the bonus paid for lengths already seen. Found words, hints and time are untouched.
+     * Does nothing for a level that is not the current one or is not hard.
+     */
+    fun dropHard(level: Int)
 }

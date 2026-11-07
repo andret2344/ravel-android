@@ -225,6 +225,16 @@ class PuzzleTest {
     }
 
     @Test
+    fun `hard mode pays more but less than any hint is worth`() {
+        // The bonus is not taken away by a hint, and this is why that is safe: the extra a hard
+        // level pays is smaller than the cheapest hint, so no purchase on a hard level can come out
+        // ahead of not buying. Held as inequalities, like the rule above, so retuning the numbers
+        // does not need this rewritten - only breaking the rule does.
+        assertTrue(Rewards.FOR_COMPLETING_HARD > Rewards.FOR_COMPLETING)
+        assertTrue(Rewards.FOR_COMPLETING_HARD - Rewards.FOR_COMPLETING < Hint.LETTER.cost)
+    }
+
+    @Test
     fun `a wallet cannot be spent below zero`() {
         assertEquals(210, Rewards.afterSpending(250, Hint.LETTER.cost))
         assertEquals(0, Rewards.afterSpending(Hint.WORD.cost, Hint.WORD.cost))

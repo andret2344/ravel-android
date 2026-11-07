@@ -28,6 +28,18 @@
     <string name="main_title">Gra</string>
     <string name="level_number">Poziom %1$d</string>
     <string name="level_size">%1$d × %2$d</string>
+    <string name="level_size_hard">%1$d × %2$d · tryb trudny</string>
+    <string name="hard_mode">Tryb trudny</string>
+    <string name="hard_mode_on">Liczba i długości słów ukryte.</string>
+    <string name="hard_mode_off">Liczba i długości słów widoczne.</string>
+    <string name="hard_mode_scope">Tylko poziomy, nie wyzwanie dnia.</string>
+    <string name="hard_badge">TRUDNY</string>
+    <string name="hard_mode_pending">Zadziała dopiero od kolejnego poziomu.</string>
+    <string name="hard_drop">Pokaż długości</string>
+    <string name="hard_drop_title">Za trudno?</string>
+    <string name="hard_drop_body">Długości słów się pokażą, ale premia za tryb trudny przepadnie. Znalezione słowa zostają na planszy.</string>
+    <string name="hard_drop_keep">Jeszcze spróbuję</string>
+    <string name="coins_lost">−%1$d</string>
     <string name="level_play">Zagraj</string>
     <string name="level_resume">Kontynuuj</string>
     <plurals name="levels_done">
@@ -41,13 +53,13 @@
     <string name="level_rung_locked">Poziom %1$d, zablokowany</string>
 
     <string name="level_done_title">Poziom %1$d ukończony!</string>
-    <string name="level_next">Dalej: %1$d</string>
-    <string name="level_menu">Menu</string>
+    <string name="level_next">Następny poziom</string>
 
     <string name="done_title">Rozwiązane!</string>
     <string name="done_gained">+%1$d</string>
     <string name="done_for_board">Plansza</string>
     <string name="done_exit">Gotowe</string>
+    <string name="done_view_board">Zobacz planszę</string>
 
     <string name="streak_title">Seria tygodniowa</string>
     <string name="streak_none">Brak serii</string>
@@ -184,7 +196,10 @@
     <string name="tutorial_title">Jak grać</string>
     <string name="tutorial_skip">Pomiń</string>
     <string name="tutorial_start">Zaczynamy</string>
+    <string name="tutorial_next">Dalej</string>
     <string name="tutorial_step_first">Każde słowo to ścieżka przez sąsiednie litery: w poziomie albo w pionie, nigdy na skos. Przeciągnij palcem od obwiedzionej litery.</string>
+    <string name="tutorial_step_decoy">Nie każde słowo na planszy się liczy. Ułóż słowo %1$s.</string>
+    <string name="tutorial_step_decoy_traced">%1$s to prawdziwe słowo i pod planszą czeka słowo tej długości, a jednak się nie liczy. Słowa muszą razem wypełnić całą planszę, a pasuje do niej tylko jeden taki układ.</string>
     <string name="tutorial_step_second">Słowo liczy się tylko czytane od pierwszej litery. Pomyłka? Cofnij palec po swoim śladzie albo stuknij literę, żeby uciąć ścieżkę do niej.</string>
     <string name="tutorial_step_last">Pod planszą widzisz tylko długości słów, a każda litera należy do dokładnie jednego słowa. Ostatnie znajdź sam.</string>
     <string name="tutorial_step_done">Gotowe! Gdy utkniesz, podpowiedź odsłoni literę albo całe słowo za monety.</string>

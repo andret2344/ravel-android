@@ -37,6 +37,25 @@ class LevelProgressStateTest {
     }
 
     @Test
+    fun `a level's mode belongs to the level it was frozen on`() {
+        val state = LevelProgressState(completed = 6, opened = OpenedLevel(level = 7, hard = true))
+        assertEquals(true, state.hardFor(7))
+        assertNull("level eight has not been opened", state.hardFor(8))
+        assertNull("level six is behind the player", state.hardFor(6))
+    }
+
+    @Test
+    fun `a level opened and not touched counts as started`() {
+        val state = LevelProgressState(completed = 6, opened = OpenedLevel(level = 7, hard = false))
+        assertTrue(state.started)
+    }
+
+    @Test
+    fun `an unopened level has no mode yet`() {
+        assertNull(LevelProgressState(completed = 6).hardFor(7))
+    }
+
+    @Test
     fun `costs are reported against the current level and nothing else`() {
         // The store keeps one level's spending, so any other level has to be answered with zero
         // rather than with the current level's tally under someone else's number.

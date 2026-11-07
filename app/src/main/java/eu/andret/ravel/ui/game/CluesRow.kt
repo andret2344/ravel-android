@@ -12,6 +12,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import eu.andret.ravel.game.Clue
@@ -20,11 +22,31 @@ import eu.andret.ravel.ui.theme.foundColors
 /**
  * The word lengths, which are the entire clue set: how many words are hidden and how long each one
  * is. Anything more would be the answer.
+ *
+ * @param hidden hard mode: only the lengths already found are shown, each appearing in its place in
+ *   the ascending order as its word is found, so the row says neither how many words are left nor
+ *   how long they are. The full row is still laid out underneath, invisible and silent to screen
+ *   readers, so the footer is the height it would be in an ordinary level - the board is sized from
+ *   what the footer leaves, and a row growing as words were found would shrink the grid under the
+ *   player at every word. What that keeps visible is the number of lines the row wraps to, which
+ *   only ever tells a player with a very long list that the list is long.
  */
 @Composable
-internal fun CluesRow(clues: List<Clue>) {
+internal fun CluesRow(clues: List<Clue>, hidden: Boolean = false) {
+    if (!hidden) {
+        ClueChips(clues)
+        return
+    }
+    Box(modifier = Modifier.fillMaxWidth()) {
+        ClueChips(clues, modifier = Modifier.alpha(0f).clearAndSetSemantics {})
+        ClueChips(clues.filter(Clue::found))
+    }
+}
+
+@Composable
+private fun ClueChips(clues: List<Clue>, modifier: Modifier = Modifier) {
     FlowRow(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {

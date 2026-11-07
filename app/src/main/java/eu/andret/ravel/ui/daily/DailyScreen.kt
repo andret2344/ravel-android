@@ -5,10 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,11 +36,13 @@ import eu.andret.ravel.ui.game.BoardState
 import eu.andret.ravel.ui.game.BoardTopBar
 import eu.andret.ravel.ui.game.BoughtLine
 import eu.andret.ravel.ui.game.CluesRow
+import eu.andret.ravel.ui.game.CompletionDialog
 import eu.andret.ravel.ui.game.FailedBoard
 import eu.andret.ravel.ui.game.GeneratingBoard
 import eu.andret.ravel.ui.game.HintRow
 import eu.andret.ravel.ui.game.PlayableBoard
 import eu.andret.ravel.ui.game.TracedWord
+import eu.andret.ravel.ui.game.afterSolvedPause
 import eu.andret.ravel.ui.game.asClock
 import eu.andret.ravel.ui.theme.goldColors
 import java.util.Date
@@ -153,7 +151,7 @@ fun DailyScreen(
         },
     )
 
-    completion?.let {
+    afterSolvedPause(completion)?.let {
         CompletedDialog(
             completion = it,
             onExit = {
@@ -172,70 +170,58 @@ fun DailyScreen(
  * question the player is actually asking and the breakdown is the answer to "why that much" - which
  * only some players ask, and never first.
  *
- * Dismissing it without the button leaves the player on the finished board rather than backing out
- * for them. A solved grid is worth a moment's looking at, and the way out is a tap away either way.
+ * Staying on the finished board is a button of its own as well as what the scrim and the back
+ * button do - see [CompletionDialog]. One board a day makes the solved grid more worth a look here
+ * than anywhere, and the level dialog offers the same choice in the same place.
  *
- * Sharing sits inside the dialog's body rather than in its button row. The row is about this dialog
+ * Sharing sits inside the dialog's body rather than with the buttons. Those are about this dialog
  * - stay or leave - and sharing is about the board behind it, so a third button there would be a
  * third answer to a two-answer question. It is also the moment the player is most likely to want it,
  * which is why it is here at all and not only on the calendar afterwards.
  */
 @Composable
 private fun CompletedDialog(completion: Completion, onExit: () -> Unit, onStay: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onStay,
-        title = { Text(stringResource(R.string.done_title)) },
-        text = {
-            Column(
-                // Scrollable because a wide window is a short one: the dialog's body is given
-                // whatever height is left after the title and the button, and on a phone lying on
-                // its side that is not much. This body is the longest in the game - a total, a
-                // breakdown, a streak line and the share button - and one that overflows takes the
-                // way out off the bottom of the screen with it.
-                modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                CoinAmount(
-                    amount = completion.total,
-                    text = stringResource(R.string.done_gained, completion.total),
-                    style = MaterialTheme.typography.displaySmall,
-                    color = goldColors.fill,
+    CompletionDialog(
+        title = stringResource(R.string.done_title),
+        primary = stringResource(R.string.done_exit),
+        onPrimary = onExit,
+        onStay = onStay,
+    ) {
+        CoinAmount(
+            amount = completion.total,
+            text = stringResource(R.string.done_gained, completion.total),
+            style = MaterialTheme.typography.displaySmall,
+            color = goldColors.fill,
+        )
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Earned(stringResource(R.string.done_for_board), completion.forBoard)
+            // Zero when the day was already on the record - a board being finished a second time
+            // still pays for the board and cannot pay for the day twice.
+            if (completion.forStreak > 0) {
+                Earned(
+                    label = stringResource(R.string.streak_day, completion.cycleDay),
+                    amount = completion.forStreak,
                 )
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    Earned(stringResource(R.string.done_for_board), completion.forBoard)
-                    // Zero when the day was already on the record - a board being finished a second
-                    // time still pays for the board and cannot pay for the day twice.
-                    if (completion.forStreak > 0) {
-                        Earned(
-                            label = stringResource(R.string.streak_day, completion.cycleDay),
-                            amount = completion.forStreak,
-                        )
-                    }
-                }
-                Text(
-                    text = buildString {
-                        if (completion.streak > 0) {
-                            append(completion.streak)
-                            append(' ')
-                            append(pluralStringResource(R.plurals.streak_days, completion.streak))
-                            append(" · ")
-                        }
-                        append(asClock(completion.seconds))
-                    },
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                ShareButton(completion.card, completion.seconds)
             }
-        },
-        confirmButton = {
-            Button(onClick = onExit) { Text(stringResource(R.string.done_exit)) }
-        },
-    )
+        }
+        Text(
+            text = buildString {
+                if (completion.streak > 0) {
+                    append(completion.streak)
+                    append(' ')
+                    append(pluralStringResource(R.plurals.streak_days, completion.streak))
+                    append(" · ")
+                }
+                append(asClock(completion.seconds))
+            },
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        ShareButton(completion.card, completion.seconds)
+    }
 }
 
 @Composable

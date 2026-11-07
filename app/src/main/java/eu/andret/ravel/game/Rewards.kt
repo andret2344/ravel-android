@@ -35,6 +35,30 @@ object Rewards {
     const val FOR_COMPLETING = 25
 
     /**
+     * Coins for finishing a level played in hard mode, with the word lengths and their count hidden.
+     *
+     * The one exception to [FOR_COMPLETING] being flat, and an exception of a different kind from
+     * the ones that note refuses: size and mode are not the player's choice, while this is, and it
+     * is a choice to give something up. Paid for levels only - the daily has no hard mode, so a day
+     * stays a day for everyone and the streak's parity with playing holds.
+     *
+     * Forty-five: twenty on top, short of double. Hard mode is a switch a player flips once, so its
+     * rate is in practice the rate for every level that player plays from then on. Fifty-five was
+     * asked for, to make the switch more tempting, and turned down: it would have made a
+     * [Hint.LETTER] cheaper than one level and an ad worth under two, which is the stuck player's
+     * way out getting cheap - and being stuck is meant to cost something. Nobody has measured how
+     * much harder a board is without its lengths - on a 5x5 with three words, barely - and raising
+     * the bonus later is a gift where lowering it is a nerf. Forty was the first figure; forty-five
+     * is the owner's compromise between the two.
+     *
+     * **Hints do not forfeit it.** The extra twenty is less than the cheapest hint, so buying a
+     * hint on a hard level is always a loss next to not buying one - there is no route to the bonus
+     * through the shop, and a rule taking it away would be a rule to explain for nothing.
+     * `PuzzleTest` holds that inequality.
+     */
+    const val FOR_COMPLETING_HARD = 45
+
+    /**
      * Coins for watching one rewarded ad through to the end.
      *
      * Exactly one hint, which is the whole reason for the number: an ad buys a thing the player can
