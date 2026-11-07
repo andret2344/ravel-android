@@ -93,6 +93,12 @@ class StoredLevelProgress(
         )
         // The next level starts clean: its own board, its own cost.
         write(LevelProgressState(completed = level))
+        // Paid only the first time this level is ever beaten in this language. After a reset the
+        // ladder starts again from one, and without this every level up to where the player had
+        // been would pay a second time - a reset would be a coin faucet.
+        val best = preferences.getInt(key(KEY_BEST), 0)
+        if (level <= best) return false
+        preferences.edit { putInt(key(KEY_BEST), level) }
         return true
     }
 
@@ -129,14 +135,25 @@ class StoredLevelProgress(
 
     /**
      * Sends every language's ladder back to level one and zeroes the lifetime totals - the whole
-     * file. The player's "reset progress", and nothing else.
+     * file except each language's best level, which is what keeps a reset from paying twice. The
+     * player's "reset progress", and nothing else.
      *
      * On the concrete store and not on [LevelProgress], beside [jumpTo]: the interface has no way to
      * move the ladder, and the one move a player is allowed to make - all the way back - is made by
      * the application, which is the one holder of this type outside `src/debug`.
      */
     fun clear() {
-        preferences.edit { this.clear() }
+        // The best level reached survives, per language: it is not progress the player sees but the
+        // record of what has already been paid for - see complete. The ladder's own count is taken
+        // into it as well, since an install from before the best level was recorded has a ladder
+        // and no record, and those levels were paid for all the same.
+        val best = Language.entries.associateWith {
+            maxOf(preferences.getInt(key(KEY_BEST, it), 0), preferences.getInt(key(KEY_COMPLETED, it), 0))
+        }
+        preferences.edit {
+            this.clear()
+            best.forEach { (language, level) -> if (level > 0) putInt(key(KEY_BEST, language), level) }
+        }
         _state.value = read(language.value)
         _totals.value = readTotals()
     }
@@ -256,5 +273,8 @@ class StoredLevelProgress(
         const val KEY_TOTAL_SECONDS = "totalSeconds"
         const val KEY_TOTAL_LETTERS = "totalLetters"
         const val KEY_TOTAL_WORDS = "totalWords"
+
+        /** The highest level ever beaten in a language, kept through a reset. */
+        const val KEY_BEST = "best"
     }
 }

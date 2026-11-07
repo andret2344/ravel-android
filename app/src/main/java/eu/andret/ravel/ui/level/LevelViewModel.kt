@@ -7,9 +7,9 @@ import androidx.lifecycle.viewModelScope
 import eu.andret.ravel.RavelApplication
 import eu.andret.ravel.game.Hint
 import eu.andret.ravel.game.Puzzle
+import eu.andret.ravel.game.PuzzleCache
 import eu.andret.ravel.game.PuzzleId
 import eu.andret.ravel.game.PuzzleMode
-import eu.andret.ravel.game.Puzzles
 import eu.andret.ravel.game.Rewards
 import eu.andret.ravel.settings.LevelProgressState
 import eu.andret.ravel.settings.SavedBoard
@@ -17,6 +17,7 @@ import eu.andret.ravel.ui.game.BoardState
 import eu.andret.ravel.ui.game.SolveClock
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -118,6 +119,15 @@ class LevelViewModel(
     /** The search currently running, kept only so a new one can call the old one off. */
     private var running: Job? = null
 
+    private val _slow = MutableStateFlow(false)
+
+    /**
+     * True once the board has been building for [SLOW_AFTER_MILLIS], which is when the screen stops
+     * only spinning and tells the player they need not wait on it - the build is the cache's and
+     * outlives this screen. See [eu.andret.ravel.game.PuzzleCache.obtain].
+     */
+    val slow: StateFlow<Boolean> = _slow.asStateFlow()
+
     private val clock = SolveClock(
         scope = viewModelScope,
         banked = progress.state.value.secondsFor(level),
@@ -145,17 +155,22 @@ class LevelViewModel(
         // produce the same level's board, not a fresh one.
         running?.cancel()
         _state.value = BoardState.Generating
+        _slow.value = false
         // Read once, here, rather than inside the coroutine: the board that comes back has to be the
         // one the saved marks below were checked against, and a switch landing mid-search would
         // otherwise restore one language's progress onto the other's grid.
         val playing = language.current.value
         running = viewModelScope.launch {
+            // A child, so it goes with the search: a board that arrives first cancels it.
+            val warning = launch {
+                delay(SLOW_AFTER_MILLIS)
+                _slow.value = true
+            }
             val next = try {
-                // The cache first, and it is usually a hit: playing a level orders the next one, so
-                // the board being opened here was started minutes ago and is either finished or
-                // most of the way there. A miss falls through to the same call this always made -
-                // cancellable, on this scope, on a player's deadline. See [PuzzleCache].
-                (puzzles.take(id, playing) ?: Puzzles.generate(id, playing))
+                // Usually a board already built or nearly so: playing a level orders the two after
+                // it. Otherwise the cache builds it, on its own scope - leaving this screen stops
+                // the waiting, not the search. See [PuzzleCache].
+                puzzles.obtain(id, playing)
                     ?.let { puzzle ->
                         BoardState.Playing(restored(puzzle, progress.state.value.boardFor(level)))
                     }
@@ -166,14 +181,19 @@ class LevelViewModel(
             } catch (failure: Exception) {
                 BoardState.Failed(failure.message)
             }
+            warning.cancel()
+            _slow.value = false
             _state.value = next
             // There is a board now, or there is not. Either way the clock's answer just changed.
             syncClock()
             // Ordered once there is a board and not before, so the two searches never share the
             // phone: the one the player is waiting for would be the one that lost. Ordered even
-            // when this board came back from the cache, since the level after it has not.
+            // when this board came back from the cache, since the levels after it may not have.
+            // Nearest first, so it is the one that finishes first.
             if (next is BoardState.Playing) {
-                puzzles.prefetch(PuzzleId(PuzzleMode.ENDLESS, level + 1L), playing)
+                for (ahead in 1..PuzzleCache.LOOKAHEAD) {
+                    puzzles.prefetch(PuzzleId(PuzzleMode.ENDLESS, level.toLong() + ahead), playing)
+                }
             }
         }
     }
@@ -285,6 +305,7 @@ class LevelViewModel(
         val seconds = progress.state.value.secondsFor(level)
         _sealed.value = progress.state.value.cost()
         val counted = progress.complete(level, wordCount)
+        puzzles.solved(id, language.current.value)
         val coins = if (counted) Rewards.FOR_COMPLETING else 0
         if (coins > 0) wallet.earn(coins)
 
@@ -292,6 +313,13 @@ class LevelViewModel(
     }
 
     private companion object {
+        /**
+         * How long the spinner spins before the screen says the board is a slow one. Long enough
+         * that a board which is merely not cached yet never shows it, short enough that the player
+         * hears it before giving up on the screen.
+         */
+        const val SLOW_AFTER_MILLIS = 30_000L
+
         /**
          * The freshly generated board with the player's own marks put back on it.
          *

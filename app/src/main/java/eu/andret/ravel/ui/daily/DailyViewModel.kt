@@ -49,6 +49,7 @@ class DailyViewModel(
     private val language = (application as RavelApplication).language
     private val wallet = (application as RavelApplication).wallet
     private val progress = (application as RavelApplication).progress
+    private val puzzles = (application as RavelApplication).puzzles
 
     /** The day this board belongs to, as a [DailyDate] ordinal. */
     val ordinal: Long = checkNotNull(handle.get<Long>(DailyRoute.ARG_ORDINAL)) {
@@ -84,6 +85,15 @@ class DailyViewModel(
     val bought: StateFlow<DayResult> = progress.state
         .map { it.costOf(ordinal) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, progress.state.value.costOf(ordinal))
+
+    /**
+     * The card this day can still be shared with, which is only ever the last day solved - see
+     * [eu.andret.ravel.settings.DailyProgressState.shareFor]. Null on every other day, so a reread
+     * board offers sharing exactly where the calendar's day card does, and nowhere else.
+     */
+    val share: StateFlow<ShareCard?> = progress.state
+        .map { it.shareFor(ordinal) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, progress.state.value.shareFor(ordinal))
 
     private val _completion = MutableStateFlow<Completion?>(null)
 
@@ -139,7 +149,14 @@ class DailyViewModel(
         val playing = language.current.value
         running = viewModelScope.launch {
             val next = try {
-                Puzzles.generate(id, playing)
+                // Today's board was ordered by the menu in front of this screen; any other day
+                // misses and is built here as it always was. See [eu.andret.ravel.game.PuzzleCache].
+                // Written down only when it is going to be played: a review's board would take the
+                // daily's one slot from today's.
+                (puzzles.take(id, playing)
+                    ?: Puzzles.generate(id, playing)?.also {
+                        if (!review) puzzles.keep(id, playing, it)
+                    })
                     ?.let { puzzle ->
                         BoardState.Playing(
                             when {
@@ -283,7 +300,12 @@ class DailyViewModel(
         // and the screen has not gone anywhere - the state that would tell syncClock so is not
         // written until this returns.
         clock.stop()
-        wallet.earn(Rewards.FOR_COMPLETING)
+        // Read before the day is sealed, which would make it look solved rather than reset. A day
+        // that already paid before a progress reset pays nothing now, board or streak: otherwise
+        // resetting and solving today again would be a coin faucet.
+        val repaid = progress.paidBeforeReset(ordinal)
+        val forBoard = if (repaid) 0 else Rewards.FOR_COMPLETING
+        if (forBoard > 0) wallet.earn(forBoard)
 
         // Taken off the finished board rather than assembled from what this class happens to know:
         // the per-word results are only derivable while the puzzle is in hand - see
@@ -295,12 +317,13 @@ class DailyViewModel(
         // in opens for review, which never reaches this method. A player who crosses midnight
         // mid-solve is paid for the day they were solving.
         val counted = progress.complete(card)
+        puzzles.solved(id, card.language)
         val streak = progress.state.value.streak
-        val forStreak = if (counted) Streak.rewardFor(Streak.dayInCycle(streak)) else 0
+        val forStreak = if (counted && !repaid) Streak.rewardFor(Streak.dayInCycle(streak)) else 0
         if (forStreak > 0) wallet.earn(forStreak)
 
         _completion.value = Completion(
-            forBoard = Rewards.FOR_COMPLETING,
+            forBoard = forBoard,
             forStreak = forStreak,
             cycleDay = Streak.dayInCycle(streak),
             streak = streak,

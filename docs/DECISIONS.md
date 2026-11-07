@@ -110,6 +110,23 @@ on 5x5 (36%) is the highest left; nobody has looked at one on a device yet. If b
 given away, the measured next step is a gate on how many letter-free tilings the walls allow, not
 another guess at a ratio.
 
+*2026-11-07:* the 10x10 half of that is answered. Above 7x7 the target word length dropped from one
+letter per side to 0.75 (`LARGE_BOARD_WORD_LENGTH_PER_SIDE`). Polish, rank 6000, 30 boards, same
+seeds: 8x8 went from 6.7 words averaging 8.4 letters to 8.9 averaging 6.5, 10x10 from 8.9 averaging
+10.0 to 10.5 averaging 8.4, and the 10x10 worst case from 1.07 s to 0.28 s. 0.85 was measured too and
+sits between. It reissued every board above 7x7.
+
+The 5x5 half is not: more walls do not buy a fourth word there. Four distinct lengths in the band
+need exactly 18 free cells (3, 4, 5, 6) or 22 to 23 (4, 5, 6, 7 / 8); the wall placement reaches 6
+walls at most when asked for 7, so 28% gave 19 free cells, three words every time, and 52% corridor
+cells. Two to four walls gave a fourth word on a fifth of boards with 30% corridor cells.
+
+*Decided the same day:* 5x5 and smaller take 8-16% walls (`SMALL_BOARD_CELLS`), and the word count
+there has no downward spread, since the fallback to one word fewer already happens when no list
+fits. 30 boards, rank 3000: four words on 17 of 30 Polish and 19 of 30 English boards (none before),
+corridor cells 29-30% (36-39% before), worst case 204 ms. With 23 free cells the only list is 4, 5,
+6, 8, so most four-word boards share it; 22 free cells give 4, 5, 6, 7.
+
 ### Shape first, words second
 
 `Partitioner` splits the free cells into disjoint paths of the chosen lengths before any word is
@@ -143,6 +160,24 @@ The median came down from 0.8 s when the length band opened: more, shorter paths
 easily than a full set of twelve-letter ones. **The tail did not move** — it is the uniqueness search,
 not the partition, and it is still the number to design against.
 
+**Revisited: the tail is the partition, and it was the layout budget.** `:app:sweepLevels` over
+levels 1-300 put 99% of every slow board in layout, with uniqueness at about a millisecond. Each
+failed layout ran `SearchBudget.LAYOUT_NODES` (500 000) to exhaustion, ~175 ms on a 10x10, and the
+slow levels were simply the ones that drew many failures. Desktop JVM, one run per level, ms:
+
+| `LAYOUT_NODES` | 10x10 median | 10x10 p90 | 10x10 max | 9x9 max | 8x8 max | over 2 s |
+|---|---|---|---|---|---|---|
+| 500 000 | 703 | 3018 | 5791 | 1164 | 713 | 6 of 300 |
+| 20 000 | 240 | 876 | 1383 | 381 | 155 | 0 of 300 |
+
+On the 46 boards of 9x9 and up: 100 000 left a 3.2 s worst case, 30 000 1.7 s, 20 000 0.8 s and
+10 000 0.8 s, with English following Polish. 10 000 was rejected on board shape, not speed: an
+exhausted budget counts as an unshapeable layout, and 200 of those (`LAYOUTS_BEFORE_EASING`) loosen
+the path-shape ceilings. The worst level reached 164 at 10 000 and 86 at 20 000.
+
+This reissued every board in both modes (see "What reissuing has already cost"). The phone numbers
+quoted in `PuzzleCache` and `Puzzles` predate it.
+
 *Re-measured 2026-11-06* after distinct lengths and the wider wall band, 30 boards per size at rank
 4000 (the table above is not comparable: it predates the rank cap). Same machine, same seeds:
 
@@ -156,10 +191,105 @@ not the partition, and it is still the number to design against.
 Run-to-run noise on the old 8x8 tail was ±40%, so read only the order of magnitude: nothing got
 slower in a way a player would see.
 
+The 2026-11-06 measurement above ran on `LAYOUT_NODES` 500 000, before the change below was merged
+in. Measured together the same day, same seeds, rank 4000, worst of 30 (median): 6x6 72–88 ms
+(12–17), 7x7 217–237 ms (25–39), 8x8 177–179 ms (33–39), 10x10 0.53–0.98 s (139–217 ms). The two
+changes compose: the budget cut the 10x10 tail by about two thirds again.
+
 Dictionaries cost 23–33 MB at the shipped `HARD`, which is why they are cached per (language,
 difficulty) and why `RavelApplication.onTrimMemory` calls `Ravel.forget()`. `Difficulty.HARD.maxRank`
 is 35 000 for that reason as much as for what lies past it — `DictionaryFootprint` asserts the
 budget, `generator/DICTIONARY.md` explains the content argument.
+
+**The table above is a desktop JVM, and a phone is not one.** A first run on a Redmi Note 10 5G put
+the same search an order of magnitude slower, with some 10x10 levels below 300 not finishing inside
+`Puzzles.DEFAULT_TIMEOUT_MILLIS` at all — deterministically, since the seed fixes the search. The
+device table is **not recorded yet**: it is to be measured with the `RavelGen` log line in
+`Puzzles.generate`, which stays in the code until it is, and then goes. Until then, treat the
+figures in `PuzzleCache` and `Puzzles` KDoc as a single preliminary run, not as the measurement.
+
+### Why boards are built before they are asked for
+
+`PuzzleCache` (on `RavelApplication`'s scope) builds the next board while the player is busy with
+the current one: `LevelViewModel` orders level *n + 1* once level *n* is on screen, and
+`DailyMenuViewModel` orders today's board while the calendar is showing. Both board screens ask the
+cache first and fall through to `Puzzles.generate` on a miss.
+
+- **It changes nothing about what a board is.** The other ways to make the slow levels cheaper —
+  a gentler size ramp, looser shape dials, a different search order — all reissue puzzles. This
+  fixes the wait without touching identity.
+- **`take` never generates.** A miss answers null and the screen generates on its own scope, so
+  leaving a screen still cancels the only search a player is waiting on. A screen that stops
+  waiting for a prefetch does not cancel the prefetch: its result is kept, which is the point.
+  *Revisited:* see "Why the level screen builds through the cache" below - this now holds for the
+  daily screen only.
+- **A prefetch is ordered only once the current board is on screen**, so the search the player is
+  waiting for never shares the phone with the one they are not.
+- **Starting level *n* orders *n + 1* and *n + 2*.** The first version ordered only *n + 1*, on the
+  assumption that a prefetch keeps running when the player leaves the app. It does not: Android
+  freezes a cached process within seconds of it leaving the foreground, so background work really
+  happens only while the game is on screen. A fast player who finishes level *n* and closes the app
+  leaves the slow *n + 1* half-built, and the process is later killed with it. Two levels of
+  foreground play is the budget instead; a build lost to a kill restarts behind the level the
+  player returns to, which is on the shelf and still has to be finished.
+- **The two are built one after the other, not side by side** (a fair `Mutex` per mode). Side by
+  side finishes both later on a phone that is already warm from the player's own board, and *n + 1*
+  is the one needed first. Per mode, so today's daily never queues behind two slow levels.
+- **Slots are counted per mode: `1 + LOOKAHEAD` (3) for endless, one for the daily.** The board
+  being played and the two after it; fewer and the one being played is evicted by its own
+  successors on a back-and-re-enter. A shared pool would let level prefetches push out today's
+  board and the reverse.
+- **A different language clears everything**, in-flight searches included.
+- **A prefetch gets `PREFETCH_TIMEOUT_MILLIS` (3 min), not the player's 20 s.** Nobody is watching,
+  so the question is "when is this device hopeless", not "how long will they sit here". A timed-out
+  prefetch is cached as its null; retrying would be the same deterministic search again.
+- **The daily menu orders today's board even for a player who only came to look at the streak.**
+  This reverses the menu's earlier "starts no generation" rule, which assumed a board was a second
+  or two. Not ordered for a day already solved — that board is only ever reviewed.
+- **No `forget()`, and the cache is not dropped in `onTrimMemory`.** `TRIM_MEMORY_UI_HIDDEN` fires
+  whenever the player leaves the app, often with a build still running that the freezer only
+  pauses; finished boards are a few kilobytes.
+- **`Puzzles.preload` builds the dictionary at process start** and again on every language switch,
+  so the first board does not pay for the trie in front of the player.
+
+**Built boards are written down, not only held in memory** (`StoredBoards`, preference file
+`ravel-boards`, backed up). Memory alone loses everything when Android kills the process in the
+background, and the player comes back to the level they were on with nothing held — for the slow
+levels, a deterministic failure on every retry. A board goes on the shelf when a prefetch finishes
+or a screen builds it, and leaves when it is solved; the shelf keeps the same per-mode count as
+memory, per language, evicting the lowest ordinal. Stored whole (letters and solution), because
+the seed is the thing that is expensive to turn back into a board.
+
+A side effect, accepted: a shelved board survives a generator change. The player finishes the
+board they started, against which their saved marks were made, instead of having the marks dropped
+by `restored` onto a reissued grid. Boards not yet built still reissue.
+
+What the shelf does not cover: a prefetch killed before it finished, and a level reached with
+nothing built - a restore from a backup older than the board, a phone slower than the prefetch
+deadline. On the 20-second screen deadline both failed on every retry; the next section is the fix.
+
+### Why the level screen builds through the cache
+
+The level screen asks `PuzzleCache.obtain`, which builds a miss on the cache's own scope with
+`PREFETCH_TIMEOUT_MILLIS`, instead of `Puzzles.generate` with the 20-second deadline. Leaving the
+screen stops the waiting, not the search.
+
+- **Background from the start, not a hand-off after a timeout.** Handing over after 30 s was the
+  other option and was rejected: the seed makes the search deterministic, so the background build
+  would start from zero and the first 30 s would be thrown away - about 98 s instead of 68 s for
+  level 238.
+- **After 30 s (`SLOW_AFTER_MILLIS`) the spinner says the board is slow and offers the daily.** Not
+  "you can leave and come back": Android freezes a backgrounded app within seconds, so the build only
+  runs while the game is in front. The offer is a concrete place inside the game where the wait
+  is not wasted.
+- **A build that ended in null is retried on the next request.** The search is deterministic, but
+  its deadline is wall-clock time, and a process frozen mid-build spends that deadline asleep.
+- **The daily screen keeps the old path.** Its misses are days opened for review, which must not
+  take today's one slot on the shelf, and its boards (8x8 at most) fit the deadline.
+
+This hides the cost rather than removing it: the first board of a fresh install and any board
+reached with nothing prefetched still pay in full. Removing it is the layout search, and changing
+that reissues puzzles.
 
 ### Base forms only, by opposite routes
 
@@ -246,6 +376,8 @@ Board identity is really *(id, generator version)*.
 - **Narrowing the daily's spec** reissued every daily ever played. `DailyViewModel.restored` drops
   saved marks that no longer fit, so nothing crashes, but reviewing an old day now shows a different
   board than was solved.
+- **`LAYOUT_NODES` 500 000 to 20 000** reissued every puzzle in both modes, before any release
+  (`versionName` 0.1.0), which is the only reason it cost nothing. See "Generation cost, measured".
 - **Distinct lengths and the 28–40% wall band** (2026-11-06) reissued every puzzle in both modes
   again, already-played dailies included, on the same terms. Accepted explicitly before the change.
   Its same-day revision to 18–28% / 8–18% reissued everything a second time.
@@ -447,7 +579,13 @@ Decided 2026-11-06. Four choices, each with its rejected alternative:
   the app mid-replay does not bring it back on the next launch.
 
 Players who already solved a level or a day when the tutorial shipped are treated as taught
-(`TutorialSettings.pendingFrom`). Note that `levelsCompleted` in the lifetime totals skips levels
+(`TutorialSettings.pendingFrom`).
+
+Two places where it departs from the plan written before it, both confirmed by the owner on
+2026-11-07: the plan had a step showing that either end of a word works, but the game accepts a word
+only traced from its first letter, and that stays the rule the tutorial teaches; and the plan said
+no grandfathering since nothing is released, but skipping players who already solved something
+stays. Note that `levelsCompleted` in the lifetime totals skips levels
 passed with the debug jump, so a debug install that only ever jumped counts as new.
 
 ---
@@ -517,6 +655,18 @@ The keep rule and the reasoning are in `app/proguard-rules.pro`, which is delibe
 Installing a release build and opening it is therefore a release-checklist step and not an optional
 one, and it is the step to repeat whenever the ads SDK moves.
 
+### Why `compose-group-mapping` is pinned in `app/build.gradle.kts`
+
+After the move to AGP 9.4.1 / Kotlin 2.4.21, every release build failed with `Could not find
+org.jetbrains.kotlin:compose-group-mapping:2.2.10`. The Compose compiler plugin requests that
+artifact at the Kotlin version it believes is running, and under AGP 9's built-in Kotlin that is
+AGP's bundled 2.2.10, which was never published. Debug builds do not shrink and never resolve it.
+
+Pinned to `libs.versions.kotlin` rather than switched off with `includeComposeMappingFile = false`,
+which also builds but leaves release stack traces through composables unreadable. Rolling AGP back
+was the third option and was not wanted. The pin is a workaround: when commenting it out still
+lets `:app:assembleRelease` pass, delete it.
+
 ### Why `ravel-ads` is in the backup rules
 
 The three-way day comparison in `AdAllowance.remainingFrom` is what makes a restore honest — same day
@@ -525,6 +675,58 @@ answers winding the clock back.
 
 **The commit that adds in-app purchases has to revisit this**: a restored balance is a restored
 balance, and "spend, then restore" can only really be answered by a server.
+
+### Coins for real money: planned, after accounts
+
+Decided 2026-10-11, not built. Coins will be sold through Google Play Billing, as three consumable
+packs (around 500 / 1 500 / 4 000 coins - 5 / 15 / 40 word hints - with the bonus on the larger
+ones; prices live in the Play Console, the code knows only product ids).
+
+- **Verified on a server, not on the phone.** Purchases wait for the account layer (Firebase Auth +
+  Firestore, see the privacy policy). Checking on the device alone was the faster option and was
+  turned down: a patched client grants itself coins, and a refunded purchase keeps them, with
+  nothing on the device able to notice either.
+- **`ravel-wallet` stays in the backup rules until then.** A consumable cannot be restored from the
+  store, so dropping the wallet from backup would make a paying player lose what they bought on
+  every new phone. "Spend, then restore an older backup" stays possible until the balance is
+  server-owned, and it is the cheater's own game it spoils.
+- Open when this is built: whether buying requires signing in (sign-in is optional, and a server
+  balance needs an account to hang on), what happens to a device balance on first sign-in, and
+  the privacy-policy and Data safety changes purchases bring.
+- *Revisited 2026-10-11:* the buyer is identified through **Play Games Services** automatic sign-in,
+  handed to Firebase as a `PlayGamesAuthProvider` credential. Chosen over an invisible Firebase
+  anonymous account created at the first purchase: an anonymous account belongs to one device and
+  is lost with it unless linked to Google first, which is exactly the paying player's coins. Play
+  Games follows the player to a new phone with nothing to remember. **Signed in silently at
+  launch**, as many games do, with no sign-in button in front of the game.
+
+### Progress reset: one ladder, and no second payout
+
+Decided 2026-10-11, not built. A reset clears the current language's ladder and nothing else. The
+coins, the daily history, the streak and the lifetime word and time totals survive it.
+
+The trap it is built around: `Rewards.FOR_COMPLETING` is paid per level, and the first levels are
+5x5 boards solved in seconds, so a reset that paid again would be a coin farm with a button. A
+per-language best level is kept, and replaying anything at or below it pays nothing. The wallet is
+not reset either way - a reset to `STARTING_BALANCE` would refill a spent wallet.
+
+### Sharing from `review`: the last solved day only
+
+Decided 2026-10-11, not built. `review` gets the `ShareButton` for the day `shareFor` still holds a
+card for, which is the last day solved. Per-day cards were reconsidered (about 30 bytes a day) and
+left out on the argument in "Why `ShareCard` is one slot": nobody posts last March.
+
+### The tutorial is a handmade level 0, and gates Daily and Shop
+
+Decided 2026-10-11, not built. Generated boards cannot teach: a lesson needs to know which word is
+laid backwards and which one is left for elimination. So level 0 is a fixed 4x4 per language, kept
+as a constant with a test that proves it unique, and it is **not a `PuzzleMode`** - a third mode
+would have to choose a size ramp and a rank cap for one board.
+
+Skippable, because a player who already knows the rules should not be held. Pays and costs nothing,
+because a tutorial that pays invites skipping back into it, and one that charges for a hint teaches
+the economy as a toll. **Daily and Shop stay locked until it is finished or skipped**: the daily is
+the one board everybody compares, and it should not be anybody's first contact with the rules.
 
 ---
 
@@ -588,11 +790,16 @@ board is 144 cells.
 Accessibility **off** the board still applies in full: `ui/Coins.kt`, `CalendarCard.kt`,
 `StreakCard.kt`, `SettingsScreen.kt` and the rest carry semantics, and new screens are expected to.
 
-### No skip or give-up on a stuck board
+### No skip, no give-up, no free reveal
 
-Decided 2026-11-06, moved here from the known gaps by the owner as an architectural decision. The
-way out of a stuck board is a hint, paid in coins; the coin faucet is capped at `ADS_PER_DAY` watches
-plus whatever solving pays. Do not add a skip, a give-up or a free reveal without being asked.
+Decided 2026-10-11. Being stuck on a board is the game asking the player to think, and a way past it
+that costs nothing would answer the question for them. The only exit is hints, paid for in coins.
+
+This does not undo "Why the hint prices came down alone": that was about the *price* of the exit
+being a grind, not about there being one. Skipping was also ruled out structurally before this -
+`LevelProgress` has no setter, see "Why `LevelProgress` has no setter".
+
+Reconfirmed 2026-11-06, when it was briefly listed as a known gap.
 
 ---
 
@@ -605,7 +812,9 @@ Recorded so they are not rediscovered as news, and not defended as intentional.
   in order), and the tutorial teaches what the app does.
 - ~~**No way out of a stuck board.**~~ A decision since 2026-11-06 — see "No skip or give-up on a
   stuck board" under Deliberate omissions.
-- **Re-opening a solved day goes to `review`, which has no footer and so no share button.**
+- ~~**Re-opening a solved day goes to `review`, which has no footer and so no share button.**~~
+  Closed 2026-11-07: `review` shows `ShareButton` for the day `shareFor` holds a card for. The card
+  carries word lengths and marks only, so it gives no one else an answer.
 - **No instrumented or Compose UI tests** (`app/src/androidTest` does not exist). The navigation
   graph's five back stacks, rotation during generation, process death mid-board, and every one of the
   wide layouts are covered by nothing.
@@ -618,6 +827,12 @@ Recorded so they are not rediscovered as news, and not defended as intentional.
   a per-language reset was considered and dropped. **Coins and today's ad allowance stay**: a reset
   that refilled the starting balance would be a coin faucet. The clearing methods sit on the concrete
   stores, not on `LevelProgress` / `DailyProgress`, which keep no way to move the ladder.
+  *Revised the same day:* as first built the reset was a coin faucet - every level up to where the
+  player had been paid `FOR_COMPLETING` again, and today's daily paid its board and streak again
+  after every reset. Closed with the guard the earlier plan had for a one-language reset: each
+  language's best level (`StoredLevelProgress`, `best`) and the latest day that paid
+  (`StoredDailyProgress`, `lastPaid`) survive `clear`, and a replay at or below them pays nothing.
+  Both are seeded from the ladder and the record on `clear`, for installs from before the keys.
 - **On Polish boards every `ć` marks the end of a path.** Measured 2026-11-06: 1249 of the 3877
   words of 4–12 letters within rank 4000 end in `ć` (infinitives), and the letter almost never
   occurs mid-word, so each one hands the player a path end for free. A sample 6x6 showed three, i.e.

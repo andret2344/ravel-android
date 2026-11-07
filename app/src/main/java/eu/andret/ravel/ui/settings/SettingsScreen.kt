@@ -40,10 +40,11 @@ import eu.andret.ravel.ui.about.Licence
 import java.util.Locale
 
 /**
- * The switches. There are two of them, and on some devices a third.
+ * The switches. There are three of them, and on some devices a fourth.
  *
  * The order is what the player is most likely to have come for: the language, then the haptics, then
- * the ad privacy row. Haptics are second rather than first because they are the setting somebody
+ * the theme, then the ad privacy row. The theme comes after the haptics because a phone already has
+ * a dark mode the game follows by default, so it is the setting fewest players need. Haptics are second rather than first because they are the setting somebody
  * arrives at having already felt the thing they want changed, while the language is the one people
  * go looking for before the game has told them anything.
  *
@@ -71,9 +72,9 @@ import java.util.Locale
  * attribution the game is required to show, and a screen holding one setting has room; a second
  * screen reached from this one would be a tap in front of a list that is already short.
  *
- * @param onLicence opens one source. The names are on this screen and the licences are a page
- *   deeper, because a player who came here to change the language should not have to scroll past a
- *   Princeton disclaimer to find out they have already passed it.
+ * @param onLicence opens one licence - a word source, or the game's own. The names are on this
+ *   screen and the licences are a page deeper, because a player who came here to change the language
+ *   should not have to scroll past a Princeton disclaimer to find out they have already passed it.
  */
 @Composable
 fun SettingsScreen(
@@ -313,7 +314,7 @@ fun SettingsScreen(
             )
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column {
-                    Licence.entries.forEach { licence ->
+                    Licence.wordSources.forEach { licence ->
                         SourceRow(licence = licence, onOpen = { onLicence(licence) })
                     }
                 }
@@ -323,6 +324,30 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
+    }
+
+    /*
+     * The game's own licence: one row, its own heading, directly under the sources.
+     *
+     * Under them rather than above because the order on this screen is what somebody came for, and
+     * nobody came for this. Its own card rather than a seventh row in theirs because that card
+     * answers "where do the words come from", and Ravel is not an answer to it - a row saying
+     * otherwise would be a false attribution sitting among five real ones.
+     */
+    val licenceSection: @Composable () -> Unit = {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = stringResource(R.string.settings_licence),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Card(modifier = Modifier.fillMaxWidth()) {
+                SourceRow(
+                    licence = Licence.RAVEL,
+                    onOpen = { onLicence(Licence.RAVEL) },
+                )
+            }
         }
     }
 
@@ -369,8 +394,12 @@ fun SettingsScreen(
                         privacySection()
                         progressSection()
                     }
-                    Column(modifier = Modifier.weight(1f)) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(20.dp),
+                    ) {
                         sourcesSection()
+                        licenceSection()
                     }
                 }
             } else {
@@ -381,6 +410,7 @@ fun SettingsScreen(
                 privacySection()
                 progressSection()
                 sourcesSection()
+                licenceSection()
             }
         }
     }
@@ -556,7 +586,7 @@ private fun RadioRow(label: String, selected: Boolean, onSelect: () -> Unit) {
     Row(
         // The whole row is the target, and the button is drawn rather than clicked: a radio button
         // is a few millimetres of a row that is a finger tall, and a player who taps the word is
-        // choosing the language as much as one who hits the circle.
+        // choosing it as much as one who hits the circle.
         modifier = Modifier
             .fillMaxWidth()
             .selectable(selected = selected, onClick = onSelect, role = Role.RadioButton)

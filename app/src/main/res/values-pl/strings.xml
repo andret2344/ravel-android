@@ -6,6 +6,8 @@
     <string name="tab_settings">Opcje</string>
 
     <string name="board_generating">Układam planszę…</string>
+    <string name="board_slow">Ta plansza jest duża i układa się dłużej. Nie musisz tu czekać: będzie się układać dalej, gdy zagrasz w wyzwanie dnia.</string>
+    <string name="board_slow_daily">Zagraj w wyzwanie dnia</string>
     <string name="board_failed">Nie udało się wygenerować planszy.</string>
     <string name="board_retry">Spróbuj ponownie</string>
     <string name="board_description">Plansza %1$d na %2$d</string>
@@ -13,7 +15,6 @@
 
     <string name="daily_title">Wyzwanie dnia</string>
     <string name="daily_play">Zagraj dzisiejszą planszę</string>
-    <string name="daily_review">Zobacz dzisiejszą planszę</string>
     <string name="daily_reviewing">Rozwiązane</string>
 
     <string name="daily_prompt_title">Dzisiejsza plansza czeka</string>
@@ -46,7 +47,6 @@
     <string name="done_title">Rozwiązane!</string>
     <string name="done_gained">+%1$d</string>
     <string name="done_for_board">Plansza</string>
-    <string name="done_streak">%1$d %2$s</string>
     <string name="done_exit">Gotowe</string>
 
     <string name="streak_title">Seria tygodniowa</string>
@@ -166,14 +166,14 @@
 
     <string name="settings_feedback">Reakcje</string>
     <string name="settings_haptics">Wibracje na planszy</string>
-    <string name="settings_haptics_note">Krótka wibracja przy każdej literze, znalezionym słowie i ukończonej planszy. Reakcja haptyczna w ustawieniach telefonu też musi być włączona.</string>
-    <string name="settings_tutorial">Samouczek</string>
-    <string name="settings_tutorial_replay">Pokaż samouczek</string>
-    <string name="settings_tutorial_note">Zasady gry na małej planszy, którą rozwiązujesz sam. Możesz go pominąć w każdej chwili.</string>
     <string name="settings_theme">Motyw</string>
     <string name="settings_theme_system">Jak w telefonie</string>
     <string name="settings_theme_light">Jasny</string>
     <string name="settings_theme_dark">Ciemny</string>
+    <string name="settings_haptics_note">Krótka wibracja przy każdej literze, znalezionym słowie i ukończonej planszy. Reakcja haptyczna w ustawieniach telefonu też musi być włączona.</string>
+    <string name="settings_tutorial">Samouczek</string>
+    <string name="settings_tutorial_replay">Pokaż samouczek</string>
+    <string name="settings_tutorial_note">Zasady gry na małej planszy, którą rozwiązujesz sam. Możesz go pominąć w każdej chwili.</string>
     <string name="settings_progress">Postęp</string>
     <string name="settings_reset">Resetuj postęp</string>
     <string name="settings_reset_note">Poziomy we wszystkich językach, historia wyzwań dnia z serią oraz statystyki. Monety zostają.</string>
@@ -197,4 +197,6 @@
     <string name="settings_sources_note">Słowniki powstają z publicznych list słów i korpusów. Dotknij źródła, aby zobaczyć jego licencję.</string>
     <string name="licence_open">Otwórz licencję</string>
     <string name="licence_back">Wstecz</string>
+    <string name="settings_licence">Licencja</string>
+    <string name="licence_ravel_notice">Ravel jest wydany na licencji PolyForm Noncommercial 1.0.0. Kod źródłowy jest dostępny pod adresem https://github.com/andret2344/ravel-android i można go czytać, budować i zmieniać w każdym celu niekomercyjnym; użycie komercyjne nie jest objęte licencją. Copyright 2026 Andret2344. Listy słów nie są objęte tymi warunkami — są wymienione powyżej, na licencjach projektów, z których pochodzą.</string>
 </resources>

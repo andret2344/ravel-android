@@ -9,7 +9,8 @@ import eu.andret.ravel.settings.ShareCard
  * the answer has moved on: the balance is already the new balance, and the streak is already the
  * longer streak. Only the code that did the paying knows what the payment was.
  *
- * @param forBoard the flat reward every finished board pays.
+ * @param forBoard the flat reward every finished board pays, or zero for a day that already paid
+ *   before a progress reset - see [eu.andret.ravel.settings.DailyProgress.paidBeforeReset].
  * @param forStreak what the day itself paid, or zero when it paid nothing - a board finished a
  *   second time, or one out of the calendar, which the streak does not buy.
  * @param cycleDay which rung of the week [forStreak] came off, so the dialog can name it.

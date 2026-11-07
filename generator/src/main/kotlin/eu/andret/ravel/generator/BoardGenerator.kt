@@ -42,8 +42,16 @@ import kotlin.random.Random
 data class BoardSpec(
     val width: Int,
     val height: Int,
-    val minWallRatio: Double = if (width * height <= DISTINCT_LENGTHS_UP_TO_CELLS) 0.18 else 0.08,
-    val maxWallRatio: Double = if (width * height <= DISTINCT_LENGTHS_UP_TO_CELLS) 0.28 else 0.18,
+    val minWallRatio: Double = when {
+        width * height <= SMALL_BOARD_CELLS -> 0.08
+        width * height <= DISTINCT_LENGTHS_UP_TO_CELLS -> 0.18
+        else -> 0.08
+    },
+    val maxWallRatio: Double = when {
+        width * height <= SMALL_BOARD_CELLS -> 0.16
+        width * height <= DISTINCT_LENGTHS_UP_TO_CELLS -> 0.28
+        else -> 0.18
+    },
     val minTurnRatio: Double = 0.0,
     val maxTurnRatio: Double = 1.0,
     val maxDirectness: Double = 1.0,
@@ -82,7 +90,10 @@ data class BoardSpec(
         // The spread only goes down. Boards vary either way in practice, because [fewest] pushes
         // back on large grids, and an extra word is worse than one fewer: it is paid for out of
         // every other word's length, which is how a 6x6 ends up with three four-letter words.
-        val spread = maxOf(1, targeted / 8)
+        // None at all on a board of 5x5 or less, where one word fewer is a third of the board's
+        // words: the count it falls back to is already tried by lengthsFor when the one asked for
+        // has no fitting list, so the spread could only ever take a fourth word away.
+        val spread = if (cellCount <= SMALL_BOARD_CELLS) 0 else maxOf(1, targeted / 8)
         return (targeted - random.nextInt(spread + 1)).coerceIn(fewest, most)
     }
 
@@ -102,11 +113,20 @@ data class BoardSpec(
      * A fixed length cannot serve both sizes: 5.5 letters suits a 6x6 board and turns a 9x9 into
      * seventeen four-letter words, which is neither hard nor good-looking. What has to stay
      * constant is the ratio of word length to board size - that is what decides whether a path has
-     * anywhere to go before it must double back on itself.
+     * anywhere to go before it must double back on itself. The ratio itself steps down once above
+     * 7x7; see [LARGE_BOARD_WORD_LENGTH_PER_SIDE].
      */
     internal val effectiveTargetWordLength: Double
-        get() = targetWordLength ?: (WORD_LENGTH_PER_SIDE * (width + height) / 2.0)
+        get() = targetWordLength ?: (lengthPerSide * (width + height) / 2.0)
             .coerceIn(MIN_WORD_LENGTH + 1.0, MAX_WORD_LENGTH - 1.0)
+
+    /** Split at the same area as [maxLengthRepeats], where the length rules change too. */
+    private val lengthPerSide: Double
+        get() = if (cellCount <= DISTINCT_LENGTHS_UP_TO_CELLS) {
+            WORD_LENGTH_PER_SIDE
+        } else {
+            LARGE_BOARD_WORD_LENGTH_PER_SIDE
+        }
 
     /**
      * Wall counts to draw from: the preferred ratio band, narrowed to counts that leave enough
@@ -155,6 +175,27 @@ data class BoardSpec(
          * generator has to fight for.
          */
         const val WORD_LENGTH_PER_SIDE = 1.0
+
+        /**
+         * The same, above 7x7. One letter per side made a 10x10 into nine words of 7 to 12 letters,
+         * mostly in pairs climbing to the ceiling (9, 9, 10, 10, 11, 11, 12, 12) - long, tiring to
+         * read, and drawn from the thinnest bands of the dictionary. At 0.75 a 10x10 holds about ten
+         * words averaging 8.4 letters, an 8x8 about nine averaging 6.5, and the 10x10 tail fell from
+         * 1.07 s to 0.28 s on the same seeds: shorter paths partition more easily. Not lower, because
+         * the length band already holds a 10x10 at 6 letters and up - more words would only repeat
+         * the same lengths more often.
+         */
+        const val LARGE_BOARD_WORD_LENGTH_PER_SIDE = 0.75
+
+        /**
+         * The largest area, 5x5, given its own wall band and no downward spread in the word count.
+         *
+         * Four distinct word lengths inside the length band fit 5x5 only with 18 free cells (3, 4, 5,
+         * 6) or 22 to 23 (4, 5, 6, 7 / 8). The 18-28% band of the next size up gave 4 to 6 walls, so
+         * three words every time; asking for 7 walls got 6 from the orbit placement and still three.
+         * 8-16% gives 2 to 4 walls, where a fourth word fits, and fewer corridor cells besides.
+         */
+        const val SMALL_BOARD_CELLS = 5 * 5
 
         /** The largest area, 7x7, on which every word length must be different. */
         const val DISTINCT_LENGTHS_UP_TO_CELLS = 7 * 7

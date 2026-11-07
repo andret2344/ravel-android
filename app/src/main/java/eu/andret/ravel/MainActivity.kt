@@ -8,7 +8,6 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -56,16 +55,17 @@ class MainActivity : ComponentActivity() {
                 ThemeChoice.LIGHT -> false
                 ThemeChoice.DARK -> true
             }
-            // The system bars are told too. enableEdgeToEdge picks light or dark bar icons from the
-            // phone's own mode, so a game forced dark on a light phone would draw dark icons on its
-            // own dark background. The scrims are the library's defaults, restated because it only
-            // exposes them as the defaults of this call.
-            DisposableEffect(dark) {
+            // The bars' icons follow the palette the game is drawn in, not the phone's. Left to
+            // enableEdgeToEdge's own detection they follow the phone, which on a light game over a
+            // dark phone is white clock and battery icons on a white bar. Scrims are the activity
+            // library's own defaults, which it does not expose.
+            LaunchedEffect(dark) {
                 enableEdgeToEdge(
-                    statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { dark },
+                    statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) {
+                        dark
+                    },
                     navigationBarStyle = SystemBarStyle.auto(LIGHT_SCRIM, DARK_SCRIM) { dark },
                 )
-                onDispose {}
             }
             // Recreated rather than restarted, so the navigation state survives the switch: the
             // player who changes the language from the options tab is still on the options tab
@@ -95,7 +95,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private companion object {
-        /** androidx.activity's default navigation bar scrims, light and dark. */
+        /** `androidx.activity`'s private `DefaultLightScrim` and `DefaultDarkScrim`. */
         val LIGHT_SCRIM = Color.argb(0xe6, 0xFF, 0xFF, 0xFF)
         val DARK_SCRIM = Color.argb(0x80, 0x1b, 0x1b, 0x1b)
     }

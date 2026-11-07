@@ -26,6 +26,7 @@ Ravel has no user accounts, no server of its own, and no analytics. The game, it
 The app keeps the following on your device only:
 
 - game progress: levels completed, daily puzzle results and streak, the board in progress, times, and hints used
+- boards built in advance, so the next puzzle opens without waiting
 - the coin balance and how many ads were watched today
 - settings: language, theme, vibration, whether the tutorial was completed, and your advertising consent choice
 

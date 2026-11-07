@@ -96,6 +96,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     /** Puts the tutorial back over the game, at once. See [eu.andret.ravel.settings.TutorialSettings]. */
     fun replayTutorial() = tutorial.restart()
 
+    /** Applies at once, on every screen; nothing is lost by it, so nothing is confirmed. */
     fun chooseTheme(choice: ThemeChoice) = theme.choose(choice)
 
     /**

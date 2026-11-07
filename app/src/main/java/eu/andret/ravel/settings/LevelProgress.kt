@@ -129,7 +129,9 @@ interface LevelProgress {
      * @return false when [level] was already behind the player, which is how the caller knows not
      *   to pay for it twice. A board restored onto the screen after the level was completed - a
      *   process killed and rebuilt, a back stack replayed - can reach the end again, and the second
-     *   finish is not a level beaten.
+     *   finish is not a level beaten. Also false, while still moving the ladder on, for a level
+     *   beaten once already before a progress reset: replaying the ladder pays nothing until the
+     *   player passes where they had been.
      */
     fun complete(level: Int, wordCount: Int): Boolean
 

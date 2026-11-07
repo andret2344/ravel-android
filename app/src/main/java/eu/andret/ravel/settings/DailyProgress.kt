@@ -287,6 +287,16 @@ interface DailyProgress {
     fun complete(card: ShareCard): Boolean
 
     /**
+     * Whether [ordinal] already paid out once, before a progress reset wiped its record.
+     *
+     * A reset forgets which days were solved, so today's board becomes playable again; finishing it
+     * a second time must pay nothing, board or streak, or every reset would be another day's pay.
+     * Days are only ever played on their own date, so the latest day that paid is enough to answer
+     * this: any unsolved day at or before it is one the player was paid for and then reset.
+     */
+    fun paidBeforeReset(ordinal: Long): Boolean
+
+    /**
      * Writes down where the player has got to, so closing the screen is not losing the board.
      *
      * There is no matching load: what was saved is in [DailyProgressState.board] from the moment

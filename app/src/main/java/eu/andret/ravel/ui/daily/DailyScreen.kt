@@ -31,6 +31,7 @@ import eu.andret.ravel.R
 import eu.andret.ravel.game.Hint
 import eu.andret.ravel.game.Puzzle
 import eu.andret.ravel.settings.DayResult
+import eu.andret.ravel.settings.ShareCard
 import eu.andret.ravel.ui.CoinAmount
 import eu.andret.ravel.ui.board.TraceState
 import eu.andret.ravel.ui.board.rememberTraceState
@@ -68,6 +69,7 @@ fun DailyScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val balance by viewModel.balance.collectAsStateWithLifecycle()
     val bought by viewModel.bought.collectAsStateWithLifecycle()
+    val share by viewModel.share.collectAsStateWithLifecycle()
     val completion by viewModel.completion.collectAsStateWithLifecycle()
     val elapsed by viewModel.elapsed.collectAsStateWithLifecycle()
     val hapticsEnabled by viewModel.hapticsEnabled.collectAsStateWithLifecycle()
@@ -132,7 +134,7 @@ fun DailyScreen(
         footer = {
             puzzle?.let {
                 if (viewModel.review) {
-                    Reviewed(it)
+                    Reviewed(puzzle = it, share = share, seconds = bought.seconds)
                 } else {
                     Footer(
                         puzzle = it,
@@ -269,15 +271,21 @@ private fun Footer(puzzle: Puzzle, trace: TraceState, bought: DayResult, onHint:
  * The lengths stay, because they are what the board is measured against and the row is the shape
  * the player remembers. The hints go, because there is nothing left to reveal and a price on a
  * finished board is an invitation to spend on nothing.
+ *
+ * The share button comes back for the one day that still has a card, the last one solved, so a
+ * player who closed the completion dialog and reopened the day can still post it. It reveals what
+ * the completion dialog's button does - word lengths and how each was found - and nothing of the
+ * board, so having it on a reread board gives nobody else an answer.
  */
 @Composable
-private fun Reviewed(puzzle: Puzzle) {
+private fun Reviewed(puzzle: Puzzle, share: ShareCard?, seconds: Int?) {
     CluesRow(puzzle.clues)
     Text(
         text = stringResource(R.string.daily_reviewing),
         style = MaterialTheme.typography.titleSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
+    share?.let { ShareButton(card = it, seconds = seconds) }
 }
 
 /**

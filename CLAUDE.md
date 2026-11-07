@@ -12,6 +12,16 @@ a rule here that needs more than one sentence of justification, that justificati
 `DECISIONS.md` material. This file is loaded into context every session; the other one is read when
 somebody is about to change something.
 
+`README.md` is the third file, and it faces outward: what Ravel is, how it is built, run and
+tested, and where the other documents are. **It must describe the project as it stands right now
+and must be updated in the same commit as any change that makes it wrong** — a module, a Gradle
+command, a mode, a documentation file, a dictionary source. **It is not a changelog**: never
+"now", "no longer", "recently", "used to"; a reader who has never seen an earlier version is the
+only reader it is written for. Git already holds the history. Its badges are part of that: the
+Kotlin, Android SDK and JDK ones carry hard-coded numbers, so **moving a version in
+`libs.versions.toml`, `app/build.gradle.kts` or the CI workflow means moving the badge too** —
+nothing fails when they drift apart.
+
 ## What this is
 
 Ravel is an Android word puzzle. The player is shown a grid of letters, a list of word *lengths*,
@@ -24,6 +34,69 @@ Two Gradle modules:
 - **`:generator`** — plain Kotlin/JVM. Generates and validates boards. No Android in it, so all of it
   runs and tests on a desktop JVM.
 - **`:app`** — the Android app (Compose, single activity). Depends on `:generator`.
+
+## Status: 0.1.0, not released
+
+Three lists, kept current: what exists, what is decided but not built, and what still needs a
+decision before the first release. **Move an item between them in the same commit that changes it**
+- a feature that ships leaves "Planned", a decision that is made leaves "Open". The rules for each
+area are in the sections further down; these lists only say where things stand.
+
+### Built
+
+- **Two modes.** Endless: a ladder of levels, sizes and vocabulary ramped by `PuzzleSpec`. Daily:
+  one board a day, same for everyone, with a calendar, a streak and a shareable result.
+- **Hints and coins.** A letter (40) or a word (100); coins from solving, the streak and rewarded
+  ads. Shop tab with the ad card.
+- **Rewarded ads only**, behind UMP consent gathered before the game is drawn.
+- **Stats tab**; **Options tab**: language (Polish / English - dictionary and UI together), board
+  haptics, theme (phone / light / dark), ad privacy (where required), word sources and licences.
+- **Boards built ahead and kept until solved** (`PuzzleCache`, `StoredBoards`): two levels of
+  lookahead, today's daily from its menu, a "this one is slow" message after 30 s.
+- **Wide layouts** for every screen, through `AdaptiveScreen`.
+- **Backup** of every preference file; **debug-only** level jump.
+- **Tutorial** - a handmade 4x4 board per language (`game/Tutorial.kt`, proved unique by
+  `TutorialTest`), laid over the whole shell on first launch after consent, so every tab waits for
+  it. Replayed from Options in one tap. Skipping counts as finishing; pays and costs nothing.
+  "Done" is stored once per player in the backed-up settings file. Players who had already solved a
+  level or a day count as taught. Teaches tracing from the first letter only, which is the rule.
+- **Progress reset** - from Options, behind a confirmation: both level ladders, the daily history
+  with the streak, and lifetime statistics, in every language. Coins, today's ad allowance and
+  settings stay. **Nothing pays twice**: each language's best level and the last day that paid
+  survive the reset, and replays at or below them pay nothing.
+- **Word strip** under the board spelling the traced word as tiles, live.
+- **Share button on `review`**, for the day `shareFor` still holds a card for (the last solved day)
+  only. No per-day cards.
+
+### Planned - decided, not built
+
+Each of these has requirements already fixed; build to them, do not reopen them.
+
+- **Accounts** - Google sign-in through Firebase Auth, optional. Every requirement in "Commitments
+  made in the privacy policy" below applies.
+- **Leaderboard** - anonymous nickname chosen by the player, opt-out toggle shipped with it.
+- **Analytics** - Firebase, 14-month retention, its own consent.
+- **Coins for real money** - after accounts; three consumable packs (~500 / 1 500 / 4 000), verified
+  on a server with a server-owned balance. **The buyer is identified through Play Games Services,
+  signed in silently at launch** (Firebase `PlayGamesAuthProvider`). The privacy policy and the Data
+  safety form change in the same commit - since 2026-11-06 neither mentions accounts at all. See
+  "The economy".
+- **Tutorial "done" moves to the account** when accounts exist.
+- **A release smoke test** - no instrumented or Compose UI tests exist at all.
+
+### Release channels
+
+**Until 1.0.0 the game ships on the alpha and beta tracks only, and boards and the economy may still
+change there** - the store description says so. Generator changes (search order, difficulty
+constants, the length band, `LAYOUT_NODES`, a dictionary) and `Wallet.STARTING_BALANCE` are free to
+move until then. **From 1.0.0 the rules below on reissuing and on the starting balance bind.**
+
+### Open - to decide
+
+- **CRITICAL before the beta: phone measurements.** Measure generation on a real device with the
+  current generator, record it in `DECISIONS.md`, then remove the temporary `RavelGen` log in
+  `Puzzles.generate`. The cache, the lookahead and the 30-second message are all sized by numbers
+  measured on the old generator.
 
 ## Commands
 
@@ -90,13 +163,21 @@ Rules:
   load-bearing in `BoardSpec.wordCountFor` — see `DECISIONS.md`.
 - **Up to 7x7 (by area) every word length is different; above, none appears more than twice**
   (`BoardSpec.maxLengthRepeats`). The rule is never eased: no fitting list means new walls.
-- **Walls take 18–28% of the grid up to 7x7 and 8–18% above** (`BoardSpec.minWallRatio`). The
-  higher share is what lets distinct lengths fit inside the band; do not raise it further — walls
-  in the middle of the grid turn into corridors that give the words away.
+- **Words aim at one letter per side up to 7x7 and 0.75 above** (`LARGE_BOARD_WORD_LENGTH_PER_SIDE`):
+  more, shorter words on big boards instead of pairs of 11s and 12s.
+- **Walls take 8–16% up to 5x5, 18–28% up to 7x7 and 8–18% above** (`BoardSpec.minWallRatio`,
+  `SMALL_BOARD_CELLS`). The middle band is what lets distinct lengths fit inside the length band; the
+  small one is what lets a 5x5 hold four words. Do not raise any of them — walls in the middle of the
+  grid turn into corridors that give the words away.
 - **Path shape (`turnRatio`, `directness`, `foldRatio`, all in `Board.kt`) is enforced per word
   during enumeration and against the worst word**, never on the finished board, never as an average.
-- **Generation blocks and must be called inside `runInterruptible`** so leaving a screen cancels the
-  search. Design against the tail (10x10 worst ~3 s), not the median.
+- **Generation blocks and must be called inside `runInterruptible`** so cancelling its coroutine
+  stops the search - a screen's own build when the screen goes, a cache build on eviction or a
+  language switch. Design against the tail, not the median — and against a phone, not the desktop table
+  (10x10 worst 0.5–1.0 s at rank 4000 with distinct lengths and `LAYOUT_NODES` 20 000; an order of
+  magnitude more on a mid-range phone).
+- **The tail is the layout search, not uniqueness.** `SearchBudget.LAYOUT_NODES` (20 000) bounds
+  each failed layout; lowering it further trips the shape easing (`LAYOUTS_BEFORE_EASING`).
 - Dictionaries are cached per (language, difficulty); `RavelApplication.onTrimMemory` calls
   `Ravel.forget()`. `DictionaryFootprint` asserts the heap budget — `generator/DICTIONARY.md`
   explains the 35 000 cap.
@@ -121,9 +202,10 @@ This is the part most easily broken by an innocent-looking change.
 - **The vocabulary curve cannot be extended past 2500 by raising the cap.** Harder late levels need a
   second axis.
 - **The daily's two ceilings are flat, not ramps**: `DAILY_MAX_SIZE` (8), `DAILY_MAX_RANK` (8000).
-- **Board identity is really *(id, generator version)*.** Changing search order, a difficulty
-  constant, the length band or the dictionary reissues puzzles — a deliberate decision every time,
-  never a side effect.
+- **Board identity is really *(id, generator version)*** — except for a board already on the shelf,
+  which stays the board the player started across an update. Changing search order, a difficulty
+  constant, the length band or the dictionary reissues every other puzzle — a deliberate decision
+  every time, never a side effect. Before 1.0.0 that decision is cheap; see "Release channels".
 - **`DayResult.wordCount` is a record, not a derivation, and `Int?` means "nobody counted".** Never
   default it to `0`. `complete` takes a `ShareCard`, so a solved day cannot be recorded without one
   entry per word.
@@ -144,20 +226,43 @@ This is the part most easily broken by an innocent-looking change.
   characters, not enum names.
 - **The squares must never go into `strings.xml`.** The surrounding layout (`share_text`) is
   translatable; the colours are not.
-- Reachable from exactly two places, both via `ShareButton`: the completion dialog and the calendar's
-  day card. `review` has none — a gap, not a decision.
+- Reachable from exactly three places, all via `ShareButton`: the completion dialog, the calendar's
+  day card and the `review` footer - the last two only for the day `shareFor` still holds a card for.
 
 ### App layer
 
 `Puzzle` (game/Puzzle.kt) is immutable; every move returns a new puzzle and **every route into the
 board — drag, tap, hint — funnels through `withPath`**. The whole rule set is testable with no device.
 
-`RavelApplication` holds the process-wide singletons — `wallet`, `language`, `progress` (daily),
-`levels`. **Screens reach them through their `AndroidViewModel`, never by constructing their own.**
+`RavelApplication` holds the process-wide singletons — `wallet`, `language`, `haptics`, `theme`,
+`progress` (daily), `levels`, `puzzles`. **Screens reach them through their `AndroidViewModel`, never by constructing their own.**
 
 `RavelApp.kt` is the whole navigation graph: five tabs, each keeping its own back stack. Screens live
 under `ui/<area>/` as `XScreen.kt` + `XViewModel.kt`; board rendering splits across `ui/board/`
 (`BoardView` decides what a cell means, `BoardPainter` draws it).
+
+Boards are built ahead in `PuzzleCache` (`game/PuzzleCache.kt`, held by `RavelApplication`):
+
+- **The level screen builds through the cache (`obtain`), never on its own scope**, so leaving the
+  screen stops the waiting, not the search. After `SLOW_AFTER_MILLIS` (30 s) it says so and offers
+  the daily - never "you can leave the app": the build only runs while the app is in front.
+- **The daily screen still builds its misses itself** (`take`, then `Puzzles.generate`): its misses
+  are reviews, which must not take today's slot.
+- **A build that ended in null is started again on the next request**, not answered from memory: a
+  frozen process spends its wall-clock deadline asleep.
+- **Never order a prefetch while a screen is still waiting on its own search** — level *n + 1* goes
+  out once level *n* is on screen; today's daily goes out from the menu, where nothing is waiting.
+- **Starting level *n* orders *n + 1* and *n + 2* (`LOOKAHEAD`).** Background work runs only while
+  the app is on screen - Android freezes cached processes - so the lookahead is counted in levels
+  of foreground play, not in wall-clock time. **Built one at a time per mode, nearest first.**
+- **Slots are per mode (`capacityOf`, exhaustive): `1 + LOOKAHEAD` endless, one daily.** Never a
+  shared pool.
+- **Never cancel the cache from `onTrimMemory`.**
+- **Every built board goes on the shelf (`StoredBoards`, `ravel-boards`) until solved**: prefetches
+  on completion, a screen's own build through `keep`, removal through `solved`. A daily *review*
+  is never kept — it would take today's one slot.
+- **The `RavelGen` log line in `Puzzles.generate` is temporary**: remove it once the device numbers
+  are in `DECISIONS.md`.
 
 Persistence is SharedPreferences plus JSON (`settings/SavedBoards.kt`, single-letter keys).
 `LevelProgress` and `DailyProgress` are interfaces because storage is expected to become an account.
@@ -222,10 +327,12 @@ share card's squares, and the `translatable="false"` licence notices.
 
 - **Never move one alone.** Three ratios are the design, guarded by `StreakTest` (as a band) and
   `PuzzleTest` (as a pair of inequalities).
-- **`Wallet.STARTING_BALANCE` cannot be raised after release** — that silently grants coins. Write a
+- **`Wallet.STARTING_BALANCE` cannot be raised after 1.0.0** — that silently grants coins. Write a
   grant instead.
 - **If the game turns out winnable through the shop, drop `ADS_PER_DAY` to 2 rather than putting the
   hint prices back.**
+- **Coins for real money are verified on a server and wait for accounts.** Never ship a
+  device-only purchase flow. Three consumable packs; prices live in the Play Console.
 
 ### Showing a coin
 
@@ -292,6 +399,11 @@ ENABLE and OANC need nothing and are listed anyway.
 The notices and the source names are `translatable="false"` on purpose: a required notice is required
 in its own wording, and these are proper names.
 
+The repository's own code is under **PolyForm Noncommercial 1.0.0** (`LICENSE.md`), which covers the
+code and nothing else. **Every third-party data file in the tree must be named in that file's "What
+it does not cover" list** — a corpus that ships without being carved out is being relicensed by
+accident.
+
 **Adding a dictionary source means adding an entry here in the same commit** — the licence obligation
 starts when the data ships, not when somebody remembers.
 
@@ -309,11 +421,8 @@ Absences that are decisions. **Do not report these as gaps or defects.** Reasoni
 - **No screen-reader support on the board.** `ui/board/BoardGrid.kt` is a bare `Canvas` by design.
   Accessibility everywhere *else* in the app still applies in full and new screens are expected to
   carry semantics.
-- **No skip or give-up on a stuck board.** The way out is a paid hint. Do not add one without being
-  asked.
+- **No skip, give-up or free reveal on a stuck board.** Being stuck is meant to make the player
+  think; the only exit is paid hints.
+- **On Polish boards every `ć` marks the end of a path**, since a third of the pool are infinitives.
+  Left as it is on purpose; the measurement is in `DECISIONS.md`.
 
-## Known gaps
-
-Real, unresolved, and listed so they are neither rediscovered as news nor defended as intentional:
-no share button on `review`; no instrumented or Compose UI tests at all; on Polish boards every `ć`
-marks the end of a path.

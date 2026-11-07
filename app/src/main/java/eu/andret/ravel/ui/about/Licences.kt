@@ -15,7 +15,13 @@ import eu.andret.ravel.R
 private const val CC_BY_4_0 = "https://creativecommons.org/licenses/by/4.0/"
 
 /**
- * The outside work the game is built on, and what each piece is used under.
+ * A licence the game has to show: the six sources it is built on, and its own.
+ *
+ * [RAVEL] is the game itself and is not a word source. It is in this enum rather than beside it
+ * because everything that makes a licence a page - the row, the route, the detail screen - already
+ * works for six entries and would have to be duplicated to serve a seventh thing that is a licence
+ * in every respect except where it came from. What separates it is the list it appears in, and that
+ * is [wordSources]' job.
  *
  * Three of these entries are obligations rather than courtesies. The two Creative Commons sources
  * require the attribution *and* a statement that the material was modified - the game ships a subset
@@ -28,9 +34,10 @@ private const val CC_BY_4_0 = "https://creativecommons.org/licenses/by/4.0/"
  * @param source what the player is looking at - the name of the word list, corpus or resource,
  *   never translated. These are proper names; "Słownik WordNet" is not a thing that exists.
  * @param licence the short licence label the row carries, for the same reason.
- * @param notice the attribution itself, in English in every locale. A translated licence notice is
- *   not the notice: CC BY and the WordNet licence both say what has to appear, and what has to
- *   appear is their wording, not a rendering of it that nobody has approved.
+ * @param notice the attribution itself. English in every locale for the six sources: CC BY and the
+ *   WordNet licence both say what has to appear, and what has to appear is their wording, not a
+ *   rendering of it that nobody has approved. [RAVEL]'s is translated, because that sentence is this
+ *   project's own and no one else's wording is being reproduced in it.
  * @param url where the licence proper lives. CC BY is satisfied by a link and is not carried in the
  *   app - the deed is four screens of legal text that changes nothing about what the player is
  *   being told here.
@@ -83,6 +90,32 @@ enum class Licence(
         notice = R.string.licence_oanc_notice,
         url = "https://anc.org/data/oanc/",
     ),
+
+    /**
+     * The game's own terms, last because the entries above are what it was built from.
+     *
+     * Not bundled in `res/raw` the way PoliMorf and WordNet are: PolyForm's own Notices section
+     * accepts "these terms or the URL for them", and a second copy of a licence inside the APK is a
+     * copy that can fall behind the one in the repository. The notice carries the copyright line
+     * those terms ask to travel with the software, which is the part a URL cannot stand in for.
+     */
+    RAVEL(
+        source = R.string.licence_ravel_source,
+        licence = R.string.licence_name_polyform,
+        notice = R.string.licence_ravel_notice,
+        url = "https://polyformproject.org/licenses/noncommercial/1.0.0",
+    );
+
+    companion object {
+        /**
+         * Everything the dictionaries are built from - this enum without [RAVEL].
+         *
+         * Written as a subtraction rather than a second list so that adding a source is adding one
+         * entry above and nothing else. The settings screen shows these under "word sources", where
+         * the game's own licence would be a false claim about where the words come from.
+         */
+        val wordSources: List<Licence> = entries - RAVEL
+    }
 }
 
 /**

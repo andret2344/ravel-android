@@ -111,8 +111,14 @@ class StoredDailyProgress(
                 share = card,
             ),
         )
+        if (card.ordinal > lastPaid()) preferences.edit { putLong(KEY_LAST_PAID, card.ordinal) }
         return true
     }
+
+    override fun paidBeforeReset(ordinal: Long): Boolean =
+        !_state.value.isSolved(ordinal) && ordinal <= lastPaid()
+
+    private fun lastPaid(): Long = preferences.getLong(KEY_LAST_PAID, Long.MIN_VALUE)
 
     override fun saveBoard(board: SavedBoard) {
         preferences.edit { putString(KEY_BOARD, SavedBoards.toJson(board).toString()) }
@@ -133,14 +139,21 @@ class StoredDailyProgress(
 
     /**
      * Forgets every day, the streak, the board in progress and the share card, in every language -
-     * the whole file, since the daily history is not kept per language. The player's "reset
+     * the whole file but the last day that paid, since the daily history is not kept per language. The player's "reset
      * progress", and nothing else.
      *
      * On the concrete store and not on [DailyProgress], for the reason
      * [StoredLevelProgress.clear] gives.
      */
     fun clear() {
-        preferences.edit { this.clear() }
+        // The last day that paid survives, so today's board solved again after a reset is history
+        // and not income - see paidBeforeReset. Taken from the record too, for an install that
+        // solved days before this key existed.
+        val paid = maxOf(lastPaid(), _state.value.solved.keys.maxOrNull() ?: Long.MIN_VALUE)
+        preferences.edit {
+            this.clear()
+            if (paid != Long.MIN_VALUE) putLong(KEY_LAST_PAID, paid)
+        }
         _state.value = read()
     }
 
@@ -231,6 +244,9 @@ class StoredDailyProgress(
          * written once per solve and overwritten by the next one, which is the lifetime it has.
          */
         const val KEY_SHARE = "share"
+
+        /** The latest day that has ever paid out, kept through a reset. */
+        const val KEY_LAST_PAID = "lastPaid"
 
         // Short names because this string is rewritten on every hint and every pause, and a year of
         // play is a few hundred of these objects.

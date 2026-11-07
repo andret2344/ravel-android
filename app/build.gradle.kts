@@ -115,6 +115,29 @@ tasks.register<JavaExec>("sweepLevels") {
     maxHeapSize = "2g"
 }
 
+/**
+ * Pins the tool R8 uses to fold Compose's group keys into the release mapping file to the Kotlin
+ * version this project actually compiles with.
+ *
+ * The Compose compiler plugin asks for `compose-group-mapping` at the Kotlin version it *thinks* is
+ * running, and under AGP 9's built-in Kotlin that is AGP's bundled 2.2.10 - a version that artifact
+ * was never published at, so every release build failed to resolve it while debug builds, which do
+ * not shrink, never noticed. Turning the feature off (`composeCompiler { includeComposeMappingFile =
+ * false }`) would also have worked, at the price of release stack traces through composables that
+ * cannot be read back.
+ *
+ * Delete this once the plugin resolves the right version by itself: comment it out, run
+ * `:app:assembleRelease`, and if it passes the bug is gone.
+ */
+configurations.matching { it.name == "composeMappingProducerClasspath" }.configureEach {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "org.jetbrains.kotlin" && requested.name == "compose-group-mapping") {
+            useVersion(libs.versions.kotlin.get())
+            because("the Compose plugin requests AGP's bundled Kotlin version, which was never published")
+        }
+    }
+}
+
 dependencies {
     implementation(project(":generator"))
     implementation(libs.androidx.activity.compose)
