@@ -835,6 +835,50 @@ The keep rule and the reasoning are in `app/proguard-rules.pro`, which is delibe
 Installing a release build and opening it is therefore a release-checklist step and not an optional
 one, and it is the step to repeat whenever the ads SDK moves.
 
+### Why a release is built from a clean project
+
+`0.1.0-alpha.3` crashed on every second drag across the board, on every board, tutorial included:
+`ClassCastException: Puzzle cannot be cast to MutableState` in `rememberUpdatedState`, inside
+`BoardGrid`'s restart lambda. Taps still worked, because a tap recomposes the board from its parent
+and never goes through that lambda. The source was fine. The bundle had been made with Generate
+Signed App Bundle on top of an `app/build` whose release classes came from incremental compiles on
+two different days, and six of them (`LevelScreenKt`, `DailyScreenKt`, `LevelProgressState` among
+them) differed from a clean compile of the same source: the Compose compiler had read stability at
+runtime (`SavedBoard.$stable`) where a clean compile writes a constant, and added `changed()` checks
+to match. On that input R8 kept the restart lambda's `$changed` as a field (`f$7`) instead of
+propagating it as a constant, and the board's slots came out misaligned.
+
+Measured on an emulator with a two-drag script, ten tries or more each:
+
+| Build | Crashes |
+|---|---|
+| The alpha.3 bundle from Play | 10 / 10 |
+| Same stale classes, full R8 | 5 / 5 |
+| Same stale classes, `-dontoptimize` | 0 / 8 |
+| Clean compile, full R8 | 0 / 5 |
+| Debug | 0 / 5 |
+| alpha.4, built after Clean Project | 0 / 10 |
+
+It takes both halves; either alone runs. Whether the fault is R8's or the incremental output's was
+not settled. The first suspect, commit `4445de3` (the off-board tap, whose line the crash pointed
+at), was only where the misaligned slot was read.
+
+What was ruled out:
+
+- **`incremental = false` on `compileReleaseKotlin`.** AGP 9.5.1 overrides it after configuration;
+  the task still compiled incrementally. Setting it in a `doFirst` does work - a full recompile,
+  stale outputs removed, bytes identical to a clean build, debug left incremental - but it rests on
+  a property AGP evidently manages itself, and the day it stops being read the build falls back to
+  incremental without a word. A manual step that can be forgotten was preferred to an automatic
+  one that can fail silently.
+- **`-dontoptimize` for good.** It hides this one shape and costs a quarter of the APK (4.04 MB to
+  5.09 MB).
+- **Release bundles from CI.** A fresh checkout is clean by definition, but the upload key would
+  have to live in GitHub secrets, which is not worth it for one developer on the alpha track.
+
+The drag check on the bundle stays whichever way the build is made: it is what catches the next
+tool bug of this kind, and "install and open", the step R8 earned the first time, did not.
+
 ### Why `compose-group-mapping` is pinned in `app/build.gradle.kts`
 
 After the move to AGP 9.4.1 / Kotlin 2.4.21, every release build failed with `Could not find

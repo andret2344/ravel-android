@@ -325,6 +325,11 @@ hint - `PuzzleTest` holds it; that is what lets hints leave the hard bonus alone
   see.** Keep rules live in `app/proguard-rules.pro`, deliberately short.
 - **Installing a release build and opening it is a release-checklist step, not an optional one** —
   and the step to repeat whenever the ads SDK moves.
+- **Every signed bundle is built right after Build > Clean Project.** Release Kotlin compiled
+  incrementally is not the same bytecode as a clean compile, and R8 turned the difference into a
+  crash on the board.
+- **Before upload, the AAB itself is checked: a universal APK from it (bundletool), and at least two
+  words dragged on a board.** Opening the app is not enough; the crash came on the second drag.
 - **Backup rules are written out by name in both `res/xml/data_extraction_rules.xml` (API 31+) and
   `res/xml/backup_rules.xml` (below). Both are live at `minSdk 24` and must be edited together.**
   Every preference file is included, `ravel-ads` among them.
