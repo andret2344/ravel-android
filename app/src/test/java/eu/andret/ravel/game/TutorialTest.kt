@@ -63,6 +63,17 @@ class TutorialTest {
     }
 
     @Test
+    fun `no tutorial word is one a generated board would be forbidden to ask for`() {
+        // The generator keeps excluded answers out of every pool, but these boards never pass
+        // through a pool. The decoy counts too: the step asks the player to trace it.
+        Language.entries.forEach { language ->
+            val excluded = Dictionary.excludedAnswers(language)
+            val words = Tutorial.boardFor(language).solution.map { it.word } + Tutorial.decoyFor(language).word
+            assertEquals("${language.code}: excluded words", emptyList<String>(), words.filter { it in excluded })
+        }
+    }
+
+    @Test
     fun `each decoy is a real word that is not an answer`() {
         Language.entries.forEach { language ->
             val board = Tutorial.boardFor(language)

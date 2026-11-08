@@ -109,6 +109,8 @@ internal fun CompletionDialog(
  * would take the buttons off the bottom of the screen with it.
  *
  * @param onDismiss the scrim and the back button.
+ * @param alternative a third action between the two, drawn by the caller because the one dialog
+ *   that has one needs it to look unlike both of the others. Gets the full width like they do.
  */
 @Composable
 internal fun StackedDialog(
@@ -118,6 +120,7 @@ internal fun StackedDialog(
     secondary: String,
     onSecondary: () -> Unit,
     onDismiss: () -> Unit,
+    alternative: (@Composable () -> Unit)? = null,
     body: @Composable ColumnScope.() -> Unit,
 ) {
     Dialog(onDismissRequest = onDismiss) {
@@ -154,6 +157,7 @@ internal fun StackedDialog(
                     Button(onClick = onPrimary, modifier = Modifier.fillMaxWidth()) {
                         Text(primary)
                     }
+                    alternative?.invoke()
                     TextButton(onClick = onSecondary, modifier = Modifier.fillMaxWidth()) {
                         Text(secondary)
                     }

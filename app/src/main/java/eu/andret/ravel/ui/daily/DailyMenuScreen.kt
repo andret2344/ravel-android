@@ -15,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,7 +27,10 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import eu.andret.ravel.R
 import eu.andret.ravel.game.DailyDate
@@ -61,8 +65,16 @@ fun DailyMenuScreen(
     val month by viewModel.month.collectAsStateWithLifecycle()
     val balance by viewModel.balance.collectAsStateWithLifecycle()
     val selected by viewModel.selected.collectAsStateWithLifecycle()
-    val today = viewModel.today
+    val today by viewModel.today.collectAsStateWithLifecycle()
     val solvedToday = progress.isSolved(today)
+
+    // Re-reads the date every time the menu comes back into view and at each midnight while it is
+    // in view; stopped with the screen, so nothing ticks for an app nobody is looking at. See
+    // DailyMenuViewModel for the morning this was missing.
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(lifecycle, viewModel) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { viewModel.followToday() }
+    }
 
     // Whether the calendar is over the menu. Kept here and not in the view model: nothing outside
     // this screen can open it, and nothing about the game changes while it is up.

@@ -109,6 +109,13 @@ Rationale for everything in this section: `docs/DECISIONS.md`.
 
 Rules:
 
+- **Two word filters, and they are not interchangeable.** `generator/blocklist-<lang>.txt` is vulgar
+  *stems*, removed from the dictionary at build time. `excluded-answers-<lang>.txt` (resources) is
+  whole *lemmas* kept out of the pool only - they stay in the trie so the solver still sees them. A
+  word that must never be asked for goes in the second list unless it is a vulgarity. **Never move an
+  excluded answer into the blocklist**, and never filter it from the trie.
+- **A dictionary rebuild that fails the sensitive-stem test in `DictionaryTest` is a review, not a
+  test to update blindly**: each new word is either excluded or added to the innocent list on purpose.
 - **How much dictionary is loaded (`Difficulty`) and how obscure a board's words may be
   (`BoardSpec.maxWordRank`) are two separate axes.** Loading less weakens the uniqueness claim; it
   does not make boards easier.
@@ -162,6 +169,12 @@ This is the part most easily broken by an innocent-looking change.
 - **`DayResult.wordCount` is a record, not a derivation, and `Int?` means "nobody counted".** Never
   default it to `0`. `complete` takes a `ShareCard`, so a solved day cannot be recorded without one
   entry per word.
+- **Never hold "today" in anything that outlives a screen.** The process outlives midnight. The
+  daily menu follows the date (`DailyMenuViewModel.followToday`, run while the screen is started),
+  and `StoredDailyProgress` reads it at every use.
+- **Only today's daily is playable, and `DailyViewModel` decides that itself**
+  (`DailyRoute.opensForReview`): any other day opens as a review whatever the route asked. Checked
+  once, at opening, so a solve that crosses midnight still pays.
 - Language is **not** part of a puzzle's identity, but progress *is* per-language.
 
 ### Sharing a solved day

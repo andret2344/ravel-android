@@ -36,6 +36,7 @@
     <string name="hard_badge">TRUDNY</string>
     <string name="hard_mode_pending">Zadziała dopiero od kolejnego poziomu.</string>
     <string name="hard_drop">Pokaż długości</string>
+    <string name="hard_drop_and_off">Pokaż i wyłącz tryb trudny</string>
     <string name="hard_drop_title">Za trudno?</string>
     <string name="hard_drop_body">Długości słów się pokażą, ale premia za tryb trudny przepadnie. Znalezione słowa zostają na planszy.</string>
     <string name="hard_drop_keep">Jeszcze spróbuję</string>

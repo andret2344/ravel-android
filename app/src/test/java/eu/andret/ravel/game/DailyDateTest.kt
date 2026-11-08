@@ -2,6 +2,7 @@ package eu.andret.ravel.game
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.util.TimeZone
 
 class DailyDateTest {
 
@@ -38,6 +39,33 @@ class DailyDateTest {
     fun `midnight on a day belongs to that day`() {
         val ordinal = DailyDate.of(2026, 8, 7)
         assertEquals(ordinal, DailyDate.ordinalOf(DailyDate.startOfDay(ordinal)))
+    }
+
+    @Test
+    fun `the wait for the next day ends exactly at its midnight`() {
+        // Three ordinary days and the two daylight-saving days of a European year. Whatever the
+        // test machine's zone, the wait has to land on the next date and not a millisecond before.
+        listOf(20260807L, 20261231L, 20260228L, 20260329L, 20261025L).forEach { day ->
+            listOf(0L, 1L, 3_600_000L, 43_200_000L).forEach { into ->
+                val now = DailyDate.startOfDay(day) + into
+                val wait = DailyDate.millisUntilNextDay(now)
+                assertEquals("$day +$into", DailyDate.shifted(day, 1), DailyDate.ordinalOf(now + wait))
+                assertEquals("$day +$into", day, DailyDate.ordinalOf(now + wait - 1))
+            }
+        }
+    }
+
+    @Test
+    fun `a short day waits a short day`() {
+        // The reason the wait is measured to the next midnight rather than as 24 hours minus the time
+        // of day: in Warsaw the last Sunday of March has 23 hours.
+        val saved = TimeZone.getDefault()
+        try {
+            TimeZone.setDefault(TimeZone.getTimeZone("Europe/Warsaw"))
+            assertEquals(23 * 3_600_000L, DailyDate.millisUntilNextDay(DailyDate.startOfDay(20260329L)))
+        } finally {
+            TimeZone.setDefault(saved)
+        }
     }
 
     @Test

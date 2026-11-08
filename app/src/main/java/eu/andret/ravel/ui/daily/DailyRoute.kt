@@ -25,4 +25,19 @@ internal object DailyRoute {
     const val BOARD = "daily/board/{$ARG_ORDINAL}/{$ARG_REVIEW}"
 
     fun board(ordinal: Long, review: Boolean): String = "daily/board/$ordinal/$review"
+
+    /**
+     * Whether a board opened with these arguments is a review, given what day it is now.
+     *
+     * The route's own [ARG_REVIEW] is a request, not the answer. Only today's board can be played,
+     * and the menu deciding "today" is not enough to guarantee that the board opens on it: a menu
+     * that had gone stale overnight once sent yesterday's board as a live one, and a route restored
+     * after the process died can arrive on any later day. Either would play, and pay a streak for,
+     * a day that is over. So any day but [today] opens as a review whatever the route asked.
+     *
+     * Checked once, when the board opens, and never again: a player who starts before midnight and
+     * finishes after it is finishing the board they were given, and is paid for that day.
+     */
+    fun opensForReview(reviewRequested: Boolean, ordinal: Long, today: Long): Boolean =
+        reviewRequested || ordinal != today
 }

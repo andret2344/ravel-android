@@ -1,8 +1,11 @@
 package eu.andret.ravel.ui.level
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -18,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -43,6 +47,7 @@ import eu.andret.ravel.ui.game.TracedWord
 import eu.andret.ravel.ui.game.afterSolvedPause
 import eu.andret.ravel.ui.game.asClock
 import eu.andret.ravel.ui.theme.goldColors
+import eu.andret.ravel.ui.theme.hardColors
 
 /**
  * One level's board, laid out exactly like the daily challenge's.
@@ -172,6 +177,10 @@ fun LevelScreen(
                 askingToDrop = false
                 viewModel.dropHard()
             },
+            onDropAndTurnOff = {
+                askingToDrop = false
+                viewModel.dropHardAndTurnOff()
+            },
             onKeep = { askingToDrop = false },
         )
     }
@@ -233,9 +242,14 @@ private fun CompletedDialog(
  * in the footer a thumb crosses all the time. The cost is shown as the coins it takes away, through
  * [CoinAmount] like every other coin figure, and the words already found are named as staying, since
  * "lose what I have done" is the fear that would otherwise keep a stuck player from pressing it.
+ *
+ * The middle button also turns hard mode off for the levels after this one. Outlined in hard mode's
+ * own red, the colour of the badge it takes away, rather than in `error`: nothing is going wrong,
+ * a setting is changing. Only the outline is red - the label keeps the dialog's text colour, because
+ * the dark theme's red on a dark dialog is too faint to read as text.
  */
 @Composable
-private fun DropHardDialog(onDrop: () -> Unit, onKeep: () -> Unit) {
+private fun DropHardDialog(onDrop: () -> Unit, onDropAndTurnOff: () -> Unit, onKeep: () -> Unit) {
     val bonus = Rewards.FOR_COMPLETING_HARD - Rewards.FOR_COMPLETING
     StackedDialog(
         title = stringResource(R.string.hard_drop_title),
@@ -244,6 +258,16 @@ private fun DropHardDialog(onDrop: () -> Unit, onKeep: () -> Unit) {
         secondary = stringResource(R.string.hard_drop_keep),
         onSecondary = onKeep,
         onDismiss = onKeep,
+        alternative = {
+            OutlinedButton(
+                onClick = onDropAndTurnOff,
+                modifier = Modifier.fillMaxWidth(),
+                border = BorderStroke(2.dp, hardColors.fill),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = LocalContentColor.current),
+            ) {
+                Text(stringResource(R.string.hard_drop_and_off))
+            }
+        },
     ) {
         Text(
             text = stringResource(R.string.hard_drop_body),

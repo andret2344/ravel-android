@@ -1,7 +1,7 @@
 # Game dictionaries — sources, licences, reproduction
 
-The game generates boards in two languages. Each has its own alphabet, its own dictionary and its
-own blocklist — none of the three carries across.
+The game generates boards in two languages. Each has its own alphabet, its own dictionary, its own
+blocklist and its own list of excluded answers — none of the four carries across.
 
 | | Polish | English |
 |---|---|---|
@@ -201,6 +201,28 @@ Deliberate compromises worth knowing about:
   `niggling` (ordinary words caught by the stem `nigg`), `rapeseed`, `pussycat`, `pussyfoot`,
   `shittim` (a biblical wood). Kept out because the surface form alone is inflammatory — but that is
   an editorial decision rather than a technical one, and it can be reversed.
+
+### Excluded answers
+
+The blocklist above covers vulgarities and nothing else. Everything else a board must never ask the
+player to find — slurs, sexual violence, killing, sex, drugs, identity words, drunkenness — is in
+`src/main/resources/excluded-answers-<language>.txt`, and it works differently on purpose:
+
+| | blocklist | excluded answers |
+|---|---|---|
+| entries | stems, matched from the start | whole lemmas, matched exactly |
+| applied | at build time, by `buildDictionary` | at load time, by `Dictionary.poolTo` |
+| the word afterwards | not in the dictionary at all | a word to the solver, never an answer |
+| changing it needs | a dictionary rebuild | nothing but the file |
+
+Excluded words keep their rank and stay in the trie, so `Solver` still rejects a board whose second
+solution would run through one. `docs/DECISIONS.md`, "Excluded answers", has the argument, the
+options turned down and where the line was drawn.
+
+Polish excludes 391 lemmas, English 280. `DictionaryTest` checks that every entry is still a word of
+the shipped dictionary — so a rebuild that drops one is noticed — that none reaches a pool, and that
+every dictionary word starting with a sensitive stem is either excluded or named as innocent.
+**After a rebuild, read that test's failures as a list of new words to decide on.**
 
 ## Reproducing the dictionaries
 

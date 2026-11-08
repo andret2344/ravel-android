@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import eu.andret.ravel.R
 import eu.andret.ravel.game.Streak
 import eu.andret.ravel.settings.DailyProgressState
+import eu.andret.ravel.ui.CoinAmount
 import eu.andret.ravel.ui.theme.foundColors
 import eu.andret.ravel.ui.theme.goldColors
 
@@ -317,13 +318,16 @@ private fun Rung(day: Int, reward: Int, state: RungState, modifier: Modifier = M
                 color = content,
                 textAlign = TextAlign.Center,
             )
-            Text(
-                text = reward.toString(),
-                style = MaterialTheme.typography.labelLarge,
+            // Signed and with the coin, as every other gain in the game is shown: a bare "25" under a
+            // day name read as a count of something, not as what the day pays.
+            CoinAmount(
+                amount = reward,
+                text = stringResource(R.string.done_gained, reward),
+                style = MaterialTheme.typography.labelLarge.copy(
+                    fontSize = if (peak) 26.sp else 20.sp,
+                    fontWeight = if (peak) FontWeight.Bold else FontWeight.Medium,
+                ),
                 color = content,
-                textAlign = TextAlign.Center,
-                fontSize = if (peak) 26.sp else 20.sp,
-                fontWeight = if (peak) FontWeight.Bold else FontWeight.Medium,
             )
         }
     }

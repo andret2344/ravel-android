@@ -41,6 +41,9 @@ import kotlinx.coroutines.launch
  * Which day it is arrives as a navigation argument rather than being read from the clock here. The
  * menu in front of this screen already decided - it might be today, or it might be a day out of the
  * calendar - and a second reading of the clock is a second chance to disagree about what day it is.
+ *
+ * The clock is read once, all the same, for the one question the menu cannot be trusted with:
+ * whether the board may be played at all. See [DailyRoute.opensForReview].
  */
 class DailyViewModel(
     application: Application,
@@ -63,8 +66,16 @@ class DailyViewModel(
      * The board itself is rebuilt from its date rather than loaded, because [PuzzleId] makes that
      * the same board every time - so reviewing a day costs a generator run and no storage at all.
      * What it cannot show is the route the player took through it, only the answer they arrived at.
+     *
+     * Also true for any day that is not today, whatever the route asked - see
+     * [DailyRoute.opensForReview]. Such a day can be one the player never solved, and then the
+     * review shows its answer, which is harmless: the day is over and nothing on it can pay.
      */
-    val review: Boolean = handle.get<Boolean>(DailyRoute.ARG_REVIEW) == true
+    val review: Boolean = DailyRoute.opensForReview(
+        reviewRequested = handle.get<Boolean>(DailyRoute.ARG_REVIEW) == true,
+        ordinal = ordinal,
+        today = DailyDate.today(),
+    )
 
     private val _state = MutableStateFlow<BoardState>(BoardState.Generating)
     val state: StateFlow<BoardState> = _state.asStateFlow()
@@ -323,8 +334,8 @@ class DailyViewModel(
         // it separately would be reading the same fact twice.
         val card = card(puzzle)
         // No check that this is still today's date. The board carries its own day, and the only
-        // board that can be played is the one that was today when it was opened - every other route
-        // in opens for review, which never reaches this method. A player who crosses midnight
+        // board that can be played is the one that was today when it was opened - [review] makes
+        // every other one a review, which never reaches this method. A player who crosses midnight
         // mid-solve is paid for the day they were solving.
         val counted = progress.complete(card)
         puzzles.solved(id, card.language)

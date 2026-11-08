@@ -127,6 +127,19 @@ class LevelViewModel(
         _hard.value = false
     }
 
+    /**
+     * [dropHard], and the levels tab's switch turned off with it: the player who gives up on the
+     * board and does not want the next one blind either, in one press instead of a trip to the tab.
+     *
+     * The switch goes off whatever [dropHard] made of this board, because that is the half of the
+     * press that is about the future. It acts from the next level opened, as it always does - see
+     * [eu.andret.ravel.settings.LevelProgress.open] - so a level already opened as hard stays hard.
+     */
+    fun dropHardAndTurnOff() {
+        dropHard()
+        hardMode.setEnabled(false)
+    }
+
     private val _completion = MutableStateFlow<LevelCompletion?>(null)
 
     /**

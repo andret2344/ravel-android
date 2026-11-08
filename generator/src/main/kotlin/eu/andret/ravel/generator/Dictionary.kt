@@ -52,6 +52,16 @@ class Dictionary private constructor(
      * still proved against every word the dictionary knows, which is the stricter claim and the one
      * that has to stay true.
      *
+     * The same split is why excluded answers ([Language.excludedAnswersResource]) are cut here and
+     * nowhere else. *zgwałcić* must never be a word the player is asked for, but it is still a word:
+     * a player who sees it spelled across a board will trace it whatever the game thinks. Dropping
+     * it from the trie as well would let a board through whose second solution runs through it, and
+     * the board would then refuse a trace the player can see is right. Kept in the trie, it can only
+     * make such a board fail the uniqueness check, which is the outcome wanted.
+     *
+     * An excluded word keeps its rank - ranks are positions in the file - so a cap of 8000 offers
+     * the 8000 most common words minus the excluded ones, not 8000 words reaching a little deeper.
+     *
      * Computed once per generation rather than per draw: the lettering loop asks for candidates
      * a few hundred times per layout, and none of those calls has anything new to work out.
      */
@@ -89,40 +99,79 @@ class Dictionary private constructor(
     }
 
     companion object {
-        fun load(language: Language, file: File, maxRank: Int = Int.MAX_VALUE): Dictionary =
-            file.bufferedReader(Charsets.UTF_8).use { load(language, it, maxRank) }
+        /**
+         * Loads a dictionary file with nothing excluded from its pools - the CLI's way of trying
+         * out a word list that is not the shipped one. Pass [excludedAnswers] to apply a filter.
+         */
+        fun load(
+            language: Language,
+            file: File,
+            maxRank: Int = Int.MAX_VALUE,
+            excludedAnswers: Set<String> = emptySet(),
+        ): Dictionary = file.bufferedReader(Charsets.UTF_8).use { load(language, it, maxRank, excludedAnswers) }
 
-        fun load(language: Language, reader: Reader, maxRank: Int = Int.MAX_VALUE): Dictionary {
+        fun load(
+            language: Language,
+            reader: Reader,
+            maxRank: Int = Int.MAX_VALUE,
+            excludedAnswers: Set<String> = emptySet(),
+        ): Dictionary {
             val words = ArrayList<String>(minOf(maxRank, 1 shl 17))
             reader.buffered().lineSequence().forEach { line ->
                 if (words.size >= maxRank) return@forEach
                 val word = line.trim()
                 if (word.isNotEmpty()) words.add(word)
             }
-            return of(language, words)
+            return of(language, words, excludedAnswers)
         }
 
         /**
          * Loads at most [maxRank] highest-ranked words of the dictionary shipped as a module
-         * resource. A smaller dictionary means words players know and, incidentally, fewer
-         * alternative tilings for the solver to rule out.
+         * resource, with the shipped [excludedAnswers] kept out of its pools. A smaller dictionary
+         * means words players know and, incidentally, fewer alternative tilings for the solver to
+         * rule out.
          */
         fun loadBundled(language: Language, maxRank: Int = Int.MAX_VALUE): Dictionary {
             val resource = language.dictionaryResource
             val stream = requireNotNull(Dictionary::class.java.getResourceAsStream(resource)) {
                 "Missing $resource - run the buildDictionary${language.code.uppercase()} Gradle task first"
             }
-            return stream.reader(Charsets.UTF_8).use { load(language, it, maxRank) }
+            return stream.reader(Charsets.UTF_8).use { load(language, it, maxRank, excludedAnswers(language)) }
         }
 
         fun loadBundled(language: Language, difficulty: Difficulty): Dictionary =
             loadBundled(language, difficulty.maxRank)
 
-        fun of(language: Language, words: List<String>): Dictionary {
+        /**
+         * The words no [language] board may ask for, read from [Language.excludedAnswersResource]:
+         * one word per line, `#` starting a comment.
+         *
+         * Public so that the app's tests can hold its own hand-made boards to the same list.
+         */
+        fun excludedAnswers(language: Language): Set<String> {
+            val resource = language.excludedAnswersResource
+            val stream = requireNotNull(Dictionary::class.java.getResourceAsStream(resource)) {
+                "Missing $resource"
+            }
+            return stream.reader(Charsets.UTF_8).use { reader ->
+                reader.readLines()
+                    .map { it.substringBefore('#').trim() }
+                    .filter { it.isNotEmpty() }
+                    .toHashSet()
+            }
+        }
+
+        /**
+         * Builds a dictionary from [words] in rank order. Every word counts for [isWord] and the
+         * trie; [excludedAnswers] are left out of the pools only - see [poolTo].
+         */
+        fun of(language: Language, words: List<String>, excludedAnswers: Set<String> = emptySet()): Dictionary {
             val buckets = Array(MAX_WORD_LENGTH + 1) { ArrayList<String>() }
+            val answerBuckets = Array(MAX_WORD_LENGTH + 1) { ArrayList<String>() }
             // A word's position in [words] is its rank, since the file is written in frequency
             // order. Recording it per bucket is what lets a bucket be cut at a rank later: the
-            // bucket inherits the file's order, so its ranks ascend and can be searched.
+            // bucket inherits the file's order, so its ranks ascend and can be searched. Skipping
+            // an excluded word leaves a gap in a bucket's ranks, which a binary search does not mind.
             val rankBuckets = Array(MAX_WORD_LENGTH + 1) { ArrayList<Int>() }
             for ((rank, word) in words.withIndex()) {
                 require(word.length in MIN_WORD_LENGTH..MAX_WORD_LENGTH) {
@@ -132,14 +181,17 @@ class Dictionary private constructor(
                     "Word '$word' contains characters outside the ${language.code} alphabet"
                 }
                 buckets[word.length].add(word)
-                rankBuckets[word.length].add(rank)
+                if (word !in excludedAnswers) {
+                    answerBuckets[word.length].add(word)
+                    rankBuckets[word.length].add(rank)
+                }
             }
             return Dictionary(
                 language = language,
                 words = words,
                 byLength = Array(buckets.size) { buckets[it].toHashSet() },
-                orderedByLength = Array(buckets.size) { buckets[it] },
-                ranksByLength = Array(buckets.size) { rankBuckets[it].toIntArray() },
+                orderedByLength = Array(answerBuckets.size) { answerBuckets[it] },
+                ranksByLength = Array(rankBuckets.size) { rankBuckets[it].toIntArray() },
             )
         }
 

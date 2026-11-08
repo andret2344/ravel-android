@@ -59,6 +59,74 @@ class DictionaryTest {
     }
 
     @Test
+    fun `every excluded answer is a word of the shipped dictionary`() {
+        // An entry that is not a word excludes nothing: a typo, or a word a dictionary rebuild has
+        // dropped. Either way the list no longer says what it was reviewed to say.
+        Language.entries.forEach { language ->
+            val dictionary = Dictionary.loadBundled(language)
+            val strays = Dictionary.excludedAnswers(language).filterNot(dictionary::isWord).sorted()
+            assertContentEquals(emptyList(), strays, "${language.code}: not in the dictionary")
+        }
+    }
+
+    @Test
+    fun `an excluded answer never reaches a pool but stays a word`() {
+        Language.entries.forEach { language ->
+            val dictionary = Dictionary.loadBundled(language)
+            val excluded = Dictionary.excludedAnswers(language)
+            // The uncapped pool and a cap tight enough for the MIN_POOL floor to widen it, which
+            // are the two ways a bucket is cut.
+            listOf(NO_RANK_LIMIT, 200).forEach { cap ->
+                val pool = dictionary.poolTo(cap)
+                val leaked = (MIN_WORD_LENGTH..MAX_WORD_LENGTH).flatMap(pool::ofLength).filter { it in excluded }
+                assertContentEquals(emptyList(), leaked, "${language.code}, cap $cap: excluded words in the pool")
+            }
+            // The other half, and the reason they are excluded here rather than at build time: the
+            // solver must still see them, or a board with a second solution through one gets out.
+            excluded.forEach { word -> assertTrue(dictionary.isWord(word), "${language.code}: '$word' lost") }
+        }
+    }
+
+    @Test
+    fun `excluding a word leaves the ranks of the others alone`() {
+        // A hundred three-letter words in rank order, enough that a cap of 70 sits above the
+        // MIN_POOL floor and the cap itself decides the cut.
+        val words = (0 until 100).map { "${'a' + it / 10}${'a' + it % 10}k" }
+        val excluded = words[10]
+        val dictionary = Dictionary.of(Language.POLISH, words, excludedAnswers = setOf(excluded))
+
+        // The cap counts ranks, and the excluded word keeps its rank: a cap of 70 offers the 70
+        // most common words minus one, and does not reach down to words[70] to make up the number.
+        val pool = dictionary.poolTo(70).ofLength(3)
+        assertContentEquals(words.take(70) - excluded, pool)
+        assertTrue(excluded !in dictionary.poolTo(NO_RANK_LIMIT).ofLength(3))
+
+        // Still a word, both for isWord and for the trie the solver walks.
+        assertTrue(dictionary.isWord(excluded))
+        val node = excluded.fold(Trie.ROOT) { at, letter -> if (at == Trie.EMPTY) at else dictionary.trie.step(at, letter) }
+        assertTrue(dictionary.trie.isWord(node))
+    }
+
+    @Test
+    fun `a word on a sensitive stem is either excluded or known to be innocent`() {
+        // The excluded answers are whole words, which suits a lemma dictionary, but a rebuild can
+        // bring in a lemma nobody reviewed - a "gwałcicielka" next to "gwałciciel". These stems are
+        // the alarm for that: every dictionary word starting with one must be on the excluded list
+        // or below, and a new one failing here is somebody reading it and deciding. Stems that match
+        // nothing today are kept on purpose; they are there for the next rebuild.
+        Language.entries.forEach { language ->
+            val excluded = Dictionary.excludedAnswers(language)
+            val (stems, innocent) = when (language) {
+                Language.POLISH -> SENSITIVE_STEMS_PL to INNOCENT_ON_STEM_PL
+                Language.ENGLISH -> SENSITIVE_STEMS_EN to INNOCENT_ON_STEM_EN
+            }
+            val unreviewed = Dictionary.loadBundled(language).words
+                .filter { word -> stems.any(word::startsWith) && word !in excluded }
+            assertEquals(innocent.toSet(), unreviewed.toSet(), "${language.code}: words on a sensitive stem")
+        }
+    }
+
+    @Test
     fun `the Polish dictionary ships lemmas, not inflected forms`() {
         val polish = Dictionary.loadBundled(Language.POLISH).words.toHashSet()
         // Base forms a player would recognise on a board.
@@ -169,5 +237,42 @@ class DictionaryTest {
             .filter { it.isNotEmpty() }
         assertTrue(stems.isNotEmpty(), "${language.blocklistFile} is empty or missing")
         return stems
+    }
+
+    private companion object {
+        val SENSITIVE_STEMS_PL = listOf(
+            "gwałc", "zgwałc", "gwałt", "molest", "pedofil", "kazirod", "zoofil", "nekrofil", "zboczeń",
+            "zboczen", "lubież", "zabój", "morder", "mordow", "samobój", "ludobój", "holokaust",
+            "holocaust", "nazis", "nazizm", "hitler", "faszys", "terror", "tortur", "egzekuc", "seks",
+            "erot", "porn", "orgazm", "masturb", "onan", "prostytu", "narkot", "narkom", "kokain",
+            "heroin", "amfetamin", "marihuan", "ćpa", "ćpun", "pedał", "pederast", "ciot", "cwel",
+            "murzyn", "czarnuch", "cygan", "żyd", "gej", "lesb", "debil", "kretyn", "idiot", "imbecyl",
+            "pijan", "pijak", "alkoholi", "dziwk", "zdzir", "szmat", "gówn", "dup", "rzyg",
+        )
+
+        /** Reviewed on 2026-11-08 and kept: each starts with a stem above and is not what it names. */
+        val INNOCENT_ON_STEM_PL = listOf(
+            "gwałtowny", "gwałtownie", "gwałtowność", // sudden, violent in the weather sense
+            "ciotka", "cioteczny", "cioteczka", "ciotunia", "ciotczyny", // aunt
+            "szmat", "szmatka", "szmatek", "szmateks", // a stretch of land; a cloth; a charity shop
+            "gejsza", "gejzer", "cyganeria", "duplikat",
+            "samobój", // an own goal
+            "sekstet", "sekstant", "sekstans",
+        )
+
+        val SENSITIVE_STEMS_EN = listOf(
+            "kill", "murder", "suicid", "genocid", "holocaust", "nazi", "fascis", "terror", "tortur",
+            "molest", "pedophil", "incest", "pervert", "sadis", "sex", "porn", "erotic", "orgasm",
+            "masturb", "prostitut", "drug", "cocaine", "heroin", "narcot", "marijuana", "cannabis", "gay",
+            "lesbian", "homosex", "bisex", "jew", "retard", "idiot", "moron", "imbecil", "drunk",
+            "alcoholi", "whor", "slut", "bitch", "bastard",
+        )
+
+        /** Reviewed on 2026-11-08 and kept: each starts with a stem above and is not what it names. */
+        val INNOCENT_ON_STEM_EN = listOf(
+            "jewel", "jewelry", "jeweler", "jeweled", "jewelled", "jewellery", "jewellike", "jewellers",
+            "heroine", "killjoy", "retardant", "whorls", "whortleberry",
+            "sexton", "sextant", "sextet", "sexto", "sextuplets",
+        )
     }
 }

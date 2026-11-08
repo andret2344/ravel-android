@@ -143,6 +143,50 @@ must rule out before calling a board unique, so a smaller load weakens the uniqu
 than easing the board. That is why "how much is loaded" (`Difficulty`) and "how obscure a board's own
 words may be" (`BoardSpec.maxWordRank`) are two axes and not one.
 
+### Excluded answers: cut from the pool, not from the dictionary
+
+Found on 2026-11-08, endless level 71 in Polish asked for *zgwałcić* ("to rape"). The build-time
+blocklist (`generator/blocklist-*.txt`) only ever covered vulgar stems, so slurs, sexual violence,
+killing and the rest passed straight through; a scan of the shipped lists found *żydek*, *cwel*,
+*murzyn*, *pedał*, *samobójstwo*, *fag*, *retard* and a few hundred more, 62 Polish and 57 English
+of them inside rank 8000, the cap of every level up to 100 and of every daily.
+
+`excluded-answers-<language>.txt` (resources) holds them: **whole lemmas, matched exactly**, applied
+by `Dictionary.poolTo` and nowhere else. Every one stays in the dictionary and in the trie.
+
+- **Why not the trie as well.** An excluded word is still a word, and a player who sees it spelled
+  across a board will trace it whatever the game thinks of it. Left in the trie it can only cause a
+  board to fail the uniqueness check, which is the right outcome; taken out, it lets through a board
+  whose second solution runs through it, and that board then rejects a trace the player can see is
+  correct. "Pool and trie are different sets" above, applied to a new kind of word.
+- **Why whole words, not stems.** The dictionaries ship base forms, so there is nothing to inflect:
+  *zgwałcić* is the only form of it that exists to exclude. Stems were tried on the review scan and
+  cut down too much that is ordinary and common - `zab-` takes *zabierać* (rank 1663), `gwałt-` takes
+  *gwałtowny*, `pochw-` takes *pochwalić*, `ass-` takes *assess* and *assistant*. The low tiers draw
+  from the top 1500, where those are exactly the words a board is built from.
+- **Why two lists rather than one.** Folding these into the build-time blocklist would have needed an
+  exact-match mode it does not have, a dictionary rebuild that moves every rank below each removed
+  word, and it would take the words out of the trie, which is the point above. The opposite merger -
+  moving the vulgar stems into the pool filter so they too return to the trie - is the more correct
+  design and was declined as not worth a rebuild and a rewrite of tested code for about a hundred
+  words. So the split is: the blocklist removes vulgar stems from the language of the game, the
+  excluded answers keep words out of what a board may ask for. A new word goes in the second list
+  unless it is a vulgarity.
+- **Stems as an alarm.** A rebuild can bring in a lemma nobody reviewed - a *gwałcicielka* beside
+  *gwałciciel*. `DictionaryTest` holds a list of sensitive stems and requires every dictionary word on
+  one to be excluded or named as innocent (*gwałtowny*, *ciotka*, *jewel*, *sextant*). On its first
+  run it found *pijana* and *pijano*, which the review had missed.
+- **Where the line was drawn.** Reviewed word by word. Cut: vulgarities, slurs and insults
+  (homographs with a slur sense included - *pedał*, *cock*, *fag*), sexual violence, killing and
+  genocide and terror and torture, sex and anatomy, drugs, identity words of every kind (*żydowski*,
+  *gay* - argued against as treating identity as shameful, and decided for, since no player can see
+  a word that is missing from a hidden pool), drunkenness and alcoholism, bodily functions. Kept:
+  death in general, war and weapons, drinks themselves (*piwo*, *beer*), mild oaths and the devil,
+  and words whose dominant sense is ordinary (*członek*, *pierś*, *jądro*, *zbocze*).
+
+The cost is about 1% of each pool, and an excluded word keeps its rank, so a cap still means "the N
+most common words" minus the excluded ones rather than reaching deeper to make up the number.
+
 ### Path shape is checked per word, not on the finished board
 
 `turnRatio`, `directness`, `foldRatio`, all in `Board.kt`. Enforced during enumeration and against
@@ -381,6 +425,8 @@ Board identity is really *(id, generator version)*.
 - **Distinct lengths and the 28–40% wall band** (2026-11-06) reissued every puzzle in both modes
   again, already-played dailies included, on the same terms. Accepted explicitly before the change.
   Its same-day revision to 18–28% / 8–18% reissued everything a second time.
+- **Excluded answers** (2026-11-08) reissued every puzzle in both modes: taking words out of a pool
+  shifts every draw that follows. Boards already on the shelf keep their words until solved.
 
 ### Why `DayResult.wordCount` is a record, not a derivation, and is `Int?`
 
@@ -636,7 +682,10 @@ lengths appear as they are found. Pays `FOR_COMPLETING_HARD` (45). Levels only.
   coins). The tab's switch does not touch the open level, or setting the next level's mode would
   silently cost the current one its bonus. Hints bought before giving up change nothing. It is in
   effect the cheapest help in the game (20 against a 40 letter), but only for players who chose to
-  play without what everyone else is given for free.
+  play without what everyone else is given for free. The same dialog offers "Show and turn off hard
+  mode" (added 2026-11-08): this board as above, and the tab's switch off from the next level on - the
+  board reaching the switch, never the switch reaching the board. Outlined in `HardColors` red, the
+  label left in the text colour for contrast on the dark theme.
 - **45: started at 40, 55 turned down.** The switch is flipped once and then sets the rate for every
   level after. 55 (asked for, to make the switch tempting) would have made a letter hint cheaper than
   one level and an ad worth under two - the stuck player's way out made cheap, against "being stuck is
@@ -651,6 +700,39 @@ lengths appear as they are found. Pays `FOR_COMPLETING_HARD` (45). Levels only.
 - **The full clue row is still laid out, invisibly,** so the footer and the board keep the size they
   have in an ordinary level. It leaks how many lines the row wraps to, which only says a long list is
   long.
+
+### Why the daily menu follows the date, and the board checks it anyway
+
+Reported 2026-11-08: the morning after solving a daily, the menu still showed today as solved and
+would not offer the new board; killing the app fixed it. `DailyMenuViewModel` read the date once, at
+construction, on the argument that a "today" ring moving under a player at midnight would be
+stranger than one a minute stale. But the view model lives as long as the daily tab's back stack,
+which is the process, and a process outlives a night on the home screen as a matter of course. The
+stale ring was not a minute old but a night old.
+
+The worse half was never reported: had yesterday been left unsolved, Play would have opened it as a
+live board, and `reward` - which deliberately does not look at the date, so that a solve crossing
+midnight still pays - would have paid a streak for a missed day. That is the one thing the streak
+rules exist to prevent.
+
+What was done, and what was turned down:
+
+- **The menu follows the date** (`followToday`, run by `repeatOnLifecycle(STARTED)`): read again
+  every time the screen starts, then at each local midnight while it stays started. The restart is
+  what catches a night in the background, a time-zone change and a clock set by hand; the midnight
+  wait covers a player watching the menu at 00:00. Nothing runs while the app is out of sight, so
+  nothing depends on a frozen process waking on time. The calendar moves with today only where it
+  was showing today (`CalendarFocus`), so a player reading an old month is not pulled out of it.
+- **Rejected: refresh on start only.** Simpler, and leaves the ring wrong for anyone watching midnight
+  pass. Chosen against, since the countdown costs one coroutine.
+- **Rejected: reading the clock at every recomposition.** Nothing recomposes at midnight, so this is
+  the same bug at less predictable moments.
+- **The board decides its own playability** (`DailyRoute.opensForReview`): any day but today opens as
+  a review, whatever the route asked. A guard in `reward` alone was turned down - the player would
+  play the whole board and learn only at the end that it pays nothing, and hints could still be
+  bought on it. The guard also covers a route restored after process death on a later day, which
+  the menu fix cannot reach. Such a day may be unsolved, and its review then shows the answer; the
+  day is over and nothing on it pays, so that is accepted.
 
 ### Progress reset, and why nothing pays twice
 

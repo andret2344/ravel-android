@@ -2,16 +2,22 @@ package eu.andret.ravel.generator
 
 /**
  * A language the game can generate boards in. Each one carries its own alphabet, its own ranked
- * dictionary resource and its own blocklist, because none of the three transfers across languages.
+ * dictionary resource and its own two word filters, because none of them transfers across languages.
+ *
+ * The two filters answer different questions and act at different times. [blocklistFile] lists
+ * vulgar *stems* and is applied when the dictionary is built, so what it matches is not a word of
+ * the game at all. [excludedAnswersResource] lists whole *words* that stay words - the solver still
+ * reads them - but that no board may ask the player to find. See [Dictionary.poolTo].
  */
 enum class Language(
     val code: String,
     val alphabet: Alphabet,
     val dictionaryResource: String,
     val blocklistFile: String,
+    val excludedAnswersResource: String,
 ) {
-    POLISH("pl", Alphabet.POLISH, "/dictionary-pl.txt", "blocklist-pl.txt"),
-    ENGLISH("en", Alphabet.ENGLISH, "/dictionary-en.txt", "blocklist-en.txt"),
+    POLISH("pl", Alphabet.POLISH, "/dictionary-pl.txt", "blocklist-pl.txt", "/excluded-answers-pl.txt"),
+    ENGLISH("en", Alphabet.ENGLISH, "/dictionary-en.txt", "blocklist-en.txt", "/excluded-answers-en.txt"),
     ;
 
     companion object {

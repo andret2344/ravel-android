@@ -60,6 +60,7 @@
     <string name="hard_badge">HARD</string>
     <string name="hard_mode_pending">Takes effect from the next level.</string>
     <string name="hard_drop">Show lengths</string>
+    <string name="hard_drop_and_off">Show and turn off hard mode</string>
     <string name="hard_drop_title">Too tough?</string>
     <string name="hard_drop_body">The word lengths will show up, but you\'ll lose the hard-mode bonus. Words you\'ve found stay on the board.</string>
     <string name="hard_drop_keep">I\'ll keep trying</string>

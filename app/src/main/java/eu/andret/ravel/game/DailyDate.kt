@@ -52,6 +52,14 @@ object DailyDate {
     }
 
     /**
+     * How long from [now] until the next local midnight, which is when [today] next changes.
+     *
+     * Measured to the next day's [startOfDay] rather than as "24 hours minus the time of day", so a
+     * day that daylight saving makes 23 or 25 hours long still ends at its own midnight.
+     */
+    fun millisUntilNextDay(now: Long): Long = startOfDay(shifted(ordinalOf(now), 1)) - now
+
+    /**
      * The ordinal [days] after [ordinal], negative to go back.
      *
      * Done through [Calendar] rather than by adding to the number itself, because the number is a
