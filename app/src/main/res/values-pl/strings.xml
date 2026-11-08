@@ -184,6 +184,8 @@
     <string name="settings_theme_light">Jasny</string>
     <string name="settings_theme_dark">Ciemny</string>
     <string name="settings_haptics_note">Krótka wibracja przy każdej literze, znalezionym słowie i ukończonej planszy. Reakcja haptyczna w ustawieniach telefonu też musi być włączona.</string>
+    <string name="settings_haptics_system_off">Reakcja haptyczna jest wyłączona w ustawieniach telefonu, więc plansza nie zawibruje. Włącz ją tam, żeby korzystać z tego przełącznika.</string>
+    <string name="settings_haptics_no_vibrator">To urządzenie nie ma wibracji.</string>
     <string name="settings_tutorial">Samouczek</string>
     <string name="settings_tutorial_replay">Pokaż samouczek</string>
     <string name="settings_tutorial_note">Zasady gry na małej planszy, którą rozwiązujesz sam. Możesz go pominąć w każdej chwili.</string>

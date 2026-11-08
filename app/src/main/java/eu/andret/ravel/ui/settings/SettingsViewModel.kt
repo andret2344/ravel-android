@@ -5,10 +5,13 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import eu.andret.ravel.RavelApplication
+import eu.andret.ravel.settings.SystemHaptics
 import eu.andret.ravel.settings.ThemeChoice
 import eu.andret.ravel.generator.Language
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
@@ -45,6 +48,19 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     /** Whether the board buzzes. See [eu.andret.ravel.settings.HapticSettings]. */
     val hapticsEnabled: StateFlow<Boolean> = haptics.enabled
+
+    private val _systemHaptics = MutableStateFlow(SystemHaptics.read(application))
+
+    /**
+     * Whether the phone lets the board vibrate at all. When it does not, the screen greys out the
+     * haptics switch and says why - see [SystemHaptics].
+     */
+    val systemHaptics: StateFlow<SystemHaptics> = _systemHaptics.asStateFlow()
+
+    /** Reads [systemHaptics] again. Called each time the screen comes into view. */
+    fun refreshSystemHaptics() {
+        _systemHaptics.value = SystemHaptics.read(getApplication())
+    }
 
     /**
      * Whether this device is one that has to be offered a way back into the consent form.

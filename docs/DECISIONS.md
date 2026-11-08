@@ -734,6 +734,20 @@ What was done, and what was turned down:
   the menu fix cannot reach. Such a day may be unsolved, and its review then shows the answer; the
   day is over and nothing on it pays, so that is accepted.
 
+### Why the haptics switch greys out, and only sometimes
+
+Added 2026-11-08 after a report that the board did not vibrate. The board's haptics obey the phone's
+touch-feedback setting (`BoardHaptics`), so with that off the game's switch does nothing either way.
+`SystemHaptics` reads `Settings.System.HAPTIC_FEEDBACK_ENABLED` (public, no permission) and
+`hasVibrator()` each time the settings tab starts; on a definite 0, or no vibrator, the switch is
+disabled - still showing the player's choice - and the note says why.
+
+Only a definite 0 counts. Android 13's intensity sliders and manufacturers' own screens may not keep
+that value in step, and quiet modes can silence touch feedback with no public signal, so the check
+can miss a silent phone; it is built never to warn about one that is not. Still no link to the
+system setting, for the reason the strings comment gives: it lives somewhere different on every
+phone. Not verified on a manufacturer's device at the time of writing.
+
 ### Progress reset, and why nothing pays twice
 
 Built 2026-11-06: `RavelApplication.resetProgress`, behind a confirmation, wipes both level ladders,

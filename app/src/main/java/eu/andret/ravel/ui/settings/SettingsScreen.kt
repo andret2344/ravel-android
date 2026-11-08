@@ -27,13 +27,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import eu.andret.ravel.R
 import eu.andret.ravel.generator.Language
+import eu.andret.ravel.settings.SystemHaptics
 import eu.andret.ravel.settings.ThemeChoice
 import eu.andret.ravel.ui.AdaptiveScreen
 import eu.andret.ravel.ui.about.Licence
@@ -86,7 +89,15 @@ fun SettingsScreen(
     val unfinished by viewModel.unfinished.collectAsStateWithLifecycle()
     val privacyOptions by viewModel.privacyOptions.collectAsStateWithLifecycle()
     val hapticsEnabled by viewModel.hapticsEnabled.collectAsStateWithLifecycle()
+    val systemHaptics by viewModel.systemHaptics.collectAsStateWithLifecycle()
     val themeChoice by viewModel.themeChoice.collectAsStateWithLifecycle()
+
+    // The phone's setting is changed in another app, so coming back to this one is exactly when it
+    // may have moved.
+    LifecycleStartEffect(viewModel) {
+        viewModel.refreshSystemHaptics()
+        onStopOrDispose { }
+    }
 
     /** Whether the reset confirmation is open. */
     var resetting by remember { mutableStateOf(false) }
@@ -150,6 +161,10 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            // Greyed out when the phone will not vibrate anyway: a switch that does nothing either way
+            // invites a player to flip it and conclude the game is broken. It keeps showing what the
+            // player chose, so turning the phone's setting back on finds it where they left it.
+            val usable = systemHaptics == SystemHaptics.AVAILABLE
             Card(modifier = Modifier.fillMaxWidth()) {
                 Row(
                     // Toggleable on the row rather than clickable on the switch, for the reason the
@@ -159,6 +174,7 @@ fun SettingsScreen(
                         .fillMaxWidth()
                         .toggleable(
                             value = hapticsEnabled,
+                            enabled = usable,
                             onValueChange = viewModel::setHaptics,
                             role = Role.Switch,
                         )
@@ -169,17 +185,30 @@ fun SettingsScreen(
                     Text(
                         text = stringResource(R.string.settings_haptics),
                         style = MaterialTheme.typography.bodyLarge,
+                        color = if (usable) {
+                            Color.Unspecified
+                        } else {
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_ALPHA)
+                        },
                     )
                     // Drawn, not clicked: the row above already took the press, and a switch that
                     // handled its own would be a second target firing the same toggle twice.
-                    Switch(checked = hapticsEnabled, onCheckedChange = null)
+                    Switch(checked = hapticsEnabled, onCheckedChange = null, enabled = usable)
                 }
             }
             // Says what the switch cannot do as well as what it does. Turning it on cannot give a
             // player haptics their phone has switched off system-wide, and somebody who tried that
-            // and felt nothing would otherwise be looking for a bug in the game.
+            // and felt nothing would otherwise be looking for a bug in the game. When the phone is
+            // known to have them off, or to have no vibrator, the note says that instead. It names
+            // the setting rather than linking to it - see the comment over these strings.
             Text(
-                text = stringResource(R.string.settings_haptics_note),
+                text = stringResource(
+                    when (systemHaptics) {
+                        SystemHaptics.AVAILABLE -> R.string.settings_haptics_note
+                        SystemHaptics.OFF -> R.string.settings_haptics_system_off
+                        SystemHaptics.ABSENT -> R.string.settings_haptics_no_vibrator
+                    },
+                ),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -598,3 +627,6 @@ private fun RadioRow(label: String, selected: Boolean, onSelect: () -> Unit) {
         Text(text = label, style = MaterialTheme.typography.bodyLarge)
     }
 }
+
+/** Material's own disabled level, as the locked tiles use, so the greyed row reads as disabled. */
+private const val DISABLED_ALPHA = 0.38f
