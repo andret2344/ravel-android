@@ -13,11 +13,11 @@ android {
         applicationId = "eu.andret.ravel"
         minSdk = 24
         targetSdk = 37
-        versionCode = 4
+        versionCode = 5
         // Not 1.0: nothing has shipped, so claiming a first release is claiming something that has
         // not happened. The version the first internal build carries should be the version its
         // crash reports carry, and "1.0" is a name to spend once.
-        versionName = "0.1.0-alpha.3"
+        versionName = "0.1.0-alpha.4"
     }
 
     buildFeatures {
