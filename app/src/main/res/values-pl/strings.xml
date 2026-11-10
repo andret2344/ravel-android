@@ -30,11 +30,10 @@
     <string name="level_size">%1$d × %2$d</string>
     <string name="level_size_hard">%1$d × %2$d · tryb trudny</string>
     <string name="hard_mode">Tryb trudny</string>
-    <string name="hard_mode_on">Liczba i długości słów ukryte.</string>
-    <string name="hard_mode_off">Liczba i długości słów widoczne.</string>
-    <string name="hard_mode_scope">Tylko poziomy, nie wyzwanie dnia.</string>
+    <string name="hard_mode_description">Ukrywa liczbę i długości słów.</string>
+    <string name="hard_mode_scope">Działa tylko w poziomach, nie w wyzwaniu dnia.</string>
     <string name="hard_badge">TRUDNY</string>
-    <string name="hard_mode_pending">Zadziała dopiero od kolejnego poziomu.</string>
+    <string name="hard_mode_pending">Zacznie działać od następnego poziomu.</string>
     <string name="hard_drop">Pokaż długości</string>
     <string name="hard_drop_and_off">Pokaż i wyłącz tryb trudny</string>
     <string name="hard_drop_title">Za trudno?</string>

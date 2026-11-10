@@ -245,16 +245,18 @@ private fun Header(balance: Int, onShop: () -> Unit) {
  * Beside the card, so it is read as a choice about the level on it.
  *
  * Toggleable on the whole row, like the haptics switch in the options tab, for the same reason: a
- * finger that lands on the words means the switch. Under the name, three lines: what the switch is
- * set to do (lengths and count shown or hidden), the fine print that it is for levels only, and - in
- * orange, once the level on the card has been opened and its mode is fixed - that the change waits
- * for the next level, which is the one thing about this switch a player could not guess. The coin
- * figure is what the mode adds to a level's pay.
+ * finger that lands on the words means the switch. Under the name, three lines: what hard mode is
+ * (count and lengths hidden), the fine print that it is for levels only, and - in orange, once the
+ * level on the card has been opened and its mode is fixed - that the change waits for the next
+ * level, which is the one thing about this switch a player could not guess. The coin figure is what
+ * the mode adds to a level's pay.
  *
- * **Its height never changes.** Flipping it used to swap the first line for a longer one, which
- * wrapped, which grew the card and moved the switch from under the finger that flipped it. Now both
- * variants of the first line are laid out on top of each other, and the orange line is laid out
- * always and only drawn when it applies.
+ * **The first line says what the mode is, never what the switch is set to.** It used to swap between
+ * "hidden" and "shown" with the switch, which only repeated what the switch itself shows - and the
+ * longer variant wrapped, growing the card and moving the switch from under the finger that flipped
+ * it. One fixed sentence has neither problem.
+ *
+ * **Its height never changes.** The orange line is laid out always and only drawn when it applies.
  */
 @Composable
 private fun HardModeSwitch(mode: MenuMode) {
@@ -269,22 +271,11 @@ private fun HardModeSwitch(mode: MenuMode) {
         ) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(text = stringResource(R.string.hard_mode), style = MaterialTheme.typography.bodyLarge)
-                Box {
-                    listOf(true, false).forEach { on ->
-                        Text(
-                            text = stringResource(
-                                if (on) R.string.hard_mode_on else R.string.hard_mode_off,
-                            ),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = if (on == mode.chosen) {
-                                Modifier
-                            } else {
-                                Modifier.alpha(0f).clearAndSetSemantics {}
-                            },
-                        )
-                    }
-                }
+                Text(
+                    text = stringResource(R.string.hard_mode_description),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
                 // A note on the note, and drawn as one: smaller, slanted and fainter, so it reads as
                 // the fine print under what the switch does rather than as a second thing it does.
                 Text(
