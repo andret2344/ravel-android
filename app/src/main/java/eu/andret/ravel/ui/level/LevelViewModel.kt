@@ -23,7 +23,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -91,21 +90,34 @@ class LevelViewModel(
     )
 
     /**
-     * True when this level is ahead of the ladder, which means the player cannot be on it.
+     * Whether the board on screen was finished here, on this screen, in the language it is in now.
      *
-     * The only thing that can put them here is a language switch. Each language keeps its own ladder
-     * - see [LevelProgressState] - so leaving the twenty-first Polish level open and switching to an
-     * English ladder that has reached level one leaves this screen showing an English board under
-     * the number 21, playable, and paying nothing: [eu.andret.ravel.settings.LevelProgress.complete]
-     * refuses a level that is not the current one, which is correct and invisible.
-     *
-     * Ahead of the ladder rather than "not the current level", because finishing a level makes it
-     * not the current one - and a celebration that threw the player back to the menu the moment they
-     * earned it would be this check firing on the one screen it is not about.
+     * Set by [reward] before the store moves the ladder on, and cleared by [generate], which is
+     * where a language switch rebuilds the board: a level beaten in one language says nothing about
+     * the same number on another ladder.
      */
-    val unreachable: StateFlow<Boolean> = progress.state
-        .map { level > it.current }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    private val finishedHere = MutableStateFlow(false)
+
+    /**
+     * True when this level is not the one on offer and was not just beaten here, which means the
+     * player has no business on it. The screen goes back to the menu.
+     *
+     * The usual way here is a language switch. Each language keeps its own ladder - see
+     * [LevelProgressState] - so a level left open on another tab can come back on a ladder that has
+     * not reached it yet, or one that is already past it. Either way the board would be playable
+     * and worth nothing: [eu.andret.ravel.settings.LevelProgress.complete] refuses a level that is
+     * not the current one, hints are refused with it, and the player would be solving a board that
+     * can neither pay nor be saved. A route restored after the level was beaten, and the debug jump,
+     * land here the same way.
+     *
+     * The one level behind the ladder that stays is the one beaten on this screen ([finishedHere]):
+     * finishing a level makes it not the current one, and a celebration that threw the player back
+     * to the menu the moment they earned it would be this check firing on the one screen it is not
+     * about.
+     */
+    val unreachable: StateFlow<Boolean> = combine(progress.state, finishedHere) { ladder, finished ->
+        level > ladder.current || (level < ladder.current && !finished)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     private val _hard = MutableStateFlow(false)
 
@@ -190,6 +202,8 @@ class LevelViewModel(
         running?.cancel()
         _state.value = BoardState.Generating
         _slow.value = false
+        // A board built again is not the board that was beaten - see [finishedHere].
+        finishedHere.value = false
         // Read once, here, rather than inside the coroutine: the board that comes back has to be the
         // one the saved marks below were checked against, and a switch landing mid-search would
         // otherwise restore one language's progress onto the other's grid.
@@ -263,6 +277,10 @@ class LevelViewModel(
     fun hint(hint: Hint): Boolean {
         val playing = _state.value as? BoardState.Playing ?: return true
         if (playing.puzzle.isComplete) return true
+        // A level that is not the one on offer cannot record the hint, pay for the board or keep its
+        // marks, so it does not take the coins either. It is on screen at all only after a language
+        // switch onto a ladder that is already past it - see [unreachable] for the opposite case.
+        if (!progress.state.value.isCurrent(level)) return true
         if (!wallet.spend(hint.cost)) return false
 
         val next = playing.puzzle.hinted(hint)
@@ -351,6 +369,9 @@ class LevelViewModel(
         clock.stop()
         val seconds = progress.state.value.secondsFor(level)
         _sealed.value = progress.state.value.cost()
+        // Before the ladder moves, so [unreachable] never sees this level behind it without knowing
+        // why: the store's move and this flag would otherwise arrive as two separate emissions.
+        finishedHere.value = true
         val counted = progress.complete(level, wordCount)
         puzzles.solved(id, language.current.value)
         val coins = when {

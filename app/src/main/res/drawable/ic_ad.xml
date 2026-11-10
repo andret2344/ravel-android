@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The shop's ad tile: a filled screen with a play mark cut out of it, read as "a video". Drawn
+    here, after the shape of Material Symbols' filled smart_display, rather than taken from the icon
+    set, so there is no third-party file to carve out in LICENSE.md for one glyph.
+    Tinted by the composable, so the colour below is only a placeholder.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FF000000"
+        android:fillType="evenOdd"
+        android:pathData="M4,4h16a2,2 0,0 1,2 2v12a2,2 0,0 1,-2 2h-16a2,2 0,0 1,-2 -2v-12a2,2 0,0 1,2 -2z M9.5,7.5v9l7,-4.5z" />
+</vector>

@@ -36,11 +36,14 @@ import kotlinx.coroutines.launch
  *   [SystemClock.elapsedRealtime] counts from the last boot: a start instant written to disk is
  *   meaningless after a restart, and one taken from the wall clock is meaningless after a time-zone
  *   change. Only a duration means the same thing tomorrow.
+ * @param now the monotonic clock, in milliseconds. A parameter only so the tests can move it; the
+ *   game never passes one.
  */
 internal class SolveClock(
     private val scope: CoroutineScope,
     banked: Int,
     private val onBank: (Int) -> Unit,
+    private val now: () -> Long = SystemClock::elapsedRealtime,
 ) {
     private var base: Int = banked
     private val _elapsed = MutableStateFlow(banked)
@@ -50,6 +53,16 @@ internal class SolveClock(
 
     /** When the current run began, on the monotonic clock, or null while the clock is stopped. */
     private var startedAt: Long? = null
+
+    /**
+     * The part of a second the last run ended on, carried into the next one.
+     *
+     * Banking is in whole seconds, because that is what the stores keep. Dropping the remainder at
+     * every stop lost up to a second each time the player left the screen or the app; carried, the
+     * only time lost is the remainder at the moment this object goes, under a second per sitting.
+     * Not written down: a fraction of a second is not worth a change to what is stored.
+     */
+    private var carriedMillis = 0L
     private var visible = false
     private var playable = false
     private var ticker: Job? = null
@@ -85,28 +98,35 @@ internal class SolveClock(
 
     private fun start() {
         if (startedAt != null) return
-        startedAt = SystemClock.elapsedRealtime()
+        startedAt = now()
         ticker = scope.launch {
             while (true) {
-                _elapsed.value = base + running()
-                delay(1_000)
+                val millis = runningMillis()
+                _elapsed.value = base + (millis / 1_000).toInt()
+                // To the next whole second rather than a flat second on: with a fraction carried in,
+                // a flat second would show every number up to a second late.
+                delay(1_000 - millis % 1_000)
             }
         }
     }
 
     private fun halt() {
-        val seconds = running()
+        val millis = runningMillis()
+        if (startedAt == null) return
         startedAt = null
         ticker?.cancel()
         ticker = null
+        val seconds = (millis / 1_000).toInt()
+        carriedMillis = millis % 1_000
         if (seconds <= 0) return
         base += seconds
         _elapsed.value = base
         onBank(seconds)
     }
 
-    private fun running(): Int {
+    /** This run so far, plus the fraction carried from the last one. Zero while stopped. */
+    private fun runningMillis(): Long {
         val began = startedAt ?: return 0
-        return ((SystemClock.elapsedRealtime() - began) / 1_000).toInt()
+        return now() - began + carriedMillis
     }
 }

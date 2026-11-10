@@ -35,9 +35,14 @@ internal object DailyRoute {
      * after the process died can arrive on any later day. Either would play, and pay a streak for,
      * a day that is over. So any day but [today] opens as a review whatever the route asked.
      *
+     * Today's board opens as a review too once it is [solved]. The menu already asks for that, but
+     * the route is not the only way back to the board: a route restored after the process died
+     * still says "play" for a day that was finished before it died. Played again, that board would
+     * be a fresh grid with no marks on it, since the saved marks go when the day is sealed.
+     *
      * Checked once, when the board opens, and never again: a player who starts before midnight and
      * finishes after it is finishing the board they were given, and is paid for that day.
      */
-    fun opensForReview(reviewRequested: Boolean, ordinal: Long, today: Long): Boolean =
-        reviewRequested || ordinal != today
+    fun opensForReview(reviewRequested: Boolean, ordinal: Long, today: Long, solved: Boolean): Boolean =
+        reviewRequested || ordinal != today || solved
 }

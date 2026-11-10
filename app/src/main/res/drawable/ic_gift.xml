@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The shop's daily gift: a box with a bow, the ribbon left as the gap down its middle. Drawn here,
+    in the same filled style as ic_ad, for the reason given there.
+    Tinted by the composable, so the colour below is only a placeholder.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M3,7h8v4h-8z M13,7h8v4h-8z M4,12h7v9h-7z M13,12h7v9h-7z M12,6.5C10.5,3 6.5,2.5 6.5,5C6.5,6.5 9,6.5 12,6.5z M12,6.5C13.5,3 17.5,2.5 17.5,5C17.5,6.5 15,6.5 12,6.5z" />
+</vector>

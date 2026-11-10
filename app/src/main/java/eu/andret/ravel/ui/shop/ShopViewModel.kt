@@ -19,6 +19,13 @@ import kotlinx.coroutines.flow.StateFlow
 class ShopViewModel(application: Application) : AndroidViewModel(application) {
     private val ravel = application as RavelApplication
 
+    init {
+        // The first ad of the process is fetched when the shop is first opened, not at launch - see
+        // RewardedAds. A view model is built once per visit to the tab at most, which is all want()
+        // needs: only the first call does anything.
+        ravel.ads.want()
+    }
+
     val balance: StateFlow<Int> = ravel.wallet.balance
 
     val adState: StateFlow<RewardedAds.State> = ravel.ads.state
@@ -26,14 +33,25 @@ class ShopViewModel(application: Application) : AndroidViewModel(application) {
     /** Watches left today. Drives what the card says as much as whether the button works. */
     val watchesLeft: StateFlow<Int> = ravel.adAllowance.remaining
 
+    /** Whether today's gift is still there to take. */
+    val giftAvailable: StateFlow<Boolean> = ravel.dailyGift.available
+
     /**
      * Re-counts the day, for a screen that is being looked at again.
      *
-     * The allowance caches its number and a process outlives midnights - see
-     * [eu.andret.ravel.settings.AdAllowance.refresh]. The shop is the only screen that shows the
-     * number, so it is the only one that has to ask.
+     * The allowance and the gift cache their answers and a process outlives midnights - see
+     * [eu.andret.ravel.settings.AdAllowance.refresh]. The shop is the only screen that shows them,
+     * so it is the only one that has to ask.
      */
-    fun refresh() = ravel.adAllowance.refresh()
+    fun refresh() {
+        ravel.adAllowance.refresh()
+        ravel.dailyGift.refresh()
+    }
+
+    /** Takes today's gift and pays it - paid only when the claim went through, so once a day. */
+    fun claimGift() {
+        if (ravel.dailyGift.claim()) ravel.wallet.earn(Rewards.DAILY_GIFT)
+    }
 
     /**
      * Plays the ad, and pays for it once the player has earned it.

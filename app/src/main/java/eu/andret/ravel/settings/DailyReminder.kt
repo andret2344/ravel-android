@@ -16,7 +16,7 @@ import androidx.core.content.edit
  */
 class DailyReminder(context: Context) {
     private val preferences =
-        context.applicationContext.getSharedPreferences(FILE, Context.MODE_PRIVATE)
+        context.applicationContext.getSharedPreferences(SETTINGS_FILE, Context.MODE_PRIVATE)
 
     /** Whether the prompt is still allowed to appear. */
     var enabled: Boolean
@@ -24,7 +24,6 @@ class DailyReminder(context: Context) {
         set(value) = preferences.edit { putBoolean(KEY_ENABLED, value) }
 
     private companion object {
-        const val FILE = "ravel-settings"
         const val KEY_ENABLED = "daily-reminder"
     }
 }

@@ -128,6 +128,23 @@ class PuzzleTest {
     }
 
     @Test
+    fun `a word being traced outranks a word further along by earlier hints`() {
+        // Two letters of the first word were bought earlier; then the player started the third word
+        // by hand. Ranked by progress alone the first word would win, two cells to one, and the path
+        // would be thrown away.
+        val state = fresh.hinted(Hint.LETTER).hinted(Hint.LETTER).withPath(listOf(5)).hinted(Hint.LETTER)
+        assertEquals(listOf(5, 6), state.path)
+        // The first word keeps what was paid for on it.
+        assertEquals(setOf(0, 1, 5, 6), state.hintedCells)
+    }
+
+    @Test
+    fun `with no path under way the word furthest along is hinted`() {
+        val state = fresh.hinted(Hint.LETTER).hinted(Hint.LETTER).cleared().hinted(Hint.LETTER)
+        assertEquals(setOf(0), state.found)
+    }
+
+    @Test
     fun `a hint cuts a path back to the part that was right`() {
         // Right for two cells, then off into a cell that word never visits.
         val state = fresh.withPath(listOf(5, 6, 7)).hinted(Hint.LETTER)
@@ -232,6 +249,15 @@ class PuzzleTest {
         // does not need this rewritten - only breaking the rule does.
         assertTrue(Rewards.FOR_COMPLETING_HARD > Rewards.FOR_COMPLETING)
         assertTrue(Rewards.FOR_COMPLETING_HARD - Rewards.FOR_COMPLETING < Hint.LETTER.cost)
+    }
+
+    @Test
+    fun `the daily gift stays under half the cheapest hint`() {
+        // The one coin paid for showing up rather than for playing. Kept small enough that a week of
+        // tapping it never adds up to a reason to stop solving - see Rewards.DAILY_GIFT.
+        assertTrue(Rewards.DAILY_GIFT > 0)
+        assertTrue(Rewards.DAILY_GIFT * 2 < Hint.LETTER.cost)
+        assertTrue(Rewards.DAILY_GIFT < Rewards.FOR_COMPLETING)
     }
 
     @Test

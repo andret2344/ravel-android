@@ -130,8 +130,15 @@ data class Puzzle(
      * The revealed cells become the current path. After [Hint.LETTER] it is there to be continued;
      * after [Hint.WORD] there is nothing to continue, since a whole word traced is a word found.
      *
-     * Ties between equally advanced words go to whichever starts earlier in reading order, so
-     * repeated hints work down the board instead of jumping about.
+     * The word the current path runs along comes first, however far another word is. Ranked only by
+     * how far along each word was, a word half revealed by earlier hints would outrank one the player
+     * had just started tracing by hand, and the hint would wipe that path to work on the other word
+     * - the opposite of continuing what the player was doing. A player who does want the other word
+     * clears the path first.
+     *
+     * With no path under way, or one that runs along no word, the furthest word wins. Ties between
+     * equally advanced words go to whichever starts earlier in reading order, so repeated hints work
+     * down the board instead of jumping about.
      */
     fun hinted(hint: Hint): Puzzle {
         val target = target() ?: return this
@@ -151,10 +158,16 @@ data class Puzzle(
         ).withPath(revealed)
     }
 
-    /** The word a hint would act on: the one furthest along, ties broken by position on the board. */
-    private fun target(): Int? = unfound.minWithOrNull(
-        compareBy({ -progressOn(it) }, { board.solution[it].cells.min() }),
-    )
+    /**
+     * The word a hint would act on: the one the path runs along, or else the one furthest along,
+     * ties broken by position on the board.
+     *
+     * At most one word can share the path's first cell - words never share cells - so the first
+     * match is the only one.
+     */
+    private fun target(): Int? =
+        unfound.firstOrNull { commonPrefixLength(board.solution[it].cells.toList(), path) > 0 }
+            ?: unfound.minWithOrNull(compareBy({ -progressOn(it) }, { board.solution[it].cells.min() }))
 
     /**
      * How far along the word at [index] the player already is, by hint or by hand.

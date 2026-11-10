@@ -20,3 +20,10 @@ package eu.andret.ravel.settings
  * be identical strings with no compiler and no test able to notice when they stopped being.
  */
 internal const val SETTINGS_FILE = "ravel-settings"
+
+/**
+ * The file the shop's daily counters live in: [AdAllowance]'s watches and [DailyGift]'s claim. Named
+ * once for the reason [SETTINGS_FILE] is, and one file rather than two because both are the same
+ * kind of record - what was taken from the shop today - backed up under the same rule.
+ */
+internal const val SHOP_FILE = "ravel-ads"

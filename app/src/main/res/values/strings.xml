@@ -229,18 +229,21 @@
         Every line is written to be readable before anything happens: what it pays, how many are
         left, and - when there is nothing to offer - which of the several reasons it is.
     -->
+    <string name="shop_daily">Daily rewards</string>
     <string name="shop_earn_ads">Watch an ad</string>
+    <string name="shop_gift_claim">Claim a gift</string>
+    <string name="shop_gift_claimed">Gift claimed</string>
+    <string name="shop_gift_left_description">Gifts left: %1$d of %2$d</string>
     <!-- Digits and a plus sign; there is nothing in it to translate. -->
-    <string name="shop_ad_reward" translatable="false">+%1$d</string>
-    <string name="shop_ad_left_today">%1$d/%2$d today</string>
-    <string name="shop_ad_none_left">Come back tomorrow.</string>
+    <string name="shop_reward" translatable="false">+%1$d</string>
+    <string name="shop_left" translatable="false">%1$d/%2$d</string>
+    <string name="shop_ad_left_description">Ads left: %1$d of %2$d</string>
     <string name="shop_ad_loading">Finding an ad…</string>
     <string name="shop_ad_unavailable">No ad right now. Tap to try again.</string>
     <string name="shop_ad_blocked">Ads are off, because of the privacy choice you made. You can change it under %1$s.</string>
 
-    <string name="shop_buy">Buy coins</string>
-    <string name="shop_coming_soon">Coming soon.</string>
-    <string name="shop_prices">A letter costs %1$d, a whole word %2$d.</string>
+    <string name="shop_buy">Coin packs</string>
+    <string name="shop_coming_soon">Coming soon</string>
 
     <!--
         The options tab. One setting, so the group heading carries the whole screen.

@@ -7,6 +7,7 @@ import eu.andret.ravel.game.PuzzleCache
 import eu.andret.ravel.game.Puzzles
 import eu.andret.ravel.generator.Ravel
 import eu.andret.ravel.settings.AdAllowance
+import eu.andret.ravel.settings.DailyGift
 import eu.andret.ravel.settings.DailyProgress
 import eu.andret.ravel.settings.HapticSettings
 import eu.andret.ravel.settings.HardModeSettings
@@ -116,7 +117,7 @@ class RavelApplication : Application() {
      * Wipes all progress in every language: both level ladders, the daily history with its streak,
      * and the lifetime statistics. The options tab's "reset progress", after a confirmation.
      *
-     * **Coins stay, and so does today's ad allowance.** Putting the balance back to the starting
+     * **Coins stay, and so do today's ad allowance and gift.** Putting the balance back to the starting
      * amount would turn the reset into a coin faucet - spend, reset, spend again - which is the grant
      * `Wallet.STARTING_BALANCE` must never become. Settings stay too: they are preferences, not
      * progress.
@@ -160,7 +161,12 @@ class RavelApplication : Application() {
      * On [Dispatchers.Default] because [Puzzles.preload] blocks, and it is not a small block: on a
      * Redmi Note 10 5G it is about three seconds. Doing it here is what keeps those three seconds
      * off the first spinner the player sees rather than adding them to it.
+     *
+     * The dispatcher is named rather than injected, against Sonar's advice, for the reason given at
+     * [scope]: Android builds this class with no arguments and no test builds it at all, so there is
+     * no seam for an injected dispatcher to come through.
      */
+    @Suppress("kotlin:S6310")
     override fun onCreate() {
         super.onCreate()
         scope.launch(Dispatchers.Default) {
@@ -172,6 +178,9 @@ class RavelApplication : Application() {
 
     /** Today's three watches, counted here so every screen sees the same three. */
     val adAllowance: AdAllowance by lazy { AdAllowance(this) }
+
+    /** Today's free gift in the shop, here for the reason [adAllowance] is. */
+    val dailyGift: DailyGift by lazy { DailyGift(this) }
 
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)

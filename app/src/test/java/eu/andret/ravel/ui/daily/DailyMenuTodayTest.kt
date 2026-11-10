@@ -66,20 +66,36 @@ class DailyMenuTodayTest {
 
     @Test
     fun `only today's board opens to be played`() {
-        assertFalse(DailyRoute.opensForReview(reviewRequested = false, ordinal = SEP_1, today = SEP_1))
-        assertTrue(DailyRoute.opensForReview(reviewRequested = true, ordinal = SEP_1, today = SEP_1))
+        assertFalse(
+            DailyRoute.opensForReview(reviewRequested = false, ordinal = SEP_1, today = SEP_1, solved = false),
+        )
+        assertTrue(
+            DailyRoute.opensForReview(reviewRequested = true, ordinal = SEP_1, today = SEP_1, solved = false),
+        )
     }
 
     @Test
     fun `yesterday's board asked for as a live one opens as a review`() {
         // The stale-menu morning: the route says play, the day is over.
-        assertTrue(DailyRoute.opensForReview(reviewRequested = false, ordinal = AUG_31, today = SEP_1))
+        assertTrue(
+            DailyRoute.opensForReview(reviewRequested = false, ordinal = AUG_31, today = SEP_1, solved = false),
+        )
     }
 
     @Test
     fun `a board from a later day than the clock opens as a review`() {
         // A clock wound back under a restored route. Not playable either: it is not today.
-        assertTrue(DailyRoute.opensForReview(reviewRequested = false, ordinal = SEP_1, today = AUG_31))
+        assertTrue(
+            DailyRoute.opensForReview(reviewRequested = false, ordinal = SEP_1, today = AUG_31, solved = false),
+        )
+    }
+
+    @Test
+    fun `today's board asked for as a live one opens as a review once it is solved`() {
+        // A route restored after the process died, on a day finished before it died.
+        assertTrue(
+            DailyRoute.opensForReview(reviewRequested = false, ordinal = SEP_1, today = SEP_1, solved = true),
+        )
     }
 
     private companion object {

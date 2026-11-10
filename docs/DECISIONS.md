@@ -804,6 +804,29 @@ Two consequences are live and are recorded in `Rewards`: an ad now buys a whole 
 out to be winnable through the shop, drop `ADS_PER_DAY` to 2 rather than putting the prices back** —
 that takes the shortcut from the player abusing it instead of from the player who was stuck.
 
+### Why the daily gift is 15, and why it exists at all
+
+The shop's "Daily rewards" section has a second tile beside the ad: one tap, once a day,
+`Rewards.DAILY_GIFT` coins. It is the only coin in the game paid for showing up rather than for
+playing - the streak at least needs the daily solved - which runs against the rule `StreakTest`
+guards: a game whose visits pay what its boards pay has an optimal player who opens it and closes it.
+
+It exists anyway as a reason to look into the shop every day, where the ad tile is. The amount is
+what keeps it that rather than income. Against a week of solving every daily (25 x 7 = 175):
+
+| Gift | A week | Of 175 |
+|---|---|---|
+| 10 | 70 | 40% |
+| 15 | 105 | 60% |
+| 25 | 175 | 100% - a tap pays what a solved board pays |
+
+15 was chosen deliberately over the 10 that was recommended. `PuzzleTest` holds it under half the
+cheapest hint and under `FOR_COMPLETING`, which is the line that keeps a tap from being worth a board.
+
+Its day rule is `AdAllowance`'s three-way comparison, stored as the day of the last claim in
+`ravel-ads`: a restore on the same day keeps it taken, a clock wound back gets nothing, and a progress
+reset does not touch it.
+
 ### Why `STARTING_BALANCE` cannot be raised after release
 
 Raising it silently grants coins to anyone who has not spent one. A grant has to be written instead.
@@ -895,7 +918,7 @@ lets `:app:assembleRelease` pass, delete it.
 
 The three-way day comparison in `AdAllowance.remainingFrom` is what makes a restore honest — same day
 keeps the watches spent, later day is a fresh allowance, *earlier* day gives nothing, which is what
-answers winding the clock back.
+answers winding the clock back. `DailyGift` keeps its claim in the same file on the same rule.
 
 **The commit that adds in-app purchases has to revisit this**: a restored balance is a restored
 balance, and "spend, then restore" can only really be answered by a server.

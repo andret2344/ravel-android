@@ -91,6 +91,9 @@ CI (`.github/workflows/tests.yml`) runs exactly those four, in that order, on JD
 - **"Debug: jump to level"** is a *pair* of source-set files, `app/src/debug/.../debug/LevelJump.kt`
   and `app/src/release/...` with an empty body. **Edit both or neither.** Its strings are hard-coded
   English deliberately. Level *n* means every level below counts as completed, paying nothing.
+- **"Debug: today"** at the bottom of the shop is the same kind of pair (`ShopDebug.kt`), on the same
+  rules: it sets today's ad watches and gift through `AdAllowance.setRemaining` and
+  `DailyGift.setAvailable`, which nothing in `main` may call.
 
 ## Architecture
 
@@ -237,7 +240,7 @@ Persistence is SharedPreferences plus JSON (`settings/SavedBoards.kt`, single-le
 - **A progress reset never pays twice.** `RavelApplication.resetProgress` clears every language;
   each language's best level (`StoredLevelProgress`, `best`) and the last day that paid
   (`StoredDailyProgress`, `lastPaid`) survive it, and a replay at or below them pays nothing. Coins,
-  today's ad allowance and settings are never reset. The clearing methods stay on the concrete
+  today's ad allowance and gift, and settings are never reset. The clearing methods stay on the concrete
   stores, off `LevelProgress` / `DailyProgress`.
 - **The tutorial boards are hand-made per language (`game/Tutorial.kt`) and `TutorialTest` proves each
   unique against the shipped dictionary.** If a dictionary rebuild breaks that test, pick a new board.
@@ -301,7 +304,9 @@ share card's squares, and the `translatable="false"` licence notices.
 **Four numbers, tuned as a set**: `Rewards.FOR_COMPLETING` (25), `Streak.DAY` (25, `SEVENTH` =
 `5 * DAY`), `Rewards.FOR_WATCHING_AD` (100), against the `Hint` prices (40 / 100). Plus
 `Rewards.FOR_COMPLETING_HARD` (45), which must stay above `FOR_COMPLETING` by less than the cheapest
-hint - `PuzzleTest` holds it; that is what lets hints leave the hard bonus alone.
+hint - `PuzzleTest` holds it; that is what lets hints leave the hard bonus alone. And
+`Rewards.DAILY_GIFT` (15), the shop's one tap a day, which must stay under half the cheapest hint -
+`PuzzleTest` holds that too.
 
 - **Never move one alone.** Three ratios are the design, guarded by `StreakTest` (as a band) and
   `PuzzleTest` (as a pair of inequalities).

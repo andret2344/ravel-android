@@ -174,7 +174,12 @@ class StoredLevelProgress(
     }
 
     override fun saveBoard(board: SavedBoard) {
-        preferences.edit { putString(key(KEY_BOARD), SavedBoards.toJson(board).toString()) }
+        // A ladder holds one board, its current level's, so anything else would overwrite it. The
+        // way here is a level screen left open on another tab across a language switch, onto a
+        // ladder already past that level: the screen stays up, still playable, and every move on it
+        // would replace the marks on the level the player is really on in that language.
+        if (board.language != language.value || board.ordinal != _state.value.current.toLong()) return
+        preferences.edit { putString(key(KEY_BOARD, board.language), SavedBoards.toJson(board).toString()) }
         _state.value = _state.value.copy(board = board)
     }
 

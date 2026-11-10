@@ -35,8 +35,17 @@ import kotlinx.coroutines.launch
  * Nothing may be requested until the consent flow says so, and that answer arrives asynchronously
  * some time after launch. Rather than have the shop poll for it or the activity remember to call
  * back, this watches [AdConsent.canRequestAds] and starts the SDK the moment it turns true. The flag
- * turning true is a permission and not a request - see [AdConsent] - so all that happens here is one
- * ad being fetched so the button is live when the player reaches it.
+ * turning true is a permission and not a request - see [AdConsent] - so all that happens then is the
+ * SDK being initialised, which fetches no ad.
+ *
+ * ## Why the first ad waits for the shop
+ *
+ * The first fetch goes out when the shop is first opened ([want]), not at launch. Fetched at launch,
+ * every player who allowed ads requested one, and most of them never open the shop: AdMob counts
+ * those as requests without impressions, which is the show rate an account is judged on, and a
+ * rewarded ad goes stale after an hour anyway. The cost is a few seconds of "finding an ad" on the
+ * first visit to the shop in a process. After that the next ad is fetched the moment one closes, as
+ * before, because a player who has watched one is the player most likely to want another.
  */
 class RewardedAds(
     context: Context,
@@ -59,6 +68,16 @@ class RewardedAds(
      * would race the first's completion callback and fetch two ads to throw one away.
      */
     private var started = false
+
+    /** Whether the shop has been opened in this process, which is what lets the first fetch out. */
+    private var wanted = false
+
+    /**
+     * Whether a fetch is out and not yet answered. The shop can be opened while the SDK is still
+     * initialising, and both that and the initialisation's callback ask for an ad: without this
+     * they would fetch two and throw one away.
+     */
+    private var fetching = false
 
     init {
         scope.launch {
@@ -128,13 +147,25 @@ class RewardedAds(
     }
 
     /**
-     * Fetches one ad, if there is not one in hand already.
+     * The shop is on screen: fetch the first ad, now or as soon as consent allows. Cheap to call on
+     * every visit - only the first one changes anything. See the class comment.
+     */
+    fun want() {
+        if (wanted) return
+        wanted = true
+        load()
+    }
+
+    /**
+     * Fetches one ad, if there is not one in hand or on its way already, and the shop has asked for
+     * one at least once.
      *
      * Public because the shop offers a retry after [State.UNAVAILABLE], and because a failure is
      * otherwise terminal: nothing else in the app would ever ask again.
      */
     fun load() {
-        if (!started || loaded != null || _state.value == State.SHOWING) return
+        if (!started || !wanted || fetching || loaded != null || _state.value == State.SHOWING) return
+        fetching = true
         _state.value = State.LOADING
         RewardedAd.load(
             application,
@@ -142,11 +173,13 @@ class RewardedAds(
             AdRequest.Builder().build(),
             object : RewardedAdLoadCallback() {
                 override fun onAdLoaded(ad: RewardedAd) {
+                    fetching = false
                     loaded = ad
                     _state.value = State.READY
                 }
 
                 override fun onAdFailedToLoad(error: LoadAdError) {
+                    fetching = false
                     loaded = null
                     _state.value = State.UNAVAILABLE
                 }

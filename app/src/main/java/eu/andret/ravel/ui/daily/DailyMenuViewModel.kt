@@ -58,7 +58,7 @@ class DailyMenuViewModel(application: Application) : AndroidViewModel(applicatio
         // the activity a language switch recreates, and the switch empties the cache. And with the
         // date as well, because a new day is a new board to order.
         viewModelScope.launch {
-            combine((application as RavelApplication).language.current, _today, ::Pair).collect { (playing, day) ->
+            combine(application.language.current, _today, ::Pair).collect { (playing, day) ->
                 if (!progress.state.value.isSolved(day)) {
                     puzzles.prefetch(PuzzleId(PuzzleMode.DAILY, day), playing)
                 }
@@ -112,9 +112,13 @@ class DailyMenuViewModel(application: Application) : AndroidViewModel(applicatio
      *
      * The wait runs a second past midnight: a timer that fires a few milliseconds early would read
      * the old date, find nothing to do, and wait out another whole day.
+     *
+     * The streak is recounted on every pass, not only when [today] moves here: this view model can
+     * be new while the store behind it has been holding a count since two midnights ago.
      */
     suspend fun followToday() {
         while (true) {
+            progress.refresh()
             rollTo(DailyDate.today())
             delay(DailyDate.millisUntilNextDay(System.currentTimeMillis()) + MIDNIGHT_MARGIN_MILLIS)
         }

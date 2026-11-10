@@ -297,6 +297,16 @@ interface DailyProgress {
     fun paidBeforeReset(ordinal: Long): Boolean
 
     /**
+     * Counts [DailyProgressState.streak] again against the current date.
+     *
+     * The streak is derived when the state is read or written, and the state is a value held in
+     * memory: a process that lives through two midnights with nothing written goes on showing a
+     * streak that the missed day has already broken. Whoever follows the date calls this when it
+     * moves - see `DailyMenuViewModel.followToday`.
+     */
+    fun refresh()
+
+    /**
      * Writes down where the player has got to, so closing the screen is not losing the board.
      *
      * There is no matching load: what was saved is in [DailyProgressState.board] from the moment

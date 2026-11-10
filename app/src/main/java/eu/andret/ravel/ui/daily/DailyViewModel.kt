@@ -75,6 +75,7 @@ class DailyViewModel(
         reviewRequested = handle.get<Boolean>(DailyRoute.ARG_REVIEW) == true,
         ordinal = ordinal,
         today = DailyDate.today(),
+        solved = progress.state.value.isSolved(ordinal),
     )
 
     private val _state = MutableStateFlow<BoardState>(BoardState.Generating)
@@ -158,20 +159,25 @@ class DailyViewModel(
         // Read once, here, rather than inside the coroutine: the grid that comes back has to be the
         // one the saved marks below were checked against.
         val playing = language.current.value
+        // [review] is decided once, at opening, so a day solved on this screen is not one by it.
+        // Built again after that - a language switch rebuilds the grid - the day comes back
+        // finished: a fresh, unmarked board for a day already sealed would be a second solve for a
+        // day that cannot pay or count again.
+        val finished = review || progress.state.value.isSolved(ordinal)
         running = viewModelScope.launch {
             val next = try {
                 // Today's board was ordered by the menu in front of this screen; any other day
                 // misses and is built here as it always was. See [eu.andret.ravel.game.PuzzleCache].
-                // Written down only when it is going to be played: a review's board would take the
-                // daily's one slot from today's.
+                // Written down only when it is going to be played: a finished day's board would take
+                // the daily's one slot from today's.
                 (puzzles.take(id, playing)
                     ?: Puzzles.generate(id, playing)?.also {
-                        if (!review) puzzles.keep(id, playing, it)
+                        if (!finished) puzzles.keep(id, playing, it)
                     })
                     ?.let { puzzle ->
                         BoardState.Playing(
                             when {
-                                review -> solved(puzzle)
+                                finished -> solved(puzzle)
                                 else -> restored(puzzle, progress.state.value.boardFor(ordinal))
                             },
                         )
@@ -325,8 +331,6 @@ class DailyViewModel(
         // that already paid before a progress reset pays nothing now, board or streak: otherwise
         // resetting and solving today again would be a coin faucet.
         val repaid = progress.paidBeforeReset(ordinal)
-        val forBoard = if (repaid) 0 else Rewards.FOR_COMPLETING
-        if (forBoard > 0) wallet.earn(forBoard)
 
         // Taken off the finished board rather than assembled from what this class happens to know:
         // the per-word results are only derivable while the puzzle is in hand - see
@@ -339,6 +343,11 @@ class DailyViewModel(
         // mid-solve is paid for the day they were solving.
         val counted = progress.complete(card)
         puzzles.solved(id, card.language)
+        // Paid only once the store has agreed this is the day's first finish, like the streak
+        // below. Paid before asking, the board's coins went out for any finish at all - and a day
+        // already sealed could be finished again whenever a fresh grid for it reached the screen.
+        val forBoard = if (counted && !repaid) Rewards.FOR_COMPLETING else 0
+        if (forBoard > 0) wallet.earn(forBoard)
         val streak = progress.state.value.streak
         val forStreak = if (counted && !repaid) Streak.rewardFor(Streak.dayInCycle(streak)) else 0
         if (forStreak > 0) wallet.earn(forStreak)

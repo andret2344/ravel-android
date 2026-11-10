@@ -5,7 +5,7 @@ title: Privacy Policy – Ravel
 
 # Privacy Policy – Ravel
 
-**Effective date: November 6, 2026**
+**Effective date: November 10, 2026**
 
 ## 1. Data Controller
 
@@ -27,7 +27,7 @@ The app keeps the following on your device only:
 
 - game progress: levels completed, daily puzzle results and streak, the board in progress, times, and hints used
 - boards built in advance, so the next puzzle opens without waiting
-- the coin balance and how many ads were watched today
+- the coin balance, how many ads were watched today, and whether today's free gift was claimed
 - settings: language, theme, vibration, hard mode, whether the tutorial was completed, and your advertising consent choice
 
 This data is not sent to the publisher or to any server operated by the publisher. It is removed by clearing the app's data or uninstalling the app.

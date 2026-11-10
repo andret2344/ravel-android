@@ -25,8 +25,9 @@ Two languages, Polish and English, each with its own bundled dictionary of base 
   be keeps climbing to level 2500. A hard-mode switch on the levels tab hides the word lengths and
   their count, for a larger reward; a level keeps the mode it was first opened in.
 
-Hints cost coins, earned by completing puzzles, by keeping a daily streak, and by watching rewarded
-ads in the shop. Ads are rewarded only, shown when the player asks for one.
+Hints cost coins, earned by completing puzzles, by keeping a daily streak, and in the shop's daily
+rewards: rewarded ads and a small free gift once a day. Ads are rewarded only, shown when the player
+asks for one.
 
 A short interactive tutorial on a hand-made board opens on first launch - including one real word
 that lies on the board and still does not count; it can be skipped and

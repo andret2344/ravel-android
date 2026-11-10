@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.lang.ref.WeakReference
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -105,9 +106,21 @@ class AdConsent(context: Context, private val scope: CoroutineScope) {
      * the game it was about to uncover anyway. Firing before one appears gives back exactly the old
      * behaviour, where the game opened first and the form arrived on top of it, which is the right
      * way for this to degrade.
+     *
+     * ## An activity rebuilt while the question is out
+     *
+     * Rotating the phone on the loading screen builds a second activity and calls this again before
+     * the first request has come back. Asking twice would start a second timer and a second round
+     * trip, so the request goes out once per process - but the form must not be shown on the
+     * activity that asked, which by then is destroyed and would make the form fail and the game
+     * open with no answer given. So the newest activity is remembered on every call, and the form
+     * goes to whichever one is alive when the answer arrives.
      */
     fun gather(activity: Activity) {
         if (_settled.value) return
+        host = WeakReference(activity)
+        if (asked) return
+        asked = true
         scope.launch {
             delay(SETTLE_TIMEOUT)
             _settled.value = true
@@ -119,11 +132,22 @@ class AdConsent(context: Context, private val scope: CoroutineScope) {
                 // Loads and shows in one call, and does nothing at all where no form is required.
                 // The error it hands back is for logging only - a form that failed to load leaves
                 // consent exactly as it was, which publish() below reads either way.
-                UserMessagingPlatform.loadAndShowConsentFormIfRequired(activity) { publish() }
+                val alive = host?.get()?.takeUnless { it.isFinishing || it.isDestroyed }
+                if (alive == null) {
+                    publish()
+                } else {
+                    UserMessagingPlatform.loadAndShowConsentFormIfRequired(alive) { publish() }
+                }
             },
             { publish() },
         )
     }
+
+    /** The newest activity [gather] was called from, for the form to sit in front of. */
+    private var host: WeakReference<Activity>? = null
+
+    /** Whether this process has sent the consent request already. See [gather]. */
+    private var asked = false
 
     /**
      * Reopens the form so the player can change their mind, as the policy says they can.

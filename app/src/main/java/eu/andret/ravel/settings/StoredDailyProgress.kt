@@ -120,6 +120,12 @@ class StoredDailyProgress(
 
     private fun lastPaid(): Long = preferences.getLong(KEY_LAST_PAID, Long.MIN_VALUE)
 
+    override fun refresh() {
+        // Nothing is read from disk: only "today" has moved, and the state already holds the rest.
+        // An unchanged count makes an equal state, which the flow does not emit again.
+        _state.value = _state.value.let { recount(it.solved, it.pending, it.board, it.share) }
+    }
+
     override fun saveBoard(board: SavedBoard) {
         preferences.edit { putString(KEY_BOARD, SavedBoards.toJson(board).toString()) }
         _state.value = _state.value.copy(board = board)

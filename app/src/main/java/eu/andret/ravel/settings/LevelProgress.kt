@@ -158,7 +158,12 @@ interface LevelProgress {
      */
     fun complete(level: Int, wordCount: Int): Boolean
 
-    /** Writes down where the player has got to, so closing the screen is not losing the level. */
+    /**
+     * Writes down where the player has got to, so closing the screen is not losing the level.
+     *
+     * Ignored for a board that is not the current level of the ladder being played: there is one
+     * board per ladder, and it belongs to that level.
+     */
     fun saveBoard(board: SavedBoard)
 
     /**

@@ -35,7 +35,20 @@ import kotlin.random.Random
  * memory back, which is what to do from `onTrimMemory` or when the player switches language.
  */
 object Ravel {
-    private val dictionaries = ConcurrentHashMap<DictionaryKey, Dictionary>()
+    /**
+     * One [Lazy] per key rather than the dictionary itself, so the load runs outside the map.
+     *
+     * `computeIfAbsent` holds a lock on the key's bin for as long as its function runs, and
+     * `clear` takes every bin's lock in turn - so with the load inside `computeIfAbsent`, a
+     * [forget] arriving mid-load waited the load out. [forget] is called on the main thread, by a
+     * language switch and by `onTrimMemory`, and a load is seconds on a phone. Here the map only
+     * ever holds the lock long enough to create the [Lazy]; the load itself runs on the [Lazy]'s
+     * own lock, which is still what keeps two callers for one key from building it twice.
+     *
+     * A [forget] during a load drops the [Lazy] from the map while the load carries on: whoever
+     * started it gets its dictionary, and the next caller starts a new one.
+     */
+    private val dictionaries = ConcurrentHashMap<DictionaryKey, Lazy<Dictionary>>()
 
     /**
      * A board with exactly one solution, blocking until it has one.
@@ -130,8 +143,8 @@ object Ravel {
 
     private fun dictionaryFor(language: Language, difficulty: Difficulty): Dictionary =
         dictionaries.computeIfAbsent(DictionaryKey(language, difficulty)) { key ->
-            Dictionary.loadBundled(key.language, key.difficulty)
-        }
+            lazy { Dictionary.loadBundled(key.language, key.difficulty) }
+        }.value
 
     private data class DictionaryKey(val language: Language, val difficulty: Difficulty)
 }

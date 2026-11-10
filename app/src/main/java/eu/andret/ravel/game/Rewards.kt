@@ -119,6 +119,20 @@ object Rewards {
     const val ADS_PER_DAY = 3
 
     /**
+     * What the shop's daily gift pays: one tap, once a day, for nothing but opening the shop.
+     *
+     * The one coin in the game paid for showing up rather than for playing, which is why it is
+     * small. Its job is a reason to look into the shop every day - where the ad tile is - and not
+     * income: at fifteen it is 105 a week against 175 for solving every daily, and under half the
+     * cheapest hint a day. Twenty-five would have paid a tap what a solved board pays, and a game
+     * whose taps pay what its boards do has stopped being paid for the boards. `PuzzleTest` holds it
+     * under half a letter.
+     *
+     * Counted by `DailyGift`, on the same day rules as [ADS_PER_DAY]'s allowance.
+     */
+    const val DAILY_GIFT = 15
+
+    /**
      * The balance after paying [cost], or null when there is not enough.
      *
      * Null rather than a clamped balance or an exception: "you cannot afford this" is an answer the

@@ -156,16 +156,18 @@
 
     <string name="shop_title">Sklep</string>
 
+    <string name="shop_daily">Dzienne nagrody</string>
     <string name="shop_earn_ads">Obejrzyj reklamę</string>
-    <string name="shop_ad_left_today">%1$d/%2$d dzisiaj</string>
-    <string name="shop_ad_none_left">Wróć jutro.</string>
+    <string name="shop_gift_claim">Odbierz prezent</string>
+    <string name="shop_gift_claimed">Prezent odebrany</string>
+    <string name="shop_gift_left_description">Pozostało prezentów: %1$d z %2$d</string>
+    <string name="shop_ad_left_description">Pozostało reklam: %1$d z %2$d</string>
     <string name="shop_ad_loading">Szukam reklamy…</string>
     <string name="shop_ad_unavailable">Teraz nie ma reklamy. Dotknij, aby spróbować ponownie.</string>
     <string name="shop_ad_blocked">Reklamy są wyłączone przez Twój wybór prywatności. Możesz go zmienić w sekcji %1$s.</string>
 
-    <string name="shop_buy">Kup monety</string>
-    <string name="shop_coming_soon">Wkrótce.</string>
-    <string name="shop_prices">Litera kosztuje %1$d, całe słowo %2$d.</string>
+    <string name="shop_buy">Pakiety monet</string>
+    <string name="shop_coming_soon">Wkrótce</string>
 
     <string name="settings_language">Język</string>
     <string name="settings_change">Zmień</string>

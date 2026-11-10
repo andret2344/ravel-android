@@ -32,7 +32,7 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 class AdAllowance(context: Context) {
     private val preferences =
-        context.applicationContext.getSharedPreferences(FILE, Context.MODE_PRIVATE)
+        context.applicationContext.getSharedPreferences(SHOP_FILE, Context.MODE_PRIVATE)
 
     private val _remaining = MutableStateFlow(read())
 
@@ -80,6 +80,19 @@ class AdAllowance(context: Context) {
         return true
     }
 
+    /**
+     * Sets how many watches today has left, for testing the shop. Reachable only from `src/debug`
+     * (`ShopDebug`), the way `StoredLevelProgress.jumpTo` is - on the class, never on a screen.
+     */
+    fun setRemaining(left: Int) {
+        val clamped = left.coerceIn(0, Rewards.ADS_PER_DAY)
+        preferences.edit {
+            putLong(KEY_DAY, DailyDate.today())
+            putInt(KEY_COUNT, Rewards.ADS_PER_DAY - clamped)
+        }
+        _remaining.value = clamped
+    }
+
     private fun read(): Int = remainingFrom(
         storedDay = preferences.getLong(KEY_DAY, ABSENT),
         storedCount = preferences.getInt(KEY_COUNT, 0),
@@ -87,7 +100,6 @@ class AdAllowance(context: Context) {
     )
 
     companion object {
-        private const val FILE = "ravel-ads"
         private const val KEY_DAY = "day"
         private const val KEY_COUNT = "count"
 
