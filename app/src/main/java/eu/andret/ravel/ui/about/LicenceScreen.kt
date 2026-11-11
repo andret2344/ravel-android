@@ -36,7 +36,7 @@ import eu.andret.ravel.R
 /**
  * One source, what it is used under, and the licence itself when the game carries it.
  *
- * A page rather than a dialog. Two of these are a screen of legal text, and a dialog that scrolls
+ * A page rather than a dialog. Three of these are a screen of legal text, and a dialog that scrolls
  * further than the screen it dims is a worse reading surface than the screen would have been.
  */
 @Composable
@@ -63,8 +63,9 @@ fun LicenceScreen(licence: Licence, onBack: () -> Unit, modifier: Modifier = Mod
         ) {
             // No background: this is a back affordance on a reading page, and a filled tonal button
             // gives it the weight of an action the page is about. The chevron is drawn rather than
-            // imported because the app carries no icon artifact at all - the tab bar uses glyphs -
-            // and one shape is not worth the several hundred kilobytes material-icons would add.
+            // imported because the app carries no icon artifact at all - the tab bar's icons are
+            // vectors copied into res/drawable - and one shape is not worth the several hundred
+            // kilobytes material-icons would add.
             IconButton(
                 onClick = onBack,
                 modifier = Modifier.semantics { contentDescription = back },

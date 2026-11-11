@@ -203,8 +203,9 @@ This is the part most easily broken by an innocent-looking change.
 `Puzzle` (game/Puzzle.kt) is immutable; every move returns a new puzzle and **every route into the
 board — drag, tap, hint — funnels through `withPath`**. The whole rule set is testable with no device.
 
-`RavelApplication` holds the process-wide singletons — `wallet`, `language`, `haptics`, `theme`,
-`progress` (daily), `levels`, `puzzles`, `tutorial`. **Screens reach them through their
+`RavelApplication` holds the process-wide singletons — `wallet`, `language`, `haptics`, `hardMode`,
+`theme`, `reminder`, `tutorial`, `progress` (daily), `levels`, `puzzles`, `consent`, `ads`, `adAllowance`,
+`dailyGift`. **Screens reach them through their
 `AndroidViewModel`, never by constructing their own.**
 
 `RavelApp.kt` is the whole navigation graph: five tabs, each keeping its own back stack. Screens live
@@ -374,7 +375,7 @@ the policy with it:
 ## Attribution
 
 `generator/DICTIONARY.md` records the dictionary sources and licences. Three require a notice, and
-the app carries all of them: the settings tab lists every source under "Word sources"
+the app carries all of them: the options tab lists every source under "Word sources"
 (`ui/about/Licences.kt`), and each name opens `LicenceScreen`.
 
 - **SJP.PL word list and KWJP100 frequency data** — CC BY 4.0, attribution **plus** a statement that
@@ -383,6 +384,12 @@ the app carries all of them: the settings tab lists every source under "Word sou
 - **WordNet 3.0** (English lemmatisation) — Princeton copyright notice retained.
 
 ENABLE and OANC need nothing and are listed anyway.
+
+- **The icons** (Material Symbols, and the path of Material Icons' `lock`) — Apache 2.0, the licence
+  text given to every recipient. They are not word sources: the options tab lists them under
+  "Licences" beside the game's own (`Licence.game`), never under "Word sources". **A new icon copied
+  from the set goes into `LICENSE.md`'s "does not cover" list in the same commit**, with a header
+  comment saying what was changed.
 
 The notices and the source names are `translatable="false"` on purpose: a required notice is required
 in its own wording, and these are proper names.
@@ -395,7 +402,8 @@ accident.
 **Adding a dictionary source means adding an entry here in the same commit** — the licence obligation
 starts when the data ships, not when somebody remembers.
 
-The two licences that ask for their text to travel with the work are bundled verbatim in `res/raw/`.
+The three licences that ask for their text to travel with the work are bundled verbatim in `res/raw/`:
+PoliMorf's, WordNet's, and Apache 2.0 for the icons.
 PoliMorf's was reconstructed from the standard BSD 2-clause template plus the copyright line on
 `morfeusz.sgjp.pl` — that host has a **revoked** TLS certificate, so it cannot be re-fetched to check
 without working around the revocation. CC BY 4.0 is linked rather than bundled, as that licence asks.

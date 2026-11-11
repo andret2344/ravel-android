@@ -1,14 +1,13 @@
 <!--
-    A padlock, drawn rather than typed.
+    Material Icons "lock" (filled) by Google, Apache License 2.0 - see LICENSE.md. The path data is
+    Google's, unchanged; the file around it and these comments are this project's.
 
-    Every other icon in the game is a character, because the shapes it needs exist as characters.
-    A padlock does not: the Unicode one is a colour emoji on most phones, which would put a yellow
-    pictogram on a tile whose whole job is to look switched off. A vector takes the tint it is given
-    and dims with the content around it.
+    A padlock, drawn rather than typed. The Unicode one is a colour emoji on most phones, which would
+    put a yellow pictogram on a tile whose whole job is to look switched off. A vector takes the tint
+    it is given and dims with the content around it.
 
-    The one drawable the app draws itself, so it is deliberately the Material shape and not a
-    reinvention - a lock is a symbol the player already knows, and an original one is only a lock
-    the player has to learn.
+    Deliberately the Material shape and not a reinvention - a lock is a symbol the player already
+    knows, and an original one is only a lock the player has to learn.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"

@@ -1,5 +1,6 @@
 package eu.andret.ravel.ui
 
+import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
@@ -18,7 +19,7 @@ import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
@@ -29,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -76,27 +78,66 @@ private const val SETTINGS_ROUTE = "settings"
  * @param prefix what a route has to start with to belong to this tab. A tab is not one screen -
  *   both game tabs are a menu and a board - and the bar has to stay lit on the right item while the
  *   player is two screens deep inside it.
- * @param glyph one shape per tab, all from the same family: geometric outlines with something inside
- *   them, and never pictographs. The sun that used to stand for the daily was a colour emoji on most
- *   devices, which put one bright yellow icon beside four that took the bar's own tint and dimmed
- *   properly when a tab was not selected. A cogwheel for the settings would do the same, which is
- *   why the settings are a dial.
+ * @param icon the tab's shape while it is not selected: a Material Symbols outline, vectors copied
+ *   into `res/drawable` and not the `material-icons` artifacts, which are no longer developed and
+ *   would bring thousands of icons to use five.
+ *   The tabs used to be Unicode geometric characters (a square with lines for the stats, a dotted
+ *   circle for the daily), which failed twice. They came from whatever fallback font the device
+ *   had, so they sat at a different size and height on every phone and filled barely half of the
+ *   24 dp an icon is given. They were also abstract on purpose, and a diamond does not say "shop" at
+ *   any size, so the labels underneath did all the work. Pictographs were avoided at the time
+ *   because the daily's sun was a colour emoji that ignored the bar's tint; a vector takes the tint
+ *   like any other icon, so that reason applies to emoji only, and a cogwheel is fine.
+ * @param selectedIcon the same symbol filled, for the selected tab, the way Material 3 marks it: the
+ *   selection then changes the shape as well as the colour, which still reads for a player who
+ *   cannot tell the two tints apart.
  */
 enum class RavelTab(
     @param:StringRes val label: Int,
-    val glyph: String,
+    @param:DrawableRes val icon: Int,
+    @param:DrawableRes val selectedIcon: Int,
     val enabled: Boolean,
     val route: String,
     val prefix: String = route,
 ) {
-    STATS(R.string.tab_stats, "▤", enabled = true, route = STATS_ROUTE),
-    DAILY(R.string.tab_daily, "◉", enabled = true, route = DailyRoute.MENU),
-    MAIN(R.string.tab_main, "▦", enabled = true, route = LevelRoute.MENU),
+    STATS(
+        R.string.tab_stats,
+        R.drawable.ic_tab_stats,
+        R.drawable.ic_tab_stats_selected,
+        enabled = true,
+        route = STATS_ROUTE,
+    ),
+    DAILY(
+        R.string.tab_daily,
+        R.drawable.ic_tab_daily,
+        R.drawable.ic_tab_daily_selected,
+        enabled = true,
+        route = DailyRoute.MENU,
+    ),
+    MAIN(
+        R.string.tab_main,
+        R.drawable.ic_tab_main,
+        R.drawable.ic_tab_main_selected,
+        enabled = true,
+        route = LevelRoute.MENU,
+    ),
 
     // Enabled because the hint buttons send players here when they run out of coins, and a
     // destination that cannot be reached is not a destination.
-    SHOP(R.string.tab_shop, "◈", enabled = true, route = SHOP_ROUTE),
-    SETTINGS(R.string.tab_settings, "◎", enabled = true, route = SETTINGS_ROUTE),
+    SHOP(
+        R.string.tab_shop,
+        R.drawable.ic_tab_shop,
+        R.drawable.ic_tab_shop_selected,
+        enabled = true,
+        route = SHOP_ROUTE,
+    ),
+    SETTINGS(
+        R.string.tab_settings,
+        R.drawable.ic_tab_settings,
+        R.drawable.ic_tab_settings_selected,
+        enabled = true,
+        route = SETTINGS_ROUTE,
+    ),
 }
 
 @Composable
@@ -138,7 +179,7 @@ fun RavelApp(
                                     selected = tab == selected,
                                     onClick = { navController.switchTo(tab) },
                                     enabled = tab.enabled,
-                                    icon = { TabGlyph(tab) },
+                                    icon = { TabIcon(tab, tab == selected) },
                                     label = { Text(stringResource(tab.label)) },
                                 )
                             }
@@ -166,7 +207,7 @@ fun RavelApp(
                         // The same five items in the same order, in the other of Material's two
                         // containers for them. It is a second copy of the loop because a bar arranges its
                         // items across a row and a rail down a column, and there is no shape both scopes
-                        // accept - so the glyph, which is the part with a decision behind it, is shared
+                        // accept - so the icon, which is the part with a decision behind it, is shared
                         // and the four wiring arguments are not.
                         NavigationRail {
                             // Centred by the two spacers rather than by an arrangement, so it does not
@@ -177,7 +218,7 @@ fun RavelApp(
                                     selected = tab == selected,
                                     onClick = { navController.switchTo(tab) },
                                     enabled = tab.enabled,
-                                    icon = { TabGlyph(tab) },
+                                    icon = { TabIcon(tab, tab == selected) },
                                     label = { Text(stringResource(tab.label)) },
                                 )
                             }
@@ -300,13 +341,19 @@ fun RavelApp(
 /**
  * One tab's shape, drawn the same whichever container it is sitting in.
  *
- * Shared rather than written out twice, because the glyph is the part of an item with a decision
- * behind it - see [RavelTab.glyph] on why these are outlines and never pictographs - and a rail whose
+ * Shared rather than written out twice, because the icon is the part of an item with a decision
+ * behind it - see [RavelTab.icon] on why these are vectors and not characters - and a rail whose
  * icons had drifted from the bar's would be five tabs that looked like a different app on its side.
+ *
+ * No content description: the item's label is right under it and already names the tab, and a
+ * description would have TalkBack read the name twice.
  */
 @Composable
-private fun TabGlyph(tab: RavelTab) {
-    Text(tab.glyph, style = MaterialTheme.typography.titleMedium)
+private fun TabIcon(tab: RavelTab, selected: Boolean) {
+    Icon(
+        painter = painterResource(if (selected) tab.selectedIcon else tab.icon),
+        contentDescription = null,
+    )
 }
 
 /**

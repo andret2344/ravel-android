@@ -4,7 +4,6 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import eu.andret.ravel.RavelApplication
 import eu.andret.ravel.game.DailyDate
-import eu.andret.ravel.settings.DailyReminder
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,7 +23,7 @@ import kotlinx.coroutines.flow.asStateFlow
  * away mid-sentence the moment the board behind it was finished.
  */
 class RavelAppViewModel(application: Application) : AndroidViewModel(application) {
-    private val reminder = DailyReminder(application)
+    private val reminder = (application as RavelApplication).reminder
 
     private val progress = (application as RavelApplication).progress
 

@@ -2,7 +2,7 @@
 
 [![Tests](https://github.com/andret2344/ravel-android/actions/workflows/tests.yml/badge.svg)](https://github.com/andret2344/ravel-android/actions/workflows/tests.yml)
 [![Release](https://img.shields.io/github/v/release/andret2344/ravel-android?sort=semver&display_name=tag&label=release)](https://github.com/andret2344/ravel-android/releases)
-[![Kotlin](https://img.shields.io/badge/Kotlin-2.4.10-7F52FF?logo=kotlin&logoColor=white)](gradle/libs.versions.toml)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.4.21-7F52FF?logo=kotlin&logoColor=white)](gradle/libs.versions.toml)
 [![Android](https://img.shields.io/badge/Android-24%E2%80%9337-3DDC84?logo=android&logoColor=white)](app/build.gradle.kts)
 [![Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?logo=jetpackcompose&logoColor=white)](app/build.gradle.kts)
 [![JDK](https://img.shields.io/badge/JDK-21%20build%20%2F%2011%20target-ED8B00?logo=openjdk&logoColor=white)](.github/workflows/tests.yml)
@@ -22,7 +22,7 @@ Two languages, Polish and English, each with its own bundled dictionary of base 
   calendar of past days. A solved day can be shared as a picture of its word lengths (`4🟥 5🟩 9🟨`)
   and nothing else.
 - **Levels** — an endless ladder. Grid size ramps to 10×10 by level 250; how obscure the words may
-  be keeps climbing to level 2500. A hard-mode switch on the levels tab hides the word lengths and
+  be keeps climbing to level 2500. A hard-mode switch on the game tab hides the word lengths and
   their count, for a larger reward; a level keeps the mode it was first opened in.
 
 Hints cost coins, earned by completing puzzles, by keeping a daily streak, and in the shop's daily
@@ -91,12 +91,13 @@ CI (`.github/workflows/tests.yml`) runs exactly those four, in that order.
 
 [PolyForm Noncommercial 1.0.0](LICENSE.md). Read it, build it, change it, use it for anything
 noncommercial — commercial use, this game on a store included, is not licensed. The bundled word
-lists are third-party material under their own terms; `LICENSE.md` says which files and
-`generator/DICTIONARY.md` says under what.
+lists and the Material icons (Apache 2.0) are third-party material under their own terms;
+`LICENSE.md` says which files, and `generator/DICTIONARY.md` says under what for the words.
 
 ## Attribution
 
 The dictionaries are built from third-party corpora, three of which require a notice: **SJP.PL** and
 **KWJP100** (CC BY 4.0, modified), **PoliMorf** (BSD 2-clause), and **WordNet 3.0** (Princeton).
-The app carries all of them under "Word sources" in the settings tab; `generator/DICTIONARY.md`
-records the full list.
+The app carries all of them under "Word sources" in the options tab; `generator/DICTIONARY.md`
+records the full list. The icons are Material Symbols by Google (Apache 2.0); the options tab
+carries that licence under "Licences", beside the game's own.

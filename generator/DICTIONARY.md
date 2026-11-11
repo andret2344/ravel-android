@@ -36,7 +36,7 @@ not worth working around.
 
 ### Attribution obligations — placed in the app
 
-Carried by the settings tab, under "Word sources": every source below is a row, and each row opens a
+Carried by the options tab, under "Word sources": every source below is a row, and each row opens a
 page with its notice and, for the two that require it, the licence text itself. The strings live in
 `app/src/main/res/values/strings.xml` as `licence_*`, the list in `app/.../ui/about/Licences.kt`.
 

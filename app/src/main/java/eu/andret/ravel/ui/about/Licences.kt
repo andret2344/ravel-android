@@ -15,13 +15,13 @@ import eu.andret.ravel.R
 private const val CC_BY_4_0 = "https://creativecommons.org/licenses/by/4.0/"
 
 /**
- * A licence the game has to show: the six sources it is built on, and its own.
+ * A licence the game has to show: the six sources it is built on, its own, and its icons'.
  *
- * [RAVEL] is the game itself and is not a word source. It is in this enum rather than beside it
- * because everything that makes a licence a page - the row, the route, the detail screen - already
- * works for six entries and would have to be duplicated to serve a seventh thing that is a licence
- * in every respect except where it came from. What separates it is the list it appears in, and that
- * is [wordSources]' job.
+ * [RAVEL] is the game itself and [MATERIAL_SYMBOLS] the icons in it; neither is a word source. They
+ * are in this enum rather than beside it because everything that makes a licence a page - the row,
+ * the route, the detail screen - already works for six entries and would have to be duplicated to
+ * serve two more things that are licences in every respect except where they came from. What
+ * separates them is the list they appear in, and that is [wordSources]' and [game]'s job.
  *
  * Three of these entries are obligations rather than courtesies. The two Creative Commons sources
  * require the attribution *and* a statement that the material was modified - the game ships a subset
@@ -41,8 +41,8 @@ private const val CC_BY_4_0 = "https://creativecommons.org/licenses/by/4.0/"
  * @param url where the licence proper lives. CC BY is satisfied by a link and is not carried in the
  *   app - the deed is four screens of legal text that changes nothing about what the player is
  *   being told here.
- * @param fullText the licence bundled verbatim, for the two that require their notice to be
- *   retained rather than pointed at. Null means the link above is the whole answer, which is why the
+ * @param fullText the licence bundled verbatim, for the three that require their text to travel with
+ *   the work rather than be pointed at. Null means the link above is the whole answer, which is why the
  *   detail screen has to work without one rather than treating it as a missing file.
  */
 enum class Licence(
@@ -104,17 +104,40 @@ enum class Licence(
         licence = R.string.licence_name_polyform,
         notice = R.string.licence_ravel_notice,
         url = "https://polyformproject.org/licenses/noncommercial/1.0.0",
+    ),
+
+    /**
+     * The icons: Material Symbols vectors (and the path of Material Icons' padlock) copied into
+     * `res/drawable`, which `LICENSE.md` lists as not covered by the game's own terms.
+     *
+     * Bundled in full, unlike [RAVEL]: Apache 2.0 asks that every recipient of the work be given a
+     * copy of the licence, and an APK is the work as the player receives it. Google's icon
+     * repository has no NOTICE file, so the licence text is the whole obligation. The notice is this
+     * project's own wording and is translated, on [RAVEL]'s argument.
+     */
+    MATERIAL_SYMBOLS(
+        source = R.string.licence_icons_source,
+        licence = R.string.licence_name_apache,
+        notice = R.string.licence_icons_notice,
+        url = "https://www.apache.org/licenses/LICENSE-2.0",
+        fullText = R.raw.licence_apache,
     );
 
     companion object {
         /**
-         * Everything the dictionaries are built from - this enum without [RAVEL].
+         * The game's own licences, shown under their own heading below the word sources: its code
+         * and the icons it carries.
+         */
+        val game: List<Licence> = listOf(RAVEL, MATERIAL_SYMBOLS)
+
+        /**
+         * Everything the dictionaries are built from - this enum without [game].
          *
          * Written as a subtraction rather than a second list so that adding a source is adding one
-         * entry above and nothing else. The settings screen shows these under "word sources", where
-         * the game's own licence would be a false claim about where the words come from.
+         * entry above and nothing else. The options screen shows these under "word sources", where
+         * the game's own licences would be a false claim about where the words come from.
          */
-        val wordSources: List<Licence> = entries - RAVEL
+        val wordSources: List<Licence> = entries - game.toSet()
     }
 }
 

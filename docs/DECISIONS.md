@@ -33,7 +33,7 @@ route the wobble never touches. And `BoardSpec.wordCountFor` must keep enough wo
 *reachable*, or the band is a promise the arithmetic cannot keep — measured: with the old `fewest`, a
 10x10 came out as seven twelve-letter words with the band wide open and unusable.
 
-*2026-11-06:* the donor loop is gone. `lengthsFor` enumerates every list that obeys the band and draws
+*2026-11-06:* `randomComposition` and its donor loop are gone. `lengthsFor` enumerates every list that obeys the band and draws
 one, so a list outside it is never built; the `wordCountFor` half still stands.
 
 ### Distinct word lengths, and the walls that make room for them
@@ -287,6 +287,8 @@ cache first and fall through to `Puzzles.generate` on a miss.
 - **A prefetch gets `PREFETCH_TIMEOUT_MILLIS` (3 min), not the player's 20 s.** Nobody is watching,
   so the question is "when is this device hopeless", not "how long will they sit here". A timed-out
   prefetch is cached as its null; retrying would be the same deterministic search again.
+  *Revisited:* a build that ended in null is now started again on the next request - see "Why the
+  level screen builds through the cache" below.
 - **The daily menu orders today's board even for a player who only came to look at the streak.**
   This reverses the menu's earlier "starts no generation" rule, which assumed a board was a second
   or two. Not ordered for a day already solved — that board is only ever reviewed.
@@ -555,6 +557,8 @@ bullet says otherwise.
   structure (three questions, only the last counting both modes) and six tiles across reads as one
   undivided row of numbers under headings nobody can attach them to.
 - **Shop** — the two offers side by side, top-aligned, still capped at `TILE_WIDTH`.
+  *Revisited 2026-11-10,* with the daily gift: the gift and the ad tile sit side by side in both
+  arrangements, so the shop no longer asks `AdaptiveScreen` and has one layout either way.
 - **Options** — switches left, the word sources right, so a player looking for the language does not
   pass a Princeton disclaimer on the way. Still scrolls in both arrangements: the sources card grows
   by a row every time a dictionary is added, which is a height set by a licence obligation rather
@@ -1003,8 +1007,8 @@ Decided 2026-08-10. `ui/board/BoardGrid.kt` is a bare `Canvas` with no `semantic
 no per-cell descriptions.
 
 The core interaction is dragging a finger along an orthogonal path; usable TalkBack support needs a
-second, parallel input model, not labels. The `Canvas` is separately a performance decision — a 12x12
-board is 144 cells.
+second, parallel input model, not labels. The `Canvas` is separately a performance decision — the
+largest board, 10x10, is 100 cells.
 
 Accessibility **off** the board still applies in full: `ui/Coins.kt`, `CalendarCard.kt`,
 `StreakCard.kt`, `SettingsScreen.kt` and the rest carry semantics, and new screens are expected to.

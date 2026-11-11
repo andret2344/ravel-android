@@ -8,6 +8,7 @@ import eu.andret.ravel.game.Puzzles
 import eu.andret.ravel.generator.Ravel
 import eu.andret.ravel.settings.AdAllowance
 import eu.andret.ravel.settings.DailyGift
+import eu.andret.ravel.settings.DailyReminder
 import eu.andret.ravel.settings.DailyProgress
 import eu.andret.ravel.settings.HapticSettings
 import eu.andret.ravel.settings.HardModeSettings
@@ -82,6 +83,13 @@ class RavelApplication : Application() {
 
     /** The theme the player picked, applied by the activity and chosen in the options tab. */
     val theme: ThemeSettings by lazy { ThemeSettings(this) }
+
+    /**
+     * Whether the launch prompt about an unsolved daily may appear. Read and written by the shell
+     * alone today, and here anyway: a setting with its own instance per screen is the second answer
+     * [language] warns about the moment a second screen offers the same switch.
+     */
+    val reminder: DailyReminder by lazy { DailyReminder(this) }
 
     /**
      * Whether the tutorial is owed, read by the shell that shows it and written by the options tab

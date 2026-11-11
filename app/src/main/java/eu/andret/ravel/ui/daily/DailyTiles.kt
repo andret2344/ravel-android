@@ -1,5 +1,6 @@
 package eu.andret.ravel.ui.daily
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -54,7 +55,7 @@ internal fun DailyTiles(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Tile(
-            glyph = "▦",
+            icon = R.drawable.ic_calendar,
             label = stringResource(R.string.tile_calendar),
             // The month's own name, so the tile says which month the count belongs to without
             // needing a sentence for it.
@@ -81,7 +82,7 @@ internal fun DailyTiles(
  *
  * Not a disabled [Card] with a click that does nothing: it takes no [onClick] at all, so nothing
  * about it can be pressed, ripple or otherwise. The padlock says why, the dimmed content says the
- * same thing again without needing the glyph to be understood, and "soon" answers the question both
+ * same thing again without needing the icon to be understood, and "soon" answers the question both
  * of them raise.
  */
 @Composable
@@ -99,13 +100,12 @@ private fun LockedTile(label: String, modifier: Modifier = Modifier) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            // The one drawn icon on the screen, and R.drawable.ic_lock says why it is drawn at all.
             // No description: the label under it already names the tile, and "locked" is said by the
             // caption rather than by an icon a screen reader would read out as a second heading.
             Icon(
                 painter = painterResource(R.drawable.ic_lock),
                 contentDescription = null,
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(TILE_ICON_SIZE),
             )
             Text(
                 text = label,
@@ -123,6 +123,16 @@ private fun LockedTile(label: String, modifier: Modifier = Modifier) {
 
 /** Material's own disabled level, so a locked tile reads as disabled and not as badly coloured. */
 private const val LOCKED_ALPHA = 0.38f
+
+/**
+ * The icon at the top of every tile, the padlock included, so the row reads as three of a kind.
+ *
+ * Above Material's 24 dp because a tile is a third of the screen's width and the icon is what the
+ * player aims at; at 24 dp it sat in the square like a bullet point. The tiles used to carry
+ * characters (a grid of squares, a triangle, a tick), which came from the device's fallback font at
+ * whatever size and height that font gave them, and the triangle was a colour emoji on some phones.
+ */
+private val TILE_ICON_SIZE = 32.dp
 
 /**
  * The way into today's board, which is three different offers wearing one square.
@@ -144,11 +154,11 @@ private fun PlayTile(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val glyph = when {
+    val icon = when {
         // A tick, not an arrow, once the day is done: the tile still opens the board, but what it
         // is mostly doing at that point is reporting.
-        solvedToday -> "✓"
-        else -> "▶"
+        solvedToday -> R.drawable.ic_check
+        else -> R.drawable.ic_play
     }
     val container = when {
         solvedToday -> foundColors.container
@@ -166,7 +176,7 @@ private fun PlayTile(
         else -> R.string.tile_play
     }
     Tile(
-        glyph = glyph,
+        icon = icon,
         label = stringResource(label),
         // How far in, rather than a word: "2/5" is the reason to go back, and it is the only thing
         // here that a player cannot already guess from the colour.
@@ -184,7 +194,7 @@ private fun PlayTile(
 }
 
 /**
- * One square: a glyph, what it opens, and one number about it.
+ * One square: an icon, what it opens, and one number about it.
  *
  * The number is the point of putting these on the front screen at all. A tile that only said
  * "Calendar" would be a link, and a link is worth a tap only after the player has decided to look;
@@ -193,7 +203,7 @@ private fun PlayTile(
  */
 @Composable
 private fun Tile(
-    glyph: String,
+    @DrawableRes icon: Int,
     label: String,
     caption: String,
     container: Color,
@@ -215,7 +225,12 @@ private fun Tile(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text(text = glyph, style = MaterialTheme.typography.headlineSmall)
+                // No description, as on the padlock: the label right under it names the tile.
+                Icon(
+                    painter = painterResource(icon),
+                    contentDescription = null,
+                    modifier = Modifier.size(TILE_ICON_SIZE),
+                )
                 Text(
                     text = label,
                     style = MaterialTheme.typography.labelLarge,

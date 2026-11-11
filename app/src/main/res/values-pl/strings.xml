@@ -216,6 +216,7 @@
     <string name="settings_sources_note">Słowniki powstają z publicznych list słów i korpusów. Dotknij źródła, aby zobaczyć jego licencję.</string>
     <string name="licence_open">Otwórz licencję</string>
     <string name="licence_back">Wstecz</string>
-    <string name="settings_licence">Licencja</string>
-    <string name="licence_ravel_notice">Ravel jest wydany na licencji PolyForm Noncommercial 1.0.0. Kod źródłowy jest dostępny pod adresem https://github.com/andret2344/ravel-android i można go czytać, budować i zmieniać w każdym celu niekomercyjnym; użycie komercyjne nie jest objęte licencją. Copyright 2026 Andret2344. Listy słów nie są objęte tymi warunkami — są wymienione powyżej, na licencjach projektów, z których pochodzą.</string>
+    <string name="settings_licence">Licencje</string>
+    <string name="licence_ravel_notice">Ravel jest wydany na licencji PolyForm Noncommercial 1.0.0. Kod źródłowy jest dostępny pod adresem https://github.com/andret2344/ravel-android i można go czytać, budować i zmieniać w każdym celu niekomercyjnym; użycie komercyjne nie jest objęte licencją. Copyright 2026 Andret2344. Listy słów i ikony nie są objęte tymi warunkami — są wymienione w opcjach, na licencjach projektów, z których pochodzą.</string>
+    <string name="licence_icons_notice">Ikony to Material Symbols i Material Icons firmy Google (https://fonts.google.com/icons), użyte na licencji Apache License, Version 2.0. Zostały zmodyfikowane względem oryginałów. Pełny tekst licencji znajduje się poniżej.</string>
 </resources>

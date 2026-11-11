@@ -357,12 +357,13 @@ fun SettingsScreen(
     }
 
     /*
-     * The game's own licence: one row, its own heading, directly under the sources.
+     * The game's own licences - its code and its icons: their own heading, directly under the
+     * sources.
      *
      * Under them rather than above because the order on this screen is what somebody came for, and
-     * nobody came for this. Its own card rather than a seventh row in theirs because that card
-     * answers "where do the words come from", and Ravel is not an answer to it - a row saying
-     * otherwise would be a false attribution sitting among five real ones.
+     * nobody came for this. Their own card rather than more rows in theirs because that card answers
+     * "where do the words come from", and neither Ravel nor the icons are an answer to it - a row
+     * saying otherwise would be a false attribution sitting among real ones.
      */
     val licenceSection: @Composable () -> Unit = {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -372,10 +373,11 @@ fun SettingsScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Card(modifier = Modifier.fillMaxWidth()) {
-                SourceRow(
-                    licence = Licence.RAVEL,
-                    onOpen = { onLicence(Licence.RAVEL) },
-                )
+                Column {
+                    Licence.game.forEach { licence ->
+                        SourceRow(licence = licence, onOpen = { onLicence(licence) })
+                    }
+                }
             }
         }
     }

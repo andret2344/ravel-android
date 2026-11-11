@@ -11,18 +11,13 @@ arguments in `docs/DECISIONS.md`; an item here points at them rather than repeat
    The cache, the lookahead and the 30-second message are all sized by numbers measured on the old
    generator; re-check them against the new table.
 2. **Remove the `RavelGen` log line** in `Puzzles.generate` - only after item 1 is recorded.
-3. **Release signing.**
-   1. Upload key: a new keystore per app, `ravel-upload.jks`, alias `ravel-upload`, 25+ years,
-      kept outside the repo and backed up; passwords in a password manager. Google holds the app
-      signing key (Play App Signing).
-   2. `signingConfigs` in `app/build.gradle.kts` reading the path, alias and passwords from
+3. **Release signing.** The upload key exists (alias `ravel-upload`, outside the repo) and
+   `app/release/` is ignored by `app/.gitignore`. Left:
+   1. `signingConfigs` in `app/build.gradle.kts` reading the path, alias and passwords from
       `~/.gradle/gradle.properties` (or the environment), failing with a clear message when they
       are missing. Nothing secret in the repo.
-   3. `.gitignore`: `*.jks`, `*.keystore`, `/app/release/` (the `.aab` and `mapping.txt` Android
-      Studio writes there).
-4. **Install the signed release build on a device and open every tab** - the step R8 makes
-   mandatory (`DECISIONS.md`, "What R8 already broke").
-5. **Play Console Data safety form**, matching `docs/privacy-policy.md`: data on the device only,
+   2. `.gitignore`: `*.jks`, `*.keystore`.
+4. **Play Console Data safety form**, matching `docs/privacy-policy.md`: data on the device only,
    AdMob rewarded ads, UMP consent, the `AD_ID` permission merged in by `play-services-ads`.
 
 ## Code

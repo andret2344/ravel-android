@@ -14,9 +14,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -24,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -96,25 +98,23 @@ private fun MonthHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // The arrows are glyphs, which a screen reader would otherwise announce as punctuation, so
-        // each carries a description of what it actually does.
-        val previous = stringResource(R.string.calendar_previous)
-        TextButton(
-            onClick = onPrevious,
-            modifier = Modifier.semantics { contentDescription = previous },
-        ) {
-            Text(text = "‹", style = MaterialTheme.typography.titleLarge)
+        // Each arrow says what it does, since a bare chevron says nothing to a screen reader.
+        // Mirrored on its own in a right-to-left locale (the drawables are autoMirrored), where
+        // "earlier" is on the right.
+        IconButton(onClick = onPrevious) {
+            Icon(
+                painter = painterResource(R.drawable.ic_chevron_left),
+                contentDescription = stringResource(R.string.calendar_previous),
+            )
         }
         Text(text = name, style = MaterialTheme.typography.titleMedium)
         // Kept in place rather than removed at the current month, so the header does not shuffle
         // sideways every time the player walks back through the year.
-        val next = stringResource(R.string.calendar_next)
-        TextButton(
-            onClick = onNext,
-            enabled = canGoForward,
-            modifier = Modifier.semantics { contentDescription = next },
-        ) {
-            Text(text = "›", style = MaterialTheme.typography.titleLarge)
+        IconButton(onClick = onNext, enabled = canGoForward) {
+            Icon(
+                painter = painterResource(R.drawable.ic_chevron_right),
+                contentDescription = stringResource(R.string.calendar_next),
+            )
         }
     }
 }

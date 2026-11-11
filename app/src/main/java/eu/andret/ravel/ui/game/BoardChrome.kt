@@ -11,19 +11,20 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import eu.andret.ravel.R
@@ -49,9 +50,9 @@ import eu.andret.ravel.ui.board.TraceState
  * what there is to spend on it. The mode's own title is not up here - it goes under the bar - which
  * keeps the least urgent thing on the screen out of its most prominent corner.
  *
- * The close button is a filled circle rather than a word or a bare glyph. A board fills the screen
+ * The close button is a filled circle rather than a word or a bare icon. A board fills the screen
  * and is the only thing on it worth looking at, so anything that has to be findable over it has to
- * be findable as a shape - a lone "✕" on the same background as the grid is a character among a
+ * be findable as a shape - a lone cross on the same background as the grid is one more mark among a
  * grid full of characters.
  *
  * The balance is the figure alone. "1000 coins" is a sentence to parse; over a puzzle, next to two
@@ -76,15 +77,9 @@ internal fun BoardTopBar(balance: Int, elapsed: Int?, onClose: () -> Unit, onSho
         // leaves the board is not a move to make.
         FilledTonalIconButton(
             onClick = onClose,
-            modifier = Modifier
-                .size(44.dp)
-                .semantics { contentDescription = close },
+            modifier = Modifier.size(44.dp),
         ) {
-            Text(
-                text = "✕",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-            )
+            Icon(painter = painterResource(R.drawable.ic_close), contentDescription = close)
         }
         if (elapsed != null) {
             Text(

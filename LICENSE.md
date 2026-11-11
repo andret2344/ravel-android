@@ -87,14 +87,20 @@ app's icon, or to publish this game, or a work based on it, on any app store.
 
 ## What it does not cover
 
-The word lists and the licence texts that ship with them are third-party material, under their own
-terms, and stay under them:
+The word lists, the licence texts that ship with them and the Material icons are third-party
+material, under their own terms, and stay under them:
 
 - `generator/src/main/resources/dictionary-pl.txt` and `dictionary-en.txt` — built from SJP.PL and
   KWJP100 (CC BY 4.0), PoliMorf (BSD 2-clause), ENABLE (public domain), OANC (open access) and
   WordNet 3.0 (Princeton). The CC BY 4.0 sources were modified; that statement and the full
   attribution are in `generator/DICTIONARY.md`, which travels with them.
-- `app/src/main/res/raw/licence_polimorf.txt` and `licence_wordnet.txt` — verbatim third-party
-  licence texts, redistributed as those licences require.
+- `app/src/main/res/raw/licence_polimorf.txt`, `licence_wordnet.txt` and `licence_apache.txt` —
+  verbatim third-party licence texts, redistributed as those licences require.
+- `app/src/main/res/drawable/ic_tab_*.xml`, `ic_calendar.xml`, `ic_check.xml`, `ic_chevron_left.xml`,
+  `ic_chevron_right.xml`, `ic_close.xml` and `ic_play.xml` — Material Symbols by Google, under the
+  [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0). Modified: renamed, and the
+  `android:tint` attribute removed, which names an AppCompat theme attribute this app does not have.
+- `app/src/main/res/drawable/ic_lock.xml` — the path of Material Icons' `lock` by Google, under the
+  same Apache License 2.0, in a file of this project's own.
 
 `generator/DICTIONARY.md` is the record of where each source comes from and what it asks for.
