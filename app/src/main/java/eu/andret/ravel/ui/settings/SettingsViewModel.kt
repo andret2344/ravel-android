@@ -41,7 +41,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     private val theme = (application as RavelApplication).theme
 
-    /** The colours the player picked. See [eu.andret.ravel.settings.ThemeSettings]. */
+    /** The colors the player picked. See [eu.andret.ravel.settings.ThemeSettings]. */
     val themeChoice: StateFlow<ThemeChoice> = theme.choice
 
     /** The language being played and read in, which is what the picker marks as chosen. */
@@ -53,7 +53,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val _systemHaptics = MutableStateFlow(SystemHaptics.read(application))
 
     /**
-     * Whether the phone lets the board vibrate at all. When it does not, the screen greys out the
+     * Whether the phone lets the board vibrate at all. When it does not, the screen grays out the
      * haptics switch and says why - see [SystemHaptics].
      */
     val systemHaptics: StateFlow<SystemHaptics> = _systemHaptics.asStateFlow()

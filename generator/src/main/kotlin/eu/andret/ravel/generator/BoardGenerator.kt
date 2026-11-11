@@ -16,7 +16,7 @@ import kotlin.random.Random
  *   keep the share they always had.
  *
  *   **Not more.** 28..40% everywhere was tried and lasted one look at a board: walls in the
- *   middle of the grid left a third of the free cells with two free neighbours or fewer, so the
+ *   middle of the grid left a third of the free cells with two free neighbors or fewer, so the
  *   corridors spelled out the paths and the letters were no longer needed to find the words.
  * @param maxWallRatio upper bound on the same share.
  * @param minTurnRatio how much the words must wind, see [turnRatioOf]. Layouts below this are
@@ -536,10 +536,10 @@ class BoardGenerator(
         while (stack.isNotEmpty()) {
             val cell = stack.removeLast()
             reached++
-            for (neighbour in grid.neighbours[cell]) {
-                if (!walls[neighbour] && !visited[neighbour]) {
-                    visited[neighbour] = true
-                    stack.addLast(neighbour)
+            for (neighbor in grid.neighbors[cell]) {
+                if (!walls[neighbor] && !visited[neighbor]) {
+                    visited[neighbor] = true
+                    stack.addLast(neighbor)
                 }
             }
         }
@@ -554,7 +554,7 @@ class BoardGenerator(
      *    eight, a list of lengths that carried no information although it is **the only clue this
      *    game gives**, drawn from the thinnest bands of the dictionary. The per-word fold gate in
      *    [PathShape.accepts] is what keeps short words from coming out as squat blocks, so a
-     *    near-flat list was a second defence that cost more than it bought.
+     *    near-flat list was a second defense that cost more than it bought.
      * 2. **One word reaches [BoardSpec.requiredLongestWord]**, so something crosses the grid.
      * 3. **No length is used more than [BoardSpec.maxLengthRepeats] times** - once on boards up to
      *    7x7, twice above. The clue list is a set of keys: when every length is different, each one

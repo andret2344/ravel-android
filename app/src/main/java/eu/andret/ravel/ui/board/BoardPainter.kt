@@ -49,15 +49,15 @@ internal class BoardPainter(
         val side = fillTile(cell, style.scale, style.fill)
         // A hint is drawn as an outline rather than as another fill, so a cell can say both "you
         // were told this one" and whichever state it is in at the same time.
-        style.hint?.let { colour -> outlineTile(cell, side, colour) }
+        style.hint?.let { color -> outlineTile(cell, side, color) }
         drawLetter(cell, side, style)
     }
 
     /** Fills a cell's tile and returns the side it was drawn at, which the letter is sized from. */
-    private fun fillTile(cell: Int, scale: Float, colour: Color): Float {
+    private fun fillTile(cell: Int, scale: Float, color: Color): Float {
         val side = metrics.tile * scale
         drawRoundRect(
-            color = colour,
+            color = color,
             topLeft = metrics.topLeftOf(cell, side),
             size = Size(side, side),
             cornerRadius = CornerRadius(side * BoardStyle.CORNER_RATIO),
@@ -65,9 +65,9 @@ internal class BoardPainter(
         return side
     }
 
-    private fun outlineTile(cell: Int, side: Float, colour: Color) {
+    private fun outlineTile(cell: Int, side: Float, color: Color) {
         drawRoundRect(
-            color = colour,
+            color = color,
             topLeft = metrics.topLeftOf(cell, side),
             size = Size(side, side),
             cornerRadius = CornerRadius(side * BoardStyle.CORNER_RATIO),
@@ -98,13 +98,13 @@ internal class BoardPainter(
         )
 
     /** The bars joining consecutive cells of a path, drawn beneath them so it reads as one word. */
-    private fun drawRibbon(cells: List<Int>, colour: Color) {
+    private fun drawRibbon(cells: List<Int>, color: Color) {
         val thickness = metrics.tile * BoardStyle.CONNECTOR_RATIO
         for (index in 1 until cells.size) {
-            val start = metrics.centreOf(cells[index - 1])
-            val end = metrics.centreOf(cells[index])
+            val start = metrics.centerOf(cells[index - 1])
+            val end = metrics.centerOf(cells[index])
             drawRoundRect(
-                color = colour,
+                color = color,
                 topLeft = Offset(minOf(start.x, end.x), minOf(start.y, end.y)) -
                     Offset(thickness / 2, thickness / 2),
                 size = Size(

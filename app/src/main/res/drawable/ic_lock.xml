@@ -2,7 +2,7 @@
     Material Icons "lock" (filled) by Google, Apache License 2.0 - see LICENSE.md. The path data is
     Google's, unchanged; the file around it and these comments are this project's.
 
-    A padlock, drawn rather than typed. The Unicode one is a colour emoji on most phones, which would
+    A padlock, drawn rather than typed. The Unicode one is a color emoji on most phones, which would
     put a yellow pictogram on a tile whose whole job is to look switched off. A vector takes the tint
     it is given and dims with the content around it.
 
@@ -14,7 +14,7 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <!-- White and untinted here: Compose's Icon paints it in the content colour of whatever it is
+    <!-- White and untinted here: Compose's Icon paints it in the content color of whatever it is
          put inside, and a tint baked in would fight that rather than help it. -->
     <path
         android:fillColor="@android:color/white"

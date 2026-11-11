@@ -247,8 +247,8 @@ private fun CompletedDialog(
  * "lose what I have done" is the fear that would otherwise keep a stuck player from pressing it.
  *
  * The middle button also turns hard mode off for the levels after this one. Outlined in hard mode's
- * own red, the colour of the badge it takes away, rather than in `error`: nothing is going wrong,
- * a setting is changing. Only the outline is red - the label keeps the dialog's text colour, because
+ * own red, the color of the badge it takes away, rather than in `error`: nothing is going wrong,
+ * a setting is changing. Only the outline is red - the label keeps the dialog's text color, because
  * the dark theme's red on a dark dialog is too faint to read as text.
  */
 @Composable
@@ -289,7 +289,7 @@ private fun DropHardDialog(onDrop: () -> Unit, onDropAndTurnOff: () -> Unit, onK
  * The way on from a finished board, in the place the hint buttons had.
  *
  * Without it, a player who closed the completion dialog to look at the board - by the button, the
- * scrim or the back button - was left with greyed-out hints and a close button that leads to the
+ * scrim or the back button - was left with grayed-out hints and a close button that leads to the
  * menu: the next level was two screens away from a board whose whole point was leading to it.
  *
  * In the hints' place rather than added under them, because a finished board has nothing left to

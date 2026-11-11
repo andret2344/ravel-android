@@ -103,9 +103,9 @@ internal fun readWordNetLemmas(directory: File, language: Language): HashSet<Str
     WORDNET_INDEXES.forEach { name ->
         val file = File(directory, name)
         require(file.isFile) { "Missing ${file.path} - see DICTIONARY.md for where to fetch WordNet" }
-        // Latin-1: the licence header at the top of each index file is not UTF-8.
+        // Latin-1: the license header at the top of each index file is not UTF-8.
         file.forEachLine(Charsets.ISO_8859_1) { line ->
-            // The licence header is indented; every data line starts with the lemma itself.
+            // The license header is indented; every data line starts with the lemma itself.
             if (line.startsWith(" ")) return@forEachLine
             val lemma = line.substringBefore(' ').lowercase()
             if (language.alphabet.isWordValid(lemma)) lemmas.add(lemma)
@@ -126,7 +126,7 @@ internal fun readWordNetLemmas(directory: File, language: Language): HashSet<Str
  *
  * A word WordNet indexes in its own right is left alone even when it looks derived: *stressed* is an
  * adjective, not only the past tense of *stress*, and the same goes for a plural that has taken on
- * its own sense. That is WordNet's judgement to make and it is better than a suffix rule's.
+ * its own sense. That is WordNet's judgment to make and it is better than a suffix rule's.
  *
  * The frequency goes with the word. Dropping *shadows* without crediting *shadow* would rank the
  * survivor by a fraction of the evidence for it, which is the distortion the Polish build corrects
@@ -158,13 +158,13 @@ internal fun foldInflections(ranked: List<RankedWord>, lemmas: Set<String>): Arr
 /**
  * Base forms [word] could be a regular inflection of, best candidate first.
  *
- * Deliberately a small rule set rather than WordNet's full `morphy`: this only has to recognise the
+ * Deliberately a small rule set rather than WordNet's full `morphy`: this only has to recognize the
  * regular endings, because an irregular form (*went*, *mice*) is indexed by WordNet in its own right
  * and never reaches here. Every candidate is checked against the lemma index before it is believed,
  * so an over-generous rule costs nothing while a missing one leaves an inflection on the board.
  *
  * A stem shorter than [MIN_WORD_LENGTH] is not proposed. It could not be a board word, so folding
- * into it would delete a playable word in favour of one the game cannot use - and it is what turned
+ * into it would delete a playable word in favor of one the game cannot use - and it is what turned
  * *his* into the archaic verb *hie*, the single false positive this rule set ever produced.
  */
 private fun basesOf(word: String): List<String> {

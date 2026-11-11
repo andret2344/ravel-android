@@ -62,8 +62,8 @@ class BoardGeneratorTest {
             val stack = ArrayDeque(listOf(free.first()))
             reached.add(free.first())
             while (stack.isNotEmpty()) {
-                grid.neighbours[stack.removeLast()].forEach { neighbour ->
-                    if (!board.isWall(neighbour) && reached.add(neighbour)) stack.addLast(neighbour)
+                grid.neighbors[stack.removeLast()].forEach { neighbor ->
+                    if (!board.isWall(neighbor) && reached.add(neighbor)) stack.addLast(neighbor)
                 }
             }
             assertEquals(free.size, reached.size, "free cells split into islands\n${board.render()}")
@@ -143,7 +143,7 @@ class BoardGeneratorTest {
             val lengths = assertNotNull(generator.generate(spec), "no 10x10 board").wordLengths
             lengths.max() - lengths.min()
         }
-        // Four letters of spread on average. The old behaviour averaged under three and could not
+        // Four letters of spread on average. The old behavior averaged under three and could not
         // exceed three at all, so this fails outright on a revert rather than drifting.
         assertTrue(spreads.average() >= 4.0, "spreads went $spreads")
     }
@@ -288,7 +288,7 @@ class BoardGeneratorTest {
                 assertEquals(placement.word[position], board.letters[cell], "letter at cell $cell")
                 if (position > 0) {
                     val previous = placement.cells[position - 1]
-                    assertTrue(cell in grid.neighbours[previous], "cells $previous and $cell are not adjacent")
+                    assertTrue(cell in grid.neighbors[previous], "cells $previous and $cell are not adjacent")
                 }
             }
         }

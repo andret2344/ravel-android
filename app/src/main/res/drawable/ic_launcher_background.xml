@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     A flat surface and nothing else: the adaptive-icon background is reprojected and parallaxed by
-    some launchers, and anything with detail in it fights the foreground once it moves. The colour
+    some launchers, and anything with detail in it fights the foreground once it moves. The color
     is the board's own surfaceVariant, so the icon and the first screen agree.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"

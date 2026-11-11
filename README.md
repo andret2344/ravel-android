@@ -7,7 +7,7 @@
 [![Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?logo=jetpackcompose&logoColor=white)](app/build.gradle.kts)
 [![JDK](https://img.shields.io/badge/JDK-21%20build%20%2F%2011%20target-ED8B00?logo=openjdk&logoColor=white)](.github/workflows/tests.yml)
 [![Languages](https://img.shields.io/badge/languages-polski%20%C2%B7%20english-blue)](generator/DICTIONARY.md)
-[![Licence](https://img.shields.io/badge/licence-PolyForm%20Noncommercial%201.0.0-lightgrey)](LICENSE.md)
+[![License](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-lightgray)](LICENSE.md)
 
 An Android word puzzle. The player is shown a grid of letters, a list of word *lengths*, and
 nothing else. Each hidden word is a path of orthogonally adjacent cells, traced from its first
@@ -87,10 +87,10 @@ CI (`.github/workflows/tests.yml`) runs exactly those four, in that order.
 - `CLAUDE.md` — the rules: what to do and what never to do, for anyone working in this repo.
 - `docs/DECISIONS.md` — the arguments behind those rules: what was measured, tried, and rejected.
 - `docs/TODO.md` — work left before the beta, code still owed, and features already decided.
-- `generator/DICTIONARY.md` — dictionary sources, licences, and how the word lists are built.
+- `generator/DICTIONARY.md` — dictionary sources, licenses, and how the word lists are built.
 - `docs/privacy-policy.md` — the published privacy policy.
 
-## Licence
+## License
 
 [PolyForm Noncommercial 1.0.0](LICENSE.md). Read it, build it, change it, use it for anything
 noncommercial — commercial use, this game on a store included, is not licensed. The bundled word
@@ -103,4 +103,4 @@ The dictionaries are built from third-party corpora, three of which require a no
 **KWJP100** (CC BY 4.0, modified), **PoliMorf** (BSD 2-clause), and **WordNet 3.0** (Princeton).
 The app carries all of them under "Word sources" on the licenses page, one row in the options tab;
 `generator/DICTIONARY.md` records the full list. The icons are Material Symbols by Google
-(Apache 2.0); the same page carries that licence under "Licences", beside the game's own.
+(Apache 2.0); the same page carries that license under "Licenses", beside the game's own.

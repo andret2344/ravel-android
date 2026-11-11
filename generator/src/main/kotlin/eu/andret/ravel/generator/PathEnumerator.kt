@@ -7,8 +7,8 @@ import kotlin.random.Random
  *
  * The anchor is always the first free cell in row-major order, which collapses the enumeration
  * into two cases: everything above and to the left of the anchor is already blocked, so the
- * anchor's only free neighbours are the one to its right and the one below it. Therefore the
- * anchor is either an endpoint of its path, or an interior cell whose two path neighbours are
+ * anchor's only free neighbors are the one to its right and the one below it. Therefore the
+ * anchor is either an endpoint of its path, or an interior cell whose two path neighbors are
  * exactly those two. Anchoring this way also means each set of cells is produced exactly once -
  * a path and its reverse are never both enumerated - so callers can count tilings without
  * deduplicating.
@@ -98,9 +98,9 @@ internal class PathEnumerator(
         } else {
             val previousCell = if (index > 0) path[index - 1] else Grid.NO_CELL
             val startCell = if (index > 0) path[0] else Grid.NO_CELL
-            for (neighbour in neighboursOf(cell, previousCell, startCell, index)) {
-                if (blocked[neighbour]) continue
-                if (extendForward(index + 1, neighbour, length, visit)) {
+            for (neighbor in neighborsOf(cell, previousCell, startCell, index)) {
+                if (blocked[neighbor]) continue
+                if (extendForward(index + 1, neighbor, length, visit)) {
                     stopped = true
                     break
                 }
@@ -129,9 +129,9 @@ internal class PathEnumerator(
             // Walking backwards, the step already taken is the one from the next position, and
             // the path's start is not known yet - only the turn preference applies here.
             val previousCell = path[index + 1]
-            for (neighbour in neighboursOf(cell, previousCell, Grid.NO_CELL, placedUpTo = -1)) {
-                if (blocked[neighbour]) continue
-                if (extendBackward(index - 1, neighbour, length, anchorIndex, below, visit)) {
+            for (neighbor in neighborsOf(cell, previousCell, Grid.NO_CELL, placedUpTo = -1)) {
+                if (blocked[neighbor]) continue
+                if (extendBackward(index - 1, neighbor, length, anchorIndex, below, visit)) {
                     stopped = true
                     break
                 }
@@ -173,10 +173,10 @@ internal class PathEnumerator(
      * layout and rejecting straight ones until a twisty one turns up by chance - at a floor of
      * 0.85 the latter costs over a second per board.
      */
-    private fun neighboursOf(cell: Int, previousCell: Int, startCell: Int, placedUpTo: Int): IntArray {
-        val neighbours = grid.neighbours[cell]
-        val random = this.random ?: return neighbours
-        var ordered = neighbours.copyOf()
+    private fun neighborsOf(cell: Int, previousCell: Int, startCell: Int, placedUpTo: Int): IntArray {
+        val neighbors = grid.neighbors[cell]
+        val random = this.random ?: return neighbors
+        var ordered = neighbors.copyOf()
         for (index in ordered.size - 1 downTo 1) {
             val target = random.nextInt(index + 1)
             val swap = ordered[index]
@@ -193,8 +193,8 @@ internal class PathEnumerator(
             val turning = IntArray(ordered.size)
             var head = 0
             var tail = ordered.size
-            ordered.forEach { neighbour ->
-                if (neighbour == straightAhead) turning[--tail] = neighbour else turning[head++] = neighbour
+            ordered.forEach { neighbor ->
+                if (neighbor == straightAhead) turning[--tail] = neighbor else turning[head++] = neighbor
             }
             ordered = turning
         }
@@ -214,7 +214,7 @@ internal class PathEnumerator(
     private fun foldsCreatedBy(candidate: Int, placedUpTo: Int): Int {
         var folds = 0
         for (position in 0 until placedUpTo) {
-            if (candidate in grid.neighbours[path[position]]) folds++
+            if (candidate in grid.neighbors[path[position]]) folds++
         }
         return folds
     }

@@ -101,7 +101,7 @@ internal fun CompletionDialog(
  * each button has the dialog's full width whatever the language makes of its label, and the one the
  * player is most likely to want is the wide one at the top, under the thumb.
  *
- * Built from the alert's own defaults - shape, colours, elevation, width - so it looks like the alert
+ * Built from the alert's own defaults - shape, colors, elevation, width - so it looks like the alert
  * it replaced and like every other dialog Material draws.
  *
  * The body scrolls and the buttons do not, because a wide window is a short one: on a phone on its

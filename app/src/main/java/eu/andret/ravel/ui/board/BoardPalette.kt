@@ -8,7 +8,7 @@ import androidx.compose.ui.graphics.Color
 import eu.andret.ravel.ui.theme.foundColors
 
 /**
- * Every colour the board draws with, resolved once instead of at each of a hundred-odd cells.
+ * Every color the board draws with, resolved once instead of at each of a hundred-odd cells.
  *
  * It also keeps the theme out of the drawing code: a painter that reached for `MaterialTheme` would
  * have to be a composable, and a composable cannot be the thing that runs inside a draw pass.

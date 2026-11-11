@@ -4,7 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * The settings tab greys the haptics switch out on these answers, so a wrong one either locks a
+ * The settings tab grays the haptics switch out on these answers, so a wrong one either locks a
  * player out of a switch that works or leaves them flipping one that cannot. Only a definite "off"
  * and a missing vibrator may lock it - see [SystemHaptics].
  */

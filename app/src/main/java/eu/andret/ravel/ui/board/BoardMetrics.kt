@@ -11,7 +11,7 @@ import eu.andret.ravel.generator.Board
  * exactly: the moment the arithmetic is written twice, the cell under the finger stops being the
  * cell that lights up.
  *
- * The grid is fitted into whatever space it is handed and centred there, with square cells, so a
+ * The grid is fitted into whatever space it is handed and centered there, with square cells, so a
  * caller only has to decide how much room the board gets - never what shape it is.
  */
 internal class BoardMetrics(
@@ -30,13 +30,13 @@ internal class BoardMetrics(
     /** The drawn square inside a cell, which is the cell less the gap around it. */
     val tile: Float = cellSize - gap
 
-    fun centreOf(cell: Int): Offset = Offset(
+    fun centerOf(cell: Int): Offset = Offset(
         originX + (cell % board.width + 0.5f) * cellSize,
         originY + (cell / board.width + 0.5f) * cellSize,
     )
 
-    /** The top left of a tile of [side] centred on [cell], whatever size that cell is drawn at. */
-    fun topLeftOf(cell: Int, side: Float): Offset = centreOf(cell) - Offset(side / 2, side / 2)
+    /** The top left of a tile of [side] centered on [cell], whatever size that cell is drawn at. */
+    fun topLeftOf(cell: Int, side: Float): Offset = centerOf(cell) - Offset(side / 2, side / 2)
 
     /**
      * The cell under [position], or null when the finger is outside the grid.

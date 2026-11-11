@@ -24,7 +24,7 @@ class PartitionerTest {
                 assertEquals(-1, owner[cell], "cell $cell covered twice")
                 owner[cell] = index
                 if (position > 0) {
-                    assertTrue(cell in grid.neighbours[path[position - 1]], "path $index is not connected")
+                    assertTrue(cell in grid.neighbors[path[position - 1]], "path $index is not connected")
                 }
             }
         }

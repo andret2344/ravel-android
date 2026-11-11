@@ -6,9 +6,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-/** Which colours the game is drawn in. [code] is what is stored, so a rename cannot lose a choice. */
+/** Which colors the game is drawn in. [code] is what is stored, so a rename cannot lose a choice. */
 enum class ThemeChoice(val code: String) {
-    /** Light or dark as the phone is, switching with it - the behaviour before there was a choice. */
+    /** Light or dark as the phone is, switching with it - the behavior before there was a choice. */
     SYSTEM("system"),
     LIGHT("light"),
     DARK("dark"),
@@ -23,7 +23,7 @@ enum class ThemeChoice(val code: String) {
  * The player's theme choice, for the whole process.
  *
  * In [SETTINGS_FILE] with the other options, so the backup rules did not need a line. Observable
- * because the activity redraws in the new colours the moment the choice is made, with no restart.
+ * because the activity redraws in the new colors the moment the choice is made, with no restart.
  * An unknown stored value - from a later version, say - falls back to [ThemeChoice.SYSTEM], which is
  * also what a player who never chose gets.
  */

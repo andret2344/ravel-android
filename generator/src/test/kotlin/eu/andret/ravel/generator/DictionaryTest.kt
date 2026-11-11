@@ -129,7 +129,7 @@ class DictionaryTest {
     @Test
     fun `the Polish dictionary ships lemmas, not inflected forms`() {
         val polish = Dictionary.loadBundled(Language.POLISH).words.toHashSet()
-        // Base forms a player would recognise on a board.
+        // Base forms a player would recognize on a board.
         listOf("robić", "samochód", "dokumentacja", "kobieta", "wystąpić").forEach {
             assertTrue(it in polish, "'$it' is a lemma and should ship")
         }

@@ -134,7 +134,7 @@ Rules:
   grid turn into corridors that give the words away.
 - **Path shape (`turnRatio`, `directness`, `foldRatio`, all in `Board.kt`) is enforced per word
   during enumeration and against the worst word**, never on the finished board, never as an average.
-- **Generation blocks and must be called inside `runInterruptible`** so cancelling its coroutine
+- **Generation blocks and must be called inside `runInterruptible`** so canceling its coroutine
   stops the search - a screen's own build when the screen goes, a cache build on eviction or a
   language switch. Design against the tail, not the median — and against a phone, not the desktop table
   (10x10 worst 0.5–1.0 s at rank 4000 with distinct lengths and `LAYOUT_NODES` 20 000; an order of
@@ -194,7 +194,7 @@ This is the part most easily broken by an innocent-looking change.
 - **On disk, marks and lengths are checked for equal size, never zipped.** Marks are `WordMark.code`
   characters, not enum names.
 - **The squares must never go into `strings.xml`.** The surrounding layout (`share_text`) is
-  translatable; the colours are not.
+  translatable; the colors are not.
 - Reachable from exactly three places, all via `ShareButton`: the completion dialog, the calendar's
   day card and the `review` footer - the last two only for the day `shareFor` still holds a card for.
 
@@ -311,7 +311,7 @@ this ships to 24). The activity recreates itself on a switch.
 reason the lint step is in CI.
 
 Three deliberate exceptions, each argued where it lives: the debug jump's hard-coded English, the
-share card's squares, and the `translatable="false"` licence notices.
+share card's squares, and the `translatable="false"` license notices.
 
 ## Conventions
 
@@ -391,7 +391,7 @@ and the Play Console Data safety form in the same breath, **before** the release
 - **The policy URL is in the Play listing: never rename the `ravel-android` repository.** GitHub
   redirects a renamed repository, but not its GitHub Pages site, so the link in Play would break.
 - **Ads are rewarded only.** No banners, no interstitials, nothing unsolicited.
-- **EEA/UK/CH consent before personalised ads**, through a Google-certified CMP (UMP SDK), changeable
+- **EEA/UK/CH consent before personalized ads**, through a Google-certified CMP (UMP SDK), changeable
   afterwards from settings. See "Ads and consent" above.
 - **The policy names what is stored on the device.** A new kind of locally stored data (a new
   preference file or key family) goes into section 3 of the policy.
@@ -414,21 +414,21 @@ the policy with it:
 
 ## Attribution
 
-`generator/DICTIONARY.md` records the dictionary sources and licences. Three require a notice, and
+`generator/DICTIONARY.md` records the dictionary sources and licenses. Three require a notice, and
 the app carries all of them: one row in the options tab ("Licenses and word sources") opens
-`LicencesScreen`, which lists every source under "Word sources" (`ui/about/Licences.kt`), and each
-name opens `LicenceScreen`.
+`LicensesScreen`, which lists every source under "Word sources" (`ui/about/Licenses.kt`), and each
+name opens `LicenseScreen`.
 
 - **SJP.PL word list and KWJP100 frequency data** — CC BY 4.0, attribution **plus** a statement that
-  the material was modified. Both notices carry that sentence; deleting it breaks the licence.
-- **PoliMorf** (Polish lemmatisation) — BSD 2-clause, copyright notice retained on redistribution.
-- **WordNet 3.0** (English lemmatisation) — Princeton copyright notice retained.
+  the material was modified. Both notices carry that sentence; deleting it breaks the license.
+- **PoliMorf** (Polish lemmatization) — BSD 2-clause, copyright notice retained on redistribution.
+- **WordNet 3.0** (English lemmatization) — Princeton copyright notice retained.
 
 ENABLE and OANC need nothing and are listed anyway.
 
-- **The icons** (Material Symbols, and the path of Material Icons' `lock`) — Apache 2.0, the licence
-  text given to every recipient. They are not word sources: `LicencesScreen` lists them
-  under "Licences" beside the game's own (`Licence.game`), never under "Word sources". **A new icon copied
+- **The icons** (Material Symbols, and the path of Material Icons' `lock`) — Apache 2.0, the license
+  text given to every recipient. They are not word sources: `LicensesScreen` lists them
+  under "Licenses" beside the game's own (`License.game`), never under "Word sources". **A new icon copied
   from the set goes into `LICENSE.md`'s "does not cover" list in the same commit**, with a header
   comment saying what was changed.
 
@@ -440,14 +440,14 @@ code and nothing else. **Every third-party data file in the tree must be named i
 it does not cover" list** — a corpus that ships without being carved out is being relicensed by
 accident.
 
-**Adding a dictionary source means adding an entry here in the same commit** — the licence obligation
+**Adding a dictionary source means adding an entry here in the same commit** — the license obligation
 starts when the data ships, not when somebody remembers.
 
-The three licences that ask for their text to travel with the work are bundled verbatim in `res/raw/`:
+The three licenses that ask for their text to travel with the work are bundled verbatim in `res/raw/`:
 PoliMorf's, WordNet's, and Apache 2.0 for the icons.
 PoliMorf's was reconstructed from the standard BSD 2-clause template plus the copyright line on
 `morfeusz.sgjp.pl` — that host has a **revoked** TLS certificate, so it cannot be re-fetched to check
-without working around the revocation. CC BY 4.0 is linked rather than bundled, as that licence asks.
+without working around the revocation. CC BY 4.0 is linked rather than bundled, as that license asks.
 
 ## Deliberate omissions
 

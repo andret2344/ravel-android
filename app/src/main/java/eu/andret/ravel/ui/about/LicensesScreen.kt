@@ -21,24 +21,24 @@ import eu.andret.ravel.R
 import eu.andret.ravel.ui.AdaptiveScreen
 
 /**
- * Every licence the game shows, on a page of its own behind one row in the options.
+ * Every license the game shows, on a page of its own behind one row in the options.
  *
  * They used to be two cards at the bottom of the options tab itself - six word sources, then the
  * game's code and its icons - which made the tab mostly a list of notices with a few switches above
  * it, and grew it by a row with every dictionary added. Behind one row, the tab is the settings
  * again and the notices are still two taps from anywhere, which is where players expect an app's
- * licences to be. Nothing about the attribution itself changed: every source is still named here,
- * and each name still opens [LicenceScreen] with the notice the licence asks for.
+ * licenses to be. Nothing about the attribution itself changed: every source is still named here,
+ * and each name still opens [LicenseScreen] with the notice the license asks for.
  *
- * The two groups keep their own headings, for the reason [Licence.wordSources] gives: the game's own
- * licence and its icons listed among the word sources would be a false claim about where the words
+ * The two groups keep their own headings, for the reason [License.wordSources] gives: the game's own
+ * license and its icons listed among the word sources would be a false claim about where the words
  * come from.
  *
- * @param onLicence opens one licence.
+ * @param onLicense opens one license.
  */
 @Composable
-fun LicencesScreen(
-    onLicence: (Licence) -> Unit,
+fun LicensesScreen(
+    onLicense: (License) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -47,8 +47,8 @@ fun LicencesScreen(
             Heading(stringResource(R.string.settings_sources))
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column {
-                    Licence.wordSources.forEach { licence ->
-                        SourceRow(licence = licence, onOpen = { onLicence(licence) })
+                    License.wordSources.forEach { license ->
+                        SourceRow(license = license, onOpen = { onLicense(license) })
                     }
                 }
             }
@@ -62,11 +62,11 @@ fun LicencesScreen(
 
     val game: @Composable () -> Unit = {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Heading(stringResource(R.string.settings_licence))
+            Heading(stringResource(R.string.settings_license))
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column {
-                    Licence.game.forEach { licence ->
-                        SourceRow(licence = licence, onOpen = { onLicence(licence) })
+                    License.game.forEach { license ->
+                        SourceRow(license = license, onOpen = { onLicense(license) })
                     }
                 }
             }
@@ -78,12 +78,12 @@ fun LicencesScreen(
             modifier = Modifier
                 .fillMaxSize()
                 // Scrolls in both arrangements: the sources card grows by a row with every
-                // dictionary, and a licence obligation does not get to be cut off by a short screen.
+                // dictionary, and a license obligation does not get to be cut off by a short screen.
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
-            BackHeader(title = stringResource(R.string.settings_licences_title), onBack = onBack)
+            BackHeader(title = stringResource(R.string.settings_licenses_title), onBack = onBack)
             if (wide) {
                 // The two groups side by side rather than one long column, since a window on its
                 // side has width to spare and the sources card alone is taller than it.
@@ -114,13 +114,13 @@ private fun Heading(text: String) {
 /**
  * One source: what it is called, and what it is used under.
  *
- * The licence label is on the row rather than only on the page behind it, because it is the part a
+ * The license label is on the row rather than only on the page behind it, because it is the part a
  * reader is checking. Somebody who opens this list is asking "what is in here and what does it
  * oblige you to", and answering the second half only after a tap makes them open six pages to find
  * out there was nothing to worry about.
  */
 @Composable
-private fun SourceRow(licence: Licence, onOpen: () -> Unit) {
+private fun SourceRow(license: License, onOpen: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -129,9 +129,9 @@ private fun SourceRow(licence: Licence, onOpen: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text(text = stringResource(licence.source), style = MaterialTheme.typography.bodyLarge)
+        Text(text = stringResource(license.source), style = MaterialTheme.typography.bodyLarge)
         Text(
-            text = stringResource(licence.licence),
+            text = stringResource(license.license),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

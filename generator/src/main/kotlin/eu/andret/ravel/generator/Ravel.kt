@@ -23,7 +23,7 @@ import kotlin.random.Random
  *
  * Interrupting the thread stops the search within microseconds and raises [InterruptedException].
  * A screen the player has left should do exactly that instead of paying for a board nobody will
- * see - from Kotlin, run the call inside `runInterruptible` and cancelling the coroutine handles
+ * see - from Kotlin, run the call inside `runInterruptible` and canceling the coroutine handles
  * it. Dictionary loading is not interruptible, so a call interrupted during the very first load
  * still finishes that load.
  *

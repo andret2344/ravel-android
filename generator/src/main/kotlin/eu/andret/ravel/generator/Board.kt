@@ -111,7 +111,7 @@ internal fun foldRatioOf(paths: List<IntArray>, grid: Grid): Double {
         cells += path.size
         for (first in path.indices) {
             for (second in first + 2 until path.size) {
-                if (path[second] in grid.neighbours[path[first]]) folds++
+                if (path[second] in grid.neighbors[path[first]]) folds++
             }
         }
     }
@@ -153,7 +153,7 @@ internal class PathShape(
         var folds = 0
         for (index in 0 until length) {
             for (other in index + 2 until length) {
-                if (path[other] in grid.neighbours[path[index]]) folds++
+                if (path[other] in grid.neighbors[path[index]]) folds++
             }
         }
         if (folds > maxFoldRatio * length + TOLERANCE) return false
@@ -190,7 +190,7 @@ internal fun worstTurnRatioOf(paths: List<IntArray>): Double =
  * The straightest travel any single word of at least [SHAPED_LENGTH] cells makes, measured as in
  * [Board.directness].
  *
- * Capped rather than maximised, which is the correction to an earlier version of this generator: a
+ * Capped rather than maximized, which is the correction to an earlier version of this generator: a
  * path that travels perfectly directly while turning constantly is a staircase, and a staircase is
  * as dull to trace as a straight line. The reference board measures 0.60 on every word.
  */
@@ -233,7 +233,7 @@ internal fun turnRatioOf(paths: List<IntArray>): Double {
  * holds by construction rather than by inspection afterwards.
  */
 enum class WallSymmetry {
-    /** Half-turn about the centre: what newspaper crosswords use. */
+    /** Half-turn about the center: what newspaper crosswords use. */
     ROTATIONAL,
 
     /** Mirrored left to right. */
@@ -267,10 +267,10 @@ enum class WallSymmetry {
     }
 }
 
-/** Row-major neighbour indices for every cell of a [width] x [height] grid. */
+/** Row-major neighbor indices for every cell of a [width] x [height] grid. */
 class Grid(val width: Int, val height: Int) {
     val cellCount: Int = width * height
-    val neighbours: Array<IntArray> = Array(cellCount) { cell ->
+    val neighbors: Array<IntArray> = Array(cellCount) { cell ->
         val row = cell / width
         val column = cell % width
         buildList(4) {

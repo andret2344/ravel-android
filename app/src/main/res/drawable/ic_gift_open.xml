@@ -2,7 +2,7 @@
 <!--
     The daily gift once taken: ic_gift with its lid swung open on the left-hand corner, bow and all.
     The box is the same paths as ic_gift so the two read as one object in two states.
-    Tinted by the composable, so the colour below is only a placeholder.
+    Tinted by the composable, so the color below is only a placeholder.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"

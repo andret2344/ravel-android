@@ -3,7 +3,7 @@
     The shop's ad tile: a filled screen with a play mark cut out of it, read as "a video". Drawn
     here, after the shape of Material Symbols' filled smart_display, rather than taken from the icon
     set, so there is no third-party file to carve out in LICENSE.md for one glyph.
-    Tinted by the composable, so the colour below is only a placeholder.
+    Tinted by the composable, so the color below is only a placeholder.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"

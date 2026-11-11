@@ -30,7 +30,7 @@ android {
              * Shrinking is on, and it is on now rather than at release time on purpose.
              *
              * R8 is the step that fails for reasons no test and no debug build can show: it removes
-             * code nothing appears to call, and "appears" is a static judgement about an app that
+             * code nothing appears to call, and "appears" is a static judgment about an app that
              * reaches some of its code by reflection. The moment to find that out is the moment a
              * dependency is added - the ads SDK arrived a few commits ago - and not the evening of
              * the first upload, with a store listing already written.
@@ -54,7 +54,7 @@ android {
             }
             proguardFiles(
                 // The optimizing variant of the default file, not the plain one: the plain
-                // `proguard-android.txt` disables optimisation passes wholesale, which leaves the
+                // `proguard-android.txt` disables optimization passes wholesale, which leaves the
                 // build paying R8's compile time for the shrinking alone.
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
@@ -152,7 +152,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     // Rewarded ads, and the consent form that has to run before they are requested. The consent SDK
     // is a separate artifact from the ads SDK on purpose - it is the Google-certified CMP the
-    // privacy policy names, and it is what decides whether a request may be personalised at all.
+    // privacy policy names, and it is what decides whether a request may be personalized at all.
     implementation(libs.play.services.ads)
     implementation(libs.user.messaging.platform)
     debugImplementation(libs.androidx.compose.ui.tooling)

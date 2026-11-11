@@ -331,7 +331,7 @@ private fun GiftTile(available: Boolean, onClaim: () -> Unit, modifier: Modifier
  * The whole tile is the button. There is one thing to do with this card, so a button inside it
  * would be a second, smaller target for the same action - and a target the player has to aim at,
  * on a card their thumb is already over. Being disabled is drawn by the card itself rather than by
- * hiding anything: the tile stays exactly where it was, in the colours of something switched off,
+ * hiding anything: the tile stays exactly where it was, in the colors of something switched off,
  * which is what a player needs to see to understand that the offer exists and is not available
  * *right now*.
  *
@@ -376,9 +376,9 @@ private fun DailyTile(
                 // What the tile is, before what it pays. While something is being fetched the glyph
                 // gives way to a spinner of the same size, so the tile does not jump when it arrives.
                 //
-                // In the primary colour while a press does something, and in the card's own
-                // content colour when it does not, so a dead tile still looks switched off all the
-                // way up - a bright glyph on a greyed card would read as the one part still working.
+                // In the primary color while a press does something, and in the card's own
+                // content color when it does not, so a dead tile still looks switched off all the
+                // way up - a bright glyph on a grayed card would read as the one part still working.
                 //
                 // A glyph that changes while the tile is on screen - the gift opening - pops: it
                 // swells and settles as the new picture fades in, so the change reads as the box

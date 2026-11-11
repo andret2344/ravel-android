@@ -13,7 +13,7 @@ import java.io.File
  * |---|---|---|
  * | admissibility | SJP.PL word-game list (CC BY 4.0) | ENABLE (public domain) |
  * | frequency | KWJP100, IPI PAN (CC BY 4.0) | OANC (unrestricted), ARF computed here |
- * | inflection | PoliMorf / SGJP (2-clause BSD) | WordNet 3.0 (Princeton licence) |
+ * | inflection | PoliMorf / SGJP (2-clause BSD) | WordNet 3.0 (Princeton license) |
  *
  * Ranking is by ARF (average reduced frequency), which discounts words that look frequent only
  * because they cluster inside a single document - something raw counts reward by accident.
@@ -23,7 +23,7 @@ import java.io.File
  * A word-game list is a list of *forms*, and Polish has a lot of them per word: the shipped
  * dictionary used to be 247 012 entries of which only 26% were base forms, so a board was far more
  * likely to spell *dokumentację* or *wystąpiło* than *dokumentacja* or *wystąpić*. That is a bad
- * trade in a game whose only clue is a word's length - a player recognises a word they know, and an
+ * trade in a game whose only clue is a word's length - a player recognizes a word they know, and an
  * oblique case of a word they know is not the same thing.
  *
  * PoliMorf supplies the form-to-lemma map, and the build keeps only lemmas: 51 247 words.
@@ -44,7 +44,7 @@ import java.io.File
  * So the English pass asks whether a word is a **regular inflection of something already in this
  * dictionary**, and folds it into that word if it is. A function word is not an inflection of
  * anything, so it survives with nobody having to keep a list of function words - and a list is what
- * this would otherwise need, with all the judgement calls that go in one. See [foldInflections].
+ * this would otherwise need, with all the judgment calls that go in one. See [foldInflections].
  *
  * A blocklist is applied last. Word-game lists are complete rather than polite, and ranking by
  * frequency actively promotes profanity, so without this step boards spell things no store rating
@@ -124,7 +124,7 @@ private fun readAdmissibleWords(language: Language, file: File): HashSet<String>
  * A form belonging to several lemmas - Polish *mam* is both *mama* and *mieć* - splits its ARF
  * evenly between them. Guessing which lemma a corpus occurrence meant needs a tagged corpus, which
  * KWJP's orthographic list is not; splitting evenly is at least symmetric, so no lemma is
- * systematically favoured, and the error is small next to the difference this whole step corrects.
+ * systematically favored, and the error is small next to the difference this whole step corrects.
  *
  * Summing ARF is likewise an approximation, and a conservative one: ARF discounts a word for
  * clustering inside few documents, and a lemma is spread over at least as many documents as any one
@@ -133,7 +133,7 @@ private fun readAdmissibleWords(language: Language, file: File): HashSet<String>
  *
  * The admissibility list still has the last word. It is a word-game dictionary, so it is the thing
  * that knows *dupa* is a word and *aids* is not one you play, and PoliMorf - a morphological
- * analyser - is not in that business.
+ * analyzer - is not in that business.
  */
 private fun rankLemmas(
     formFrequencies: Map<String, Double>,

@@ -42,7 +42,7 @@ class RavelAppViewModel(application: Application) : AndroidViewModel(application
      *
      * The prompt says different things about the two, because they are different offers: one is an
      * invitation and the other is a reminder of something owed, and a player who left three words
-     * on the board will not recognise "play today's puzzle" as the board they are half way through.
+     * on the board will not recognize "play today's puzzle" as the board they are half way through.
      */
     val started: Boolean = progress.state.value.isStarted(today)
 

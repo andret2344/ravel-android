@@ -21,9 +21,9 @@ only clue this game gives*, so a list repeating one number is not a clue.
 
 Those are also the thinnest bands of the dictionary: within rank 4000 Polish has 574 five-letter
 lemmas against 93 twelve-letter ones, so the biggest boards drew from the narrowest pool while the
-most recognisable vocabulary never appeared on them.
+most recognizable vocabulary never appeared on them.
 
-The old flat list was a second layer of defence against short words coming out as squat blocks, and
+The old flat list was a second layer of defense against short words coming out as squat blocks, and
 the per-word fold gate in `PathShape.accepts` is the layer that actually does that job, at every
 length — so the flat list was not paying for itself.
 
@@ -71,7 +71,7 @@ the board this replaced.
 - *Themed word sets* (one letter shared by every word: JOB JUMP EJECT ADJUST) — looked common, measured
   weak: an uncommon letter in ≥75% of the words on 30% of Wend boards against 23% for random words of
   the same lengths. Shared letters would also raise uniqueness rejections, which is the tail.
-- *Favouring j/q/x/z* — Wend shows them twice as often as chance (38% vs 20%), but a rare letter is
+- *Favoring j/q/x/z* — Wend shows them twice as often as chance (38% vs 20%), but a rare letter is
   an anchor that makes a board easier, not better.
 
 **Costs.** Fewer words: 3.8 on 6x6 (was 4.9), 4.2 on 7x7 (was 5.6), and mean length up by about half
@@ -79,7 +79,7 @@ a letter. Reissued every board in both modes — see "What reissuing has already
 
 **Revised the same day: 28–40% was too many walls.** The first board looked at on a device (an 8x8,
 level 75) needed no letters to solve: the walls cut the grid into corridors that spelled out every
-path. Measured on 30 boards per size, the share of free cells with two free neighbours or fewer —
+path. Measured on 30 boards per size, the share of free cells with two free neighbors or fewer —
 cells a path can cross only one way — went from 16% to 35% on 8x8 and from 20% to 39% on 6x6, with
 about half the walls in the middle of the grid rather than at its edge. (One Wend board measured 55%
 such cells, but 86% of its walls on the border: it trims the outline and leaves the middle open.)
@@ -340,7 +340,7 @@ that reissues puzzles.
 ### Base forms only, by opposite routes
 
 - **Polish** (51 685, from PoliMorf) keeps the lemmas. Three quarters of the old 247 012-entry list
-  were oblique cases, which is not what a player recognises when the only clue is a length.
+  were oblique cases, which is not what a player recognizes when the only clue is a length.
 - **English** (42 554, from WordNet) folds regular inflections into a base *that is itself in the
   dictionary*. It cannot ask "is this a lemma?" — WordNet indexes only nouns, verbs, adjectives and
   adverbs, so that question deletes `the`, `and`, `for` and `with`. Asking about inflection instead
@@ -514,7 +514,7 @@ a rename must not stop yesterday's card parsing.
 
 ### Why the squares are not in `strings.xml`
 
-Colour is not language, and two locales disagreeing about which one means "found it" would break the
+Color is not language, and two locales disagreeing about which one means "found it" would break the
 only thing the row exists to do. The surrounding layout *is* translatable (`share_text` with
 placeholders) so a translator can move the separators.
 
@@ -543,7 +543,7 @@ bullet says otherwise.
   uses — sized off the width its bottom row is cut, sized off the height alone it is a narrow band
   down the middle of a wide column. **Both roads hold an odd number of levels** (five across in
   tall, nine as a block in wide) so that the level on offer has a middle square to sit in, with as
-  many levels behind it as ahead; the strip was eight and put the player one place left of centre.
+  many levels behind it as ahead; the strip was eight and put the player one place left of center.
   That is the one thing the two counts have to agree on, and `firstOf` takes half the size rather
   than a constant of its own so they cannot drift apart. The strip went from seven to five on
   2026-11-07 because the squares carry numbers: at seven a four-digit level (~33dp) did not fit a
@@ -561,9 +561,9 @@ bullet says otherwise.
   arrangements, so the shop no longer asks `AdaptiveScreen` and has one layout either way.
 - **Options** — switches left, the word sources right, so a player looking for the language does not
   pass a Princeton disclaimer on the way. Still scrolls in both arrangements: the sources card grows
-  by a row every time a dictionary is added, which is a height set by a licence obligation rather
+  by a row every time a dictionary is added, which is a height set by a license obligation rather
   than by a layout.
-  *Revisited 2026-11-11:* every licence moved to a page of its own (`LicencesScreen`), behind one row
+  *Revisited 2026-11-11:* every license moved to a page of its own (`LicensesScreen`), behind one row
   at the bottom of the tab. With the theme, the reminders and the reset added, the notices had become
   most of the tab's length - the argument that "a screen holding one setting has room" no longer
   described the screen. Attribution is unchanged: every source is still named, one tap in, and each
@@ -696,7 +696,7 @@ lengths appear as they are found. Pays `FOR_COMPLETING_HARD` (45). Levels only.
   play without what everyone else is given for free. The same dialog offers "Show and turn off hard
   mode" (added 2026-11-08): this board as above, and the tab's switch off from the next level on - the
   board reaching the switch, never the switch reaching the board. Outlined in `HardColors` red, the
-  label left in the text colour for contrast on the dark theme.
+  label left in the text color for contrast on the dark theme.
 - **45: started at 40, 55 turned down.** The switch is flipped once and then sets the rate for every
   level after. 55 (asked for, to make the switch tempting) would have made a letter hint cheaper than
   one level and an ad worth under two - the stuck player's way out made cheap, against "being stuck is
@@ -745,7 +745,7 @@ What was done, and what was turned down:
   the menu fix cannot reach. Such a day may be unsolved, and its review then shows the answer; the
   day is over and nothing on it pays, so that is accepted.
 
-### Why the haptics switch greys out, and only sometimes
+### Why the haptics switch grays out, and only sometimes
 
 Added 2026-11-08 after a report that the board did not vibrate. The board's haptics obey the phone's
 touch-feedback setting (`BoardHaptics`), so with that off the game's switch does nothing either way.
@@ -1112,7 +1112,7 @@ ones; prices live in the Play Console, the code knows only product ids).
 `setContent` shows `LoadingScreen` until `AdConsent.settled` turns true, so the form is never a
 dialog landing on a screen the player had already started reading.
 
-That wait is capped at `SETTLE_TIMEOUT` and the timer is deliberately not cancelled — a word puzzle
+That wait is capped at `SETTLE_TIMEOUT` and the timer is deliberately not canceled — a word puzzle
 that works offline must never have a launch that depends on a network, and past the cap the form
 simply arrives on top of the game as it used to.
 

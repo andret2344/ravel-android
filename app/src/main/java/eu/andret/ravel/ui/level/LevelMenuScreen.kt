@@ -78,7 +78,7 @@ import eu.andret.ravel.ui.theme.hardColors
  *
  * Both counts are odd, and that is the one thing they have to agree on: an odd road has a middle
  * square, the middle square is the level being offered, and the same number of levels sit behind it
- * as ahead of it. The strip used to be eight and put the player one place left of centre, which is a
+ * as ahead of it. The strip used to be eight and put the player one place left of center, which is a
  * road they are standing slightly off.
  *
  * @param onPlay the level to open, which is only ever the current one.
@@ -353,7 +353,7 @@ private fun PlayCard(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = container, contentColor = content),
     ) {
-        // Centred rather than hung from the top, which costs nothing where the card is the height of
+        // Centered rather than hung from the top, which costs nothing where the card is the height of
         // its own contents and is the whole difference where it is not: given a column to fill, a
         // top-aligned invitation would sit above a hand's depth of empty card.
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -418,7 +418,7 @@ private fun HardBadge(modifier: Modifier = Modifier) {
 
 /**
  * How far in, rather than a word: "2/5" is the reason to come back, and it is the only thing on the
- * card a player cannot already guess from the colour.
+ * card a player cannot already guess from the color.
  *
  * Without the count on a hard level, where "2/5" is exactly what the mode hides - the time alone is
  * left, and nothing at all for a level opened and not yet timed.
@@ -440,7 +440,7 @@ private fun ResumeCaption(board: SavedBoard?, seconds: Int) {
 
 /**
  * The notification dot, in the corner every notification dot has ever been in. It is redundant with
- * the colour and the label on purpose: this is the one thing on the screen that has to survive being
+ * the color and the label on purpose: this is the one thing on the screen that has to survive being
  * seen out of the corner of an eye.
  *
  * No content description: the caption beside it already says how far in the level is, and a screen
@@ -476,7 +476,7 @@ private fun NotificationDot(modifier: Modifier = Modifier) {
  * that is the point being made: the levels behind are done and the ones ahead are not open yet.
  *
  * An odd count, for the reason the block is nine: an odd count has a middle, and the middle is where
- * the level being offered belongs. At eight the current level sat one place left of centre, which is
+ * the level being offered belongs. At eight the current level sat one place left of center, which is
  * a road with the player slightly off it.
  *
  * Five rather than the seven it was, because the squares carry numbers and the ladder has no end. At
@@ -577,10 +577,10 @@ private fun DoneSoFar(current: Int) {
 private fun firstOf(current: Int, size: Int) = maxOf(1, current - (size - 1) / 2)
 
 /**
- * One square of the road, coloured by where the player stands relative to it.
+ * One square of the road, colored by where the player stands relative to it.
  *
  * Green for done, matching every other "done" in the game. The current level is outlined as well as
- * filled, so it is findable without colour and still findable once the fill beside it is the same
+ * filled, so it is findable without color and still findable once the fill beside it is the same
  * family of brown. Everything ahead is the flat surface variant and, unlike the other two, its
  * number is dimmed - a locked level is a fact about the future, not a thing to read.
  */

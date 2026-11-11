@@ -28,7 +28,7 @@ import eu.andret.ravel.settings.StoredLevelProgress
  * a call to a function that does nothing and the dialog, the store cast and the strings are simply
  * not in the APK. The alternative - one file in `main` wrapped in `if (BuildConfig.DEBUG)` - relies
  * on R8 folding a constant and dropping the branch, and this project has already been bitten once by
- * treating R8's judgement as a given (see `proguard-rules.pro`). A cheat that sets the player's
+ * treating R8's judgment as a given (see `proguard-rules.pro`). A cheat that sets the player's
  * progress is the wrong place to find out it survived the fold. It would also mean turning
  * `buildConfig` on, which is a whole build feature enabled to carry one boolean.
  *

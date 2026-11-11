@@ -45,10 +45,10 @@ When an ad is requested or shown, the Google Mobile Ads SDK processes, on Google
 
 - the IP address, and an approximate location derived from it
 - device information, such as model, operating system version and language
-- the Android Advertising ID, if you consented to personalised advertising (the app declares the advertising ID permission for this purpose)
+- the Android Advertising ID, if you consented to personalized advertising (the app declares the advertising ID permission for this purpose)
 - interactions with the ad, and diagnostic information about the SDK
 
-Before any personalised advertising is shown, users in the European Economic Area, the United Kingdom, and Switzerland are asked for consent through Google's consent management platform (User Messaging Platform). Without that consent, only non-personalised advertising is shown. Consent can be changed at any time in the app's options.
+Before any personalized advertising is shown, users in the European Economic Area, the United Kingdom, and Switzerland are asked for consent through Google's consent management platform (User Messaging Platform). Without that consent, only non-personalized advertising is shown. Consent can be changed at any time in the app's options.
 
 Google's information on how it uses data from apps that use its services: https://policies.google.com/technologies/partner-sites
 
@@ -60,10 +60,10 @@ Google's privacy policy: https://policies.google.com/privacy
 
 | Purpose | Legal basis |
 | --- | --- |
-| Showing a rewarded ad you asked for, non-personalised | Legitimate interest of the controller, Article 6(1)(f) GDPR |
-| Personalised advertising | Consent, Article 6(1)(a) GDPR |
+| Showing a rewarded ad you asked for, non-personalized | Legitimate interest of the controller, Article 6(1)(f) GDPR |
+| Personalized advertising | Consent, Article 6(1)(a) GDPR |
 
-Consent given for personalised advertising can be withdrawn at any time in the app's options, with effect for the future.
+Consent given for personalized advertising can be withdrawn at any time in the app's options, with effect for the future.
 
 ---
 
@@ -90,7 +90,7 @@ You have the right to:
 - access your data
 - request deletion, correction, or restriction of processing
 - object to processing based on legitimate interest
-- withdraw consent given for personalised advertising
+- withdraw consent given for personalized advertising
 - request a copy of your data in a portable format
 - file a complaint with a supervisory authority (in Poland: Prezes Urzędu Ochrony Danych Osobowych, uodo.gov.pl)
 

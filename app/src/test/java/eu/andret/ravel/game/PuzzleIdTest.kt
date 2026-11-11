@@ -53,8 +53,8 @@ class PuzzleIdTest {
     }
 
     @Test
-    fun `neighbouring ordinals produce unrelated seeds`() {
-        // Consecutive levels must not be neighbouring streams in the generator, or level 51 comes
+    fun `neighboring ordinals produce unrelated seeds`() {
+        // Consecutive levels must not be neighboring streams in the generator, or level 51 comes
         // out as a variation on level 50. Two seeds from a good mix differ in about half their
         // bits; anything under a quarter would mean the input's pattern survived.
         val first = PuzzleId(PuzzleMode.ENDLESS, 50).seed

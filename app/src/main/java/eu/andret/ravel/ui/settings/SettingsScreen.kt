@@ -62,7 +62,7 @@ import java.util.Locale
  * The third is the ad privacy row, and it is conditional because the consent SDK says whether this
  * device was ever asked - a player outside the regions that require a form has nothing to change,
  * and a row that opens a form which reports "nothing to show" is worse than no row. It sits above
- * the licences row because it is a setting and they are a notice.
+ * the licenses row because it is a setting and they are a notice.
  *
  * The language row shows what is set and opens a picker, where it used to lay every option out on
  * the tab. Two changes at once, and they are the same change: "follow the phone" is gone, and with
@@ -79,17 +79,17 @@ import java.util.Locale
  * language the interface is read in, because a player who wants English puzzles wants English
  * buttons - see [eu.andret.ravel.settings.LanguageSettings].
  *
- * The licences are one row at the bottom, opening [eu.andret.ravel.ui.about.LicencesScreen]. They
- * used to be laid out here - the word sources and the game's own licences, two cards - on the
+ * The licenses are one row at the bottom, opening [eu.andret.ravel.ui.about.LicensesScreen]. They
+ * used to be laid out here - the word sources and the game's own licenses, two cards - on the
  * argument that a screen holding one setting had room for them. It stopped holding one setting:
  * with the theme, the reminders and the progress reset, the notices were most of the tab's length
  * and the part a player scrolled past to reach nothing. Every source is still named, one page in.
  *
- * @param onLicences opens the licences page.
+ * @param onLicenses opens the licenses page.
  */
 @Composable
 fun SettingsScreen(
-    onLicences: () -> Unit,
+    onLicenses: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = viewModel(),
 ) {
@@ -211,14 +211,14 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            // Greyed out when the phone will not vibrate anyway: a switch that does nothing either way
+            // Grayed out when the phone will not vibrate anyway: a switch that does nothing either way
             // invites a player to flip it and conclude the game is broken. It keeps showing what the
             // player chose, so turning the phone's setting back on finds it where they left it.
             val usable = systemHaptics == SystemHaptics.AVAILABLE
             Card(modifier = Modifier.fillMaxWidth()) {
                 Row(
                     // Toggleable on the row rather than clickable on the switch, for the reason the
-                    // language options are selectable on the row: a switch is a few millimetres of
+                    // language options are selectable on the row: a switch is a few millimeters of
                     // something a finger tall, and a player who taps the words means the switch.
                     modifier = Modifier
                         .fillMaxWidth()
@@ -319,7 +319,7 @@ fun SettingsScreen(
         }
     }
 
-    // In the error colour and behind a confirmation, because it is the one row on this tab that
+    // In the error color and behind a confirmation, because it is the one row on this tab that
     // cannot be taken back. The note says what survives before the dialog has to.
     val progressSection: @Composable () -> Unit = {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -361,7 +361,7 @@ fun SettingsScreen(
                 )
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Row(
-                        // The same full-width target the licence rows use: a row that is a finger
+                        // The same full-width target the license rows use: a row that is a finger
                         // tall should be tappable everywhere a finger lands on it.
                         modifier = Modifier
                             .fillMaxWidth()
@@ -387,7 +387,7 @@ fun SettingsScreen(
     // Last, because nobody opens the options for it. One row, the same full-width target as the
     // tutorial's; the note says what is behind it, so a player looking for where the words come
     // from knows this is the row.
-    val licencesSection: @Composable () -> Unit = {
+    val licensesSection: @Composable () -> Unit = {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 text = stringResource(R.string.settings_about),
@@ -398,18 +398,18 @@ fun SettingsScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable(onClick = onLicences)
+                        .clickable(onClick = onLicenses)
                         .padding(horizontal = 12.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = stringResource(R.string.settings_licences_title),
+                        text = stringResource(R.string.settings_licenses_title),
                         style = MaterialTheme.typography.bodyLarge,
                     )
                 }
             }
             Text(
-                text = stringResource(R.string.settings_licences_note),
+                text = stringResource(R.string.settings_licenses_note),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -433,7 +433,7 @@ fun SettingsScreen(
             if (wide) {
                 // How the game looks and feels on the left - language, theme, vibration, reminders
                 // - and everything else on the right: the tutorial, the ad privacy row, the reset and
-                // the licences. The right column used to be the licence cards alone; with those one
+                // the licenses. The right column used to be the license cards alone; with those one
                 // page in, a split that kept them there would leave half the window holding one row.
                 //
                 // The ad privacy row is the section that is not always there, and a column that
@@ -458,7 +458,7 @@ fun SettingsScreen(
                         tutorialSection()
                         privacySection()
                         progressSection()
-                        licencesSection()
+                        licensesSection()
                     }
                 }
             } else {
@@ -469,7 +469,7 @@ fun SettingsScreen(
                 tutorialSection()
                 privacySection()
                 progressSection()
-                licencesSection()
+                licensesSection()
             }
         }
     }
@@ -609,7 +609,7 @@ private fun LanguageDialog(
  * the platform rather than from a string resource for the same reason it is not translated: there is
  * exactly one right answer per language and the platform has it for all of them.
  *
- * Capitalised by the locale it belongs to, because the platform returns these lower-cased in the
+ * Capitalized by the locale it belongs to, because the platform returns these lower-cased in the
  * languages that write them that way, and this one is at the start of a line.
  */
 private fun nameOf(language: Language): String {
@@ -628,7 +628,7 @@ private fun labelOf(choice: ThemeChoice): Int = when (choice) {
 private fun RadioRow(label: String, selected: Boolean, onSelect: () -> Unit) {
     Row(
         // The whole row is the target, and the button is drawn rather than clicked: a radio button
-        // is a few millimetres of a row that is a finger tall, and a player who taps the word is
+        // is a few millimeters of a row that is a finger tall, and a player who taps the word is
         // choosing it as much as one who hits the circle.
         modifier = Modifier
             .fillMaxWidth()
@@ -642,5 +642,5 @@ private fun RadioRow(label: String, selected: Boolean, onSelect: () -> Unit) {
     }
 }
 
-/** Material's own disabled level, as the locked tiles use, so the greyed row reads as disabled. */
+/** Material's own disabled level, as the locked tiles use, so the grayed row reads as disabled. */
 private const val DISABLED_ALPHA = 0.38f

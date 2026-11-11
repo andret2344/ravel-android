@@ -51,9 +51,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import eu.andret.ravel.R
 import eu.andret.ravel.game.DailyDate
-import eu.andret.ravel.ui.about.LicenceRoute
-import eu.andret.ravel.ui.about.LicenceScreen
-import eu.andret.ravel.ui.about.LicencesScreen
+import eu.andret.ravel.ui.about.LicenseRoute
+import eu.andret.ravel.ui.about.LicenseScreen
+import eu.andret.ravel.ui.about.LicensesScreen
 import eu.andret.ravel.ui.daily.DailyMenuScreen
 import eu.andret.ravel.ui.daily.DailyRoute
 import eu.andret.ravel.ui.daily.DailyScreen
@@ -93,10 +93,10 @@ private const val SETTINGS_ROUTE = "settings"
  *   had, so they sat at a different size and height on every phone and filled barely half of the
  *   24 dp an icon is given. They were also abstract on purpose, and a diamond does not say "shop" at
  *   any size, so the labels underneath did all the work. Pictographs were avoided at the time
- *   because the daily's sun was a colour emoji that ignored the bar's tint; a vector takes the tint
+ *   because the daily's sun was a color emoji that ignored the bar's tint; a vector takes the tint
  *   like any other icon, so that reason applies to emoji only, and a cogwheel is fine.
  * @param selectedIcon the same symbol filled, for the selected tab, the way Material 3 marks it: the
- *   selection then changes the shape as well as the colour, which still reads for a player who
+ *   selection then changes the shape as well as the color, which still reads for a player who
  *   cannot tell the two tints apart.
  */
 enum class RavelTab(
@@ -219,7 +219,7 @@ fun RavelApp(
                         // accept - so the icon, which is the part with a decision behind it, is shared
                         // and the four wiring arguments are not.
                         NavigationRail {
-                            // Centred by the two spacers rather than by an arrangement, so it does not
+                            // Centered by the two spacers rather than by an arrangement, so it does not
                             // matter which end Material's own default hangs the items from.
                             Spacer(Modifier.weight(1f))
                             RavelTab.entries.forEach { tab ->
@@ -302,25 +302,25 @@ fun RavelApp(
                         composable(STATS_ROUTE) { StatsScreen(modifier = content) }
                         composable(SETTINGS_ROUTE) {
                             SettingsScreen(
-                                onLicences = { navController.navigate(LicenceRoute.LIST) },
+                                onLicenses = { navController.navigate(LicenseRoute.LIST) },
                                 modifier = content,
                             )
                         }
-                        composable(LicenceRoute.LIST) {
-                            LicencesScreen(
-                                onLicence = { navController.navigate(LicenceRoute.of(it)) },
+                        composable(LicenseRoute.LIST) {
+                            LicensesScreen(
+                                onLicense = { navController.navigate(LicenseRoute.of(it)) },
                                 onBack = { navController.popBackStack() },
                                 modifier = content,
                             )
                         }
                         composable(
-                            route = LicenceRoute.DETAIL,
+                            route = LicenseRoute.DETAIL,
                             arguments = listOf(
-                                navArgument(LicenceRoute.ARG_LICENCE) { type = NavType.StringType },
+                                navArgument(LicenseRoute.ARG_LICENSE) { type = NavType.StringType },
                             ),
                         ) { entry ->
-                            LicenceScreen(
-                                licence = LicenceRoute.from(entry),
+                            LicenseScreen(
+                                license = LicenseRoute.from(entry),
                                 onBack = { navController.popBackStack() },
                                 modifier = content,
                             )
@@ -441,7 +441,7 @@ private fun tabOf(route: String?): RavelTab? =
  * Which way along the bar this transition is going, or null when it is not going along it at all.
  *
  * The sign is the whole point: a tab two places to the right has to arrive from the right, and the
- * same tab pair travelled the other way has to reverse. Anything that stays inside one tab - a menu
+ * same tab pair traveled the other way has to reverse. Anything that stays inside one tab - a menu
  * opening its board, a board closing - answers null here and is animated as depth instead. Sliding
  * a board in from the side would say "this is beside the menu" about a screen that is inside it.
  */

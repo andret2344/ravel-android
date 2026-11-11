@@ -7,7 +7,7 @@
     the first two circles is inside one subpath, the core is inside all three, and both come out
     odd - filled - while the gap between them is inside two and comes out empty.
 
-    White rather than a theme colour, because a drawable cannot read the Compose colour scheme. Every
+    White rather than a theme color, because a drawable cannot read the Compose color scheme. Every
     use tints it, which is also what keeps it legible in both themes.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"

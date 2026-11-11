@@ -58,7 +58,7 @@ private fun ClueChips(clues: List<Clue>, modifier: Modifier = Modifier) {
  * A found length turns the same green the word wears on the board, so the row and the grid agree on
  * what "done" looks like.
  *
- * It is struck through as well, which is not decoration: colour alone is the one cue a colour-blind
+ * It is struck through as well, which is not decoration: color alone is the one cue a color-blind
  * player cannot use, and this row is how anyone tracks what is left.
  *
  * Nothing is removed from the row either way - it keeps the shape the player has been counting

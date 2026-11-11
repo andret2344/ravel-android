@@ -2,7 +2,7 @@
 <!--
     The shop's daily gift: a box with a bow, the ribbon left as the gap down its middle. Drawn here,
     in the same filled style as ic_ad, for the reason given there.
-    Tinted by the composable, so the colour below is only a placeholder.
+    Tinted by the composable, so the color below is only a placeholder.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"

@@ -189,7 +189,7 @@ class DailyNotifications(
      */
     private fun post(state: DailyProgressState, today: Long): Boolean {
         // Checked here in this form, beside the call it guards, as well as in [permitted]: it is
-        // the shape the platform's lint recognises.
+        // the shape the platform's lint recognizes.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
             PackageManager.PERMISSION_GRANTED

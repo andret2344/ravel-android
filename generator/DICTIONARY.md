@@ -1,4 +1,4 @@
-# Game dictionaries — sources, licences, reproduction
+# Game dictionaries — sources, licenses, reproduction
 
 The game generates boards in two languages. Each has its own alphabet, its own dictionary, its own
 blocklist and its own list of excluded answers — none of the four carries across.
@@ -6,31 +6,31 @@ blocklist and its own list of excluded answers — none of the four carries acro
 | | Polish | English |
 |---|---|---|
 | admissibility | SJP.PL word-game list | ENABLE |
-| licence | **CC BY 4.0** (choice of GPL 2, LGPL 2.1, MPL 1.1, Apache 2.0) | **public domain** |
+| license | **CC BY 4.0** (choice of GPL 2, LGPL 2.1, MPL 1.1, Apache 2.0) | **public domain** |
 | frequency | KWJP100, IPI PAN | OANC (Open American National Corpus) |
-| licence | **CC BY 4.0** | **unrestricted**, commercial use allowed |
+| license | **CC BY 4.0** | **unrestricted**, commercial use allowed |
 | ARF | supplied by the source | computed by `buildDictionaryEn` |
 | inflection | PoliMorf (SGJP) | WordNet 3.0 (Princeton) |
-| licence | **BSD 2-clause** | **WordNet licence** (permissive, notice required) |
+| license | **BSD 2-clause** | **WordNet license** (permissive, notice required) |
 | words after intersection | 51 685 **lemmas** | 42 554 **base forms** |
 
-## Licences
+## Licenses
 
 ### Why these sources
 
 **Polish, CC BY instead of GPL.** The SJP.PL lists are offered under a **choice** of GPL 2, LGPL 2.1,
-CC BY 4.0, MPL 1.1 or Apache 2.0. The licences are alternative, not cumulative, so choosing CC BY 4.0
+CC BY 4.0, MPL 1.1 or Apache 2.0. The licenses are alternative, not cumulative, so choosing CC BY 4.0
 means copyleft does not apply and the app can stay closed.
 
 **Rejected for share-alike** (it would infect the result): `hermitdave/FrequencyWords` (CC BY-SA 4.0),
 `rspeer/wordfreq` — data under CC BY-SA 4.0, the BNC/Leech lists (CC BY-SA 2.0 UK).
 
-**Rejected for having no licence:** Norvig's `count_1w.txt`. The page licenses the code as MIT, says
-nothing about the data, and the data comes from an LDC corpus. No licence is not a free licence.
+**Rejected for having no license:** Norvig's `count_1w.txt`. The page licenses the code as MIT, says
+nothing about the data, and the data comes from an LDC corpus. No license is not a free license.
 
 **PoliMorf** entered the pipeline on 2026-08-08 precisely because it is 2-clause BSD — no copyleft,
 minimal attribution, and it is the only complete inflectional resource for Polish under a free
-licence. Fetched from the IPI PAN mirror rather than `download.sgjp.pl`: the latter has a **revoked**
+license. Fetched from the IPI PAN mirror rather than `download.sgjp.pl`: the latter has a **revoked**
 TLS certificate (`CRYPT_E_REVOKED`), which is a stronger signal than OANC's merely expired one and
 not worth working around.
 
@@ -38,8 +38,8 @@ not worth working around.
 
 Carried by the licenses page - one row in the options tab, "Licenses and word sources" - under
 "Word sources": every source below is a row, and each row opens a
-page with its notice and, for the two that require it, the licence text itself. The strings live in
-`app/src/main/res/values/strings.xml` as `licence_*`, the list in `app/.../ui/about/Licences.kt`.
+page with its notice and, for the two that require it, the license text itself. The strings live in
+`app/src/main/res/values/strings.xml` as `license_*`, the list in `app/.../ui/about/Licenses.kt`.
 
 #### Polish sources
 
@@ -59,7 +59,7 @@ PoliMorf is **BSD 2-clause**, which requires neither a modification notice nor a
 but does require the copyright notice to be retained on redistribution. The game dictionary is a
 derivative work, so the safest course is to add it to the same screen:
 
-> Polish lemmatisation based on **PoliMorf** (Linguistic Engineering Group, ICS PAS, and the Grammatical
+> Polish lemmatization based on **PoliMorf** (Linguistic Engineering Group, ICS PAS, and the Grammatical
 > Dictionary of Polish team), licensed under **BSD 2-clause**
 > (https://morfeusz.sgjp.pl/doc/license/).
 
@@ -68,9 +68,9 @@ derivative work, so the safest course is to add it to the same screen:
 **WordNet** requires the Princeton copyright notice to be retained — the full text sits in the header
 of every `index.*` file in `generator/data/wordnet/`. To the same screen:
 
-> English lemmatisation based on **WordNet 3.0**, Princeton University
+> English lemmatization based on **WordNet 3.0**, Princeton University
 > (https://wordnet.princeton.edu/). WordNet 3.0 Copyright 2006 by Princeton University. All rights
-> reserved. Used under the terms of the WordNet licence.
+> reserved. Used under the terms of the WordNet license.
 
 The remaining English sources require no attribution. ENABLE is public domain ("The ENABLE master
 word list, WORD.LST, is herewith formally released into the Public Domain") and OANC imposes no
@@ -82,7 +82,7 @@ restrictions. Naming them anyway is honest but optional.
 
 Until 2026-08-08 the Polish dictionary held 247 012 entries, **74% of them inflected forms**. A board
 was far likelier to spell `dokumentację` or `wystąpiło` than `dokumentacja` or `wystąpić` — a bad
-trade in a game whose only clue is a word's length. A player recognises a word they know; an oblique
+trade in a game whose only clue is a word's length. A player recognizes a word they know; an oblique
 case of a word they know is not the same thing.
 
 PoliMorf supplies the form → lemma map, and the pipeline keeps only lemmas.
@@ -107,9 +107,9 @@ readable early board is built from.
 The English pass therefore asks: **is this word a regular inflection of something that is itself in
 this dictionary?** If so the word goes and its ARF goes to the base. A function word is not an
 inflection of anything, so it survives with nobody having to maintain a list of function words — and
-such a list is what this would otherwise need, with all the judgement calls that go into one.
+such a list is what this would otherwise need, with all the judgment calls that go into one.
 
-The suffix rules are deliberately modest: they recognise only the regular endings, because an
+The suffix rules are deliberately modest: they recognize only the regular endings, because an
 irregular form (`went`, `mice`) is a lemma in WordNet in its own right and never reaches them. Every
 candidate base is checked against the index before it is believed, so an over-generous rule costs
 nothing.
@@ -119,9 +119,9 @@ Two decisions worth remembering:
 - **Bare `-s` restores no `e`.** `hopes` → `hope` comes out of plain stripping, while the `e` variant
   turned `his` into the archaic verb `hie` — the only false positive this rule set ever produced.
 - **No base shorter than 3 letters is proposed.** Such a base cannot be a board word, so folding into
-  it would delete a playable word in favour of an unplayable one.
+  it would delete a playable word in favor of an unplayable one.
 
-The judgement belongs to WordNet, not to the rule. `stressed` stays, because WordNet knows it as an
+The judgment belongs to WordNet, not to the rule. `stressed` stays, because WordNet knows it as an
 adjective and not only as the past tense of `stress`. So do `greatest`, `longest`, `fastest` and
 `latest` — all adverb lemmas. `largest`, `highest`, `smallest` and `strongest` are not, and were
 folded away. It is the same principle that kept `leżąca` on the Polish side.

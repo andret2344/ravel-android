@@ -57,7 +57,7 @@ import kotlinx.coroutines.sync.withLock
  * away: it carries on while the app is in front, and the board is waiting on the next visit. The
  * screen tells the player so once the wait gets long - see `LevelViewModel.slow`.
  *
- * Whoever awaits a board here awaits a job it does not own: cancelling the awaiting coroutine raises
+ * Whoever awaits a board here awaits a job it does not own: canceling the awaiting coroutine raises
  * in the awaiter and leaves the search running, which is the point.
  *
  * The daily screen still builds a miss itself ([take], then `Puzzles.generate`): its only misses are
@@ -150,11 +150,11 @@ class PuzzleCache(
         } catch (cancellation: CancellationException) {
             // Two very different events arrive as the same exception here, and only one of them is
             // about this caller. The entry is awaited outside the lock, so between finding it and
-            // waiting for it an eviction or a language switch may have cancelled it - that is this
+            // waiting for it an eviction or a language switch may have canceled it - that is this
             // cache dropping a board, not the screen going away, and the honest answer is null:
             // for [take] "generate it yourself", for [obtain] a failure the player can retry.
             //
-            // ensureActive is what separates them. If the caller's own job is the cancelled one it
+            // ensureActive is what separates them. If the caller's own job is the canceled one it
             // rethrows, because a view model that has been told to stop must stop - swallowing that
             // would leave the screen on its spinner with nothing left to finish it.
             currentCoroutineContext().ensureActive()

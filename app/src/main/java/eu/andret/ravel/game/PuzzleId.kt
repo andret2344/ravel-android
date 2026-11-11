@@ -40,7 +40,7 @@ enum class PuzzleMode(internal val salt: Long) {
  * derived from it and never handled directly, which is what stops one mode's numbering from
  * colliding with another's.
  *
- * The derivation is deliberately not reversible and not sequential: neighbouring ordinals produce
+ * The derivation is deliberately not reversible and not sequential: neighboring ordinals produce
  * seeds with nothing in common, so level 51 is not a variation on level 50.
  */
 data class PuzzleId(val mode: PuzzleMode, val ordinal: Long) {
@@ -61,12 +61,12 @@ data class PuzzleId(val mode: PuzzleMode, val ordinal: Long) {
 
     private companion object {
         /**
-         * The SplitMix64 finaliser: an integer hash that spreads any pattern in its input across
+         * The SplitMix64 finalizer: an integer hash that spreads any pattern in its input across
          * all 64 output bits.
          *
          * Dates and level numbers are about as patterned as inputs get - consecutive, small,
          * sharing every high bit - and a seed built by adding or concatenating them would hand the
-         * generator neighbouring streams for neighbouring puzzles. Hashing costs three multiplies
+         * generator neighboring streams for neighboring puzzles. Hashing costs three multiplies
          * once per board.
          */
         fun mix(value: Long): Long {

@@ -5,7 +5,7 @@ import java.util.Locale
 /**
  * A duration as minutes and seconds, the way a stopwatch reads.
  *
- * Fixed formatting rather than a localised one: this is a clock, not a sentence, and every language
+ * Fixed formatting rather than a localized one: this is a clock, not a sentence, and every language
  * writes 4:07 the same way. [Locale.ROOT] and not the player's, so a locale with its own digits does
  * not turn the running counter into a different set of shapes every time the phone's language
  * changes.

@@ -66,7 +66,7 @@ import eu.andret.ravel.ui.AdaptiveScreen
  *   the heading names the board: given the column's own rhythm it ends up as far from the grid as
  *   the grid is from the clues, and three evenly spaced bands read as three unrelated things.
  * @param board the grid, or whatever stands in for it while there is not one - it is given a square
- *   and centred in it either way.
+ *   and centered in it either way.
  * @param footer the clues, the prices and the tally. Emitted straight into the surrounding column, so
  *   its own children are spaced by that column and not by a wrapper of their own.
  * @param onTapOffBoard a tap on the screen that nothing else took - see [offBoardTaps].
@@ -110,10 +110,10 @@ private fun Tall(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         topBar()
-        // The heading and the grid are one thing and are spaced as one, then the pair is centred in
+        // The heading and the grid are one thing and are spaced as one, then the pair is centered in
         // what is left over. The board is measured at weight(fill = false) so the box is the size of
         // the grid rather than of the space it was offered - given the whole remaining height it
-        // would centre itself in that instead, and "under the heading" would stop meaning anything.
+        // would center itself in that instead, and "under the heading" would stop meaning anything.
         Column(
             modifier = Modifier.fillMaxWidth().weight(1f),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -194,7 +194,7 @@ private fun Modifier.offBoardTaps(onTap: State<() -> Unit>): Modifier =
  * Deliberately no `fillMaxSize` in front of the ratio: that fixes both constraints, leaving
  * [aspectRatio] nothing to choose between and producing a square as wide as the space and as tall as
  * that width. Left unfixed, the ratio takes whichever of the two bounds it can satisfy - which is the
- * height in a wide window and the width in a tall one - and the parent's alignment centres the result.
+ * height in a wide window and the width in a tall one - and the parent's alignment centers the result.
  */
 @Composable
 private fun Square(modifier: Modifier = Modifier, content: @Composable () -> Unit) {

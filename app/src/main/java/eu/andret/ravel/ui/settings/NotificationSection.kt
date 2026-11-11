@@ -41,7 +41,7 @@ import java.util.Calendar
  * they pick, and the time itself when they pick it.
  *
  * Two switches and not one three-way choice, because they answer two questions in the order a
- * player asks them - "do I want this", then "when". The second and the time are drawn greyed while
+ * player asks them - "do I want this", then "when". The second and the time are drawn grayed while
  * the first is off rather than hidden, so a player deciding whether to switch it on can see what
  * they would be switching on.
  *

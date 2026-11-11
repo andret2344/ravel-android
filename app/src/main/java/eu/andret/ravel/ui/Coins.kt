@@ -27,7 +27,7 @@ import eu.andret.ravel.R
  * existing at all - before it, the balance over a board was a number after a `◈` glyph, the balance
  * on a menu was a number followed by the word "coins", and the price on a hint button was a number
  * after a middle dot. Three renderings of one idea, none of which taught a player what the other two
- * meant. A player who learns the coin on the shop tile should recognise it on the hint button they
+ * meant. A player who learns the coin on the shop tile should recognize it on the hint button they
  * are about to press, and that only holds while there is one thing to learn.
  *
  * The noun is gone with the glyph. "100 coins" beside a coin is the label read twice, and the
@@ -65,7 +65,7 @@ internal fun CoinAmount(
             painter = painterResource(R.drawable.ic_coin),
             contentDescription = null,
             // Follows the text when the caller has not said otherwise, which is what puts the coin
-            // in the muted colour of a top bar and the bright one of a hint button without either
+            // in the muted color of a top bar and the bright one of a hint button without either
             // call site having to know.
             tint = color.takeOrElse { LocalContentColor.current },
             modifier = Modifier.size(size),

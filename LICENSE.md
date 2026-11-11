@@ -79,7 +79,7 @@ The **licensor** is the individual or entity offering these terms, and the **sof
 *The section below is added by the licensor. It is not part of the PolyForm Noncommercial License
 1.0.0 text above and does not modify it.*
 
-## What this licence covers
+## What this license covers
 
 These terms cover the **source code** of Ravel — everything in this repository except the files
 listed under "What it does not cover". They do not grant any right to the name "Ravel", to the
@@ -87,15 +87,15 @@ app's icon, or to publish this game, or a work based on it, on any app store.
 
 ## What it does not cover
 
-The word lists, the licence texts that ship with them and the Material icons are third-party
+The word lists, the license texts that ship with them and the Material icons are third-party
 material, under their own terms, and stay under them:
 
 - `generator/src/main/resources/dictionary-pl.txt` and `dictionary-en.txt` — built from SJP.PL and
   KWJP100 (CC BY 4.0), PoliMorf (BSD 2-clause), ENABLE (public domain), OANC (open access) and
   WordNet 3.0 (Princeton). The CC BY 4.0 sources were modified; that statement and the full
   attribution are in `generator/DICTIONARY.md`, which travels with them.
-- `app/src/main/res/raw/licence_polimorf.txt`, `licence_wordnet.txt` and `licence_apache.txt` —
-  verbatim third-party licence texts, redistributed as those licences require.
+- `app/src/main/res/raw/license_polimorf.txt`, `license_wordnet.txt` and `license_apache.txt` —
+  verbatim third-party license texts, redistributed as those licenses require.
 - `app/src/main/res/drawable/ic_tab_*.xml`, `ic_calendar.xml`, `ic_check.xml`, `ic_chevron_left.xml`,
   `ic_chevron_right.xml`, `ic_close.xml`, `ic_play.xml` and `ic_streak_repaired.xml` — Material Symbols by Google, under the
   [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0). Modified: renamed, and the

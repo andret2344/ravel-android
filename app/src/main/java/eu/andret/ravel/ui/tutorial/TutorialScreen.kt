@@ -132,7 +132,7 @@ fun TutorialScreen(viewModel: TutorialViewModel = viewModel()) {
  *
  * The cost is that the board is the size it would be on the longest step throughout, which on a 4x4
  * is little. The box itself is what makes the fixed height read as intended: a panel of constant size
- * with the text centred in it, set apart from the board and the bar, rather than a gap under a short
+ * with the text centered in it, set apart from the board and the bar, rather than a gap under a short
  * line.
  */
 @Composable

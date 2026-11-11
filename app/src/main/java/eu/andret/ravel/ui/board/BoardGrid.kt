@@ -18,7 +18,7 @@ import eu.andret.ravel.game.Puzzle
  * cells, and tracing turns a moving finger into a cell index dozens of times a second. That is one
  * division against [BoardMetrics] here, against 144 layout nodes and a hit-test tree the other way.
  *
- * The grid takes whatever space it is given and fits itself inside, centred, with square cells. It
+ * The grid takes whatever space it is given and fits itself inside, centered, with square cells. It
  * never asks for a size of its own, so the screen around it can hand it the room left over after
  * the header and the clues and be certain nothing overflows.
  *

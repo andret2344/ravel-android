@@ -38,7 +38,7 @@ import eu.andret.ravel.ui.board.shownPath
  * **Drawn as the board draws a traced word**, not as text: the same [BoardPalette.marked] tiles,
  * corner ratio and joining ribbon, the first tile full-sized and bold and the rest at
  * [BoardStyle.TAIL_SCALE]. The strip and the grid are then visibly one thing - the word under the
- * finger, straightened out - rather than a caption about it. Only the trace's colour is borrowed,
+ * finger, straightened out - rather than a caption about it. Only the trace's color is borrowed,
  * never a found word's: a found word clears the path, so the strip empties on success by itself.
  *
  * Reads the trace while the finger is down and the marked path once it lifts, through
@@ -110,7 +110,7 @@ private fun LetterTile(letter: Char, side: Dp, leading: Boolean, palette: BoardP
 
 /**
  * The bar between two tiles, as thick against the tile as the board's own ribbon is. On the board
- * it runs from centre to centre underneath the tiles; here the tiles sit in a row, so only the part
+ * it runs from center to center underneath the tiles; here the tiles sit in a row, so only the part
  * showing in the gap is drawn.
  */
 @Composable

@@ -63,11 +63,11 @@ internal class BoardView(
 /**
  * How one cell is drawn.
  *
- * @param scale shrinks the tile about its own centre, which is how every cell of a marked word
+ * @param scale shrinks the tile about its own center, which is how every cell of a marked word
  *   except the first is played down.
  * @param leading adds weight to the letter a word begins at. Size alone would say it, but the two
  *   together survive a glance at a board where most cells are untouched and full-sized anyway.
- * @param hint the outline colour when a hint gave this cell away, null when it did not.
+ * @param hint the outline color when a hint gave this cell away, null when it did not.
  */
 internal class CellStyle(
     val fill: Color,

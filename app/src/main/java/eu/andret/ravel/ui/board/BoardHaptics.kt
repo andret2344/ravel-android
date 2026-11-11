@@ -135,7 +135,7 @@ internal class BoardHaptics(private val view: View) {
         }
 
         /**
-         * The heaviest constant every Android has, and the only one a player will recognise as an
+         * The heaviest constant every Android has, and the only one a player will recognize as an
          * event rather than as feedback. Not gated on a version, because there is nothing newer
          * worth having: `GESTURE_END` and `TOGGLE_ON` are both lighter than this, and a finished
          * board should not feel like closing a drawer.

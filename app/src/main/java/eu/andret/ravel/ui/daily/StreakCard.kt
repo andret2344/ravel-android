@@ -125,7 +125,7 @@ internal fun StreakCard(
  * height. The count carries the size and the noun stays small beside it, so the card is about as
  * tall as the number needs and no taller.
  *
- * Filled in the secondary family rather than left the default card colour. Two cards of the same
+ * Filled in the secondary family rather than left the default card color. Two cards of the same
  * shade stacked eight points apart read as one card with a line through it, which undoes the whole
  * reason for splitting them: the surface change is what says these are two facts and not two halves
  * of one. Secondary and not primary, because primary already means "this is today's move" - it is
@@ -160,12 +160,12 @@ internal fun TotalStreakCard(
         ) {
             Row(
                 horizontalArrangement = Arrangement.Center,
-                // Centred rather than on a shared baseline: the two differ by twenty points of type,
+                // Centered rather than on a shared baseline: the two differ by twenty points of type,
                 // and a baseline would hang the small word off the bottom of the big number.
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Colours are left to the card's own content colour rather than set here. On a
-                // filled surface the usual onSurfaceVariant grey is a colour from a different
+                // Colors are left to the card's own content color rather than set here. On a
+                // filled surface the usual onSurfaceVariant gray is a color from a different
                 // background, and the size difference already says which line is the important one.
                 if (shown == 0) {
                     Text(
@@ -310,8 +310,8 @@ private enum class RungState {
  * interchangeable, and the whole shape of the week is that the last one is not.
  *
  * The seventh says it is different four ways at once - gold, wider, taller, larger type - because it
- * is the one thing on this card that has to survive being glanced at. Colour alone would fail a
- * colour-blind player and size alone would read as a layout accident.
+ * is the one thing on this card that has to survive being glanced at. Color alone would fail a
+ * color-blind player and size alone would read as a layout accident.
  */
 @Composable
 private fun Rung(day: Int, reward: Int, state: RungState, modifier: Modifier = Modifier) {
@@ -344,7 +344,7 @@ private fun Rung(day: Int, reward: Int, state: RungState, modifier: Modifier = M
     }
     val shape = RoundedCornerShape(if (peak) 14.dp else 10.dp)
     val outline = when {
-        // The day on offer is outlined as well as filled, so it is findable without colour and
+        // The day on offer is outlined as well as filled, so it is findable without color and
         // still findable once the fill beside it is the same family of brown.
         state != RungState.OFFERED -> Color.Transparent
         peak -> goldColors.fill

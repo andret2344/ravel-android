@@ -220,7 +220,7 @@ private fun HintButton(
         ) {
             Text(text = stringResource(label), style = MaterialTheme.typography.labelLarge)
             // The price wears the same coin as the balance the player is spending from, three
-            // centimetres above it. It used to be a number after a middle dot, which asked them to
+            // centimeters above it. It used to be a number after a middle dot, which asked them to
             // work out for themselves that the two figures were in the same units.
             CoinAmount(amount = hint.cost, style = MaterialTheme.typography.labelLarge)
         }

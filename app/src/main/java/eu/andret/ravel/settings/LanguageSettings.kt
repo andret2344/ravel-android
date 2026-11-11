@@ -29,7 +29,7 @@ import java.util.Locale
  * has never chosen is on [fromDevice], which is the phone's language when the game speaks it and
  * English when it does not.
  *
- * The difference that leaves is worth naming, because it is a real behaviour change and not a tidy-up.
+ * The difference that leaves is worth naming, because it is a real behavior change and not a tidy-up.
  * Absent storage still means "resolve from the phone every time", so a player who has never opened
  * the picker does follow their phone across a system language switch. The moment they pick anything -
  * including the language they were already on - it is written down and they stop following it. That

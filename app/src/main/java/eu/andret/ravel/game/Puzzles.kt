@@ -17,7 +17,7 @@ object Puzzles {
     /**
      * The puzzle for [id] in [language], or null when generation ran out of time.
      *
-     * Cancelling the calling coroutine interrupts the search rather than merely abandoning it, so
+     * Canceling the calling coroutine interrupts the search rather than merely abandoning it, so
      * leaving a screen stops the work instead of paying for a board nobody will see.
      *
      * The dispatcher is named rather than taken as a parameter, which Sonar asks for and which would

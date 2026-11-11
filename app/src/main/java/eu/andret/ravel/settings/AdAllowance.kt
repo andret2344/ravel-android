@@ -127,7 +127,7 @@ class AdAllowance(context: Context) {
          * to have a record of tomorrow, so the two things that produce it are a clock moved
          * backwards and a backup restored from a device that was ahead. The first is the whole
          * reason this branch exists - without it, winding the date back is three more ads for the
-         * cost of a trip to the settings app, repeatable - and the second costs a traveller landing
+         * cost of a trip to the settings app, repeatable - and the second costs a traveler landing
          * from a further time zone one day's ads, which they get back tomorrow. Answering the
          * exploit is worth that; the alternative is a server-side counter, which means an account,
          * which this game deliberately does not have.

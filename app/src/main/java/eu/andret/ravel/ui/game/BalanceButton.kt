@@ -15,7 +15,7 @@ import eu.andret.ravel.ui.CoinAmount
  * the player watches go down, and "how do I get more" is the question it raises - so the answer is
  * under the question rather than two taps away on a tab they have to think of first.
  *
- * Quiet on purpose: text button, the surface's own muted colour, no container. It is worth a tap but
+ * Quiet on purpose: text button, the surface's own muted color, no container. It is worth a tap but
  * it is never the move to make, and a filled button in that corner would compete with the board.
  *
  * The padding is tighter than a text button's default so the figure stays in the corner it has

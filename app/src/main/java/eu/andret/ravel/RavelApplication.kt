@@ -50,7 +50,7 @@ class RavelApplication : Application() {
      *
      * Tied to the process rather than to a screen because that is what these collectors watch over:
      * a store that stopped following the setting when the last board was closed would be reading the
-     * wrong ladder the next time one opened. Nothing is ever cancelled here for the same reason -
+     * wrong ladder the next time one opened. Nothing is ever canceled here for the same reason -
      * the scope ends when the process does.
      *
      * The dispatcher is named here rather than injected, against Sonar's advice, because there is
@@ -145,7 +145,7 @@ class RavelApplication : Application() {
      * What this device has said about ads, and the ad itself.
      *
      * Process-wide for the reasons everything above is, plus one of their own: fetching an ad takes
-     * seconds and the SDK holds a single initialised instance whatever this code does, so a copy
+     * seconds and the SDK holds a single initialized instance whatever this code does, so a copy
      * per screen would be several screens each waiting out the same fetch to use one of the
      * results. The shop reaches both through its view model.
      *

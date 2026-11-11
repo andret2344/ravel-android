@@ -37,7 +37,7 @@ import eu.andret.ravel.ui.theme.foundColors
  * time. Three squares are read once and then aimed at.
  *
  * Playing sits in the middle and is the only filled tile, so the hierarchy is carried by position
- * and colour rather than by size. Making it bigger would break the grid, and leaving all three the
+ * and color rather than by size. Making it bigger would break the grid, and leaving all three the
  * same would leave the primary action of the whole tab looking like a menu entry.
  */
 @Composable
@@ -121,7 +121,7 @@ private fun LockedTile(label: String, modifier: Modifier = Modifier) {
     }
 }
 
-/** Material's own disabled level, so a locked tile reads as disabled and not as badly coloured. */
+/** Material's own disabled level, so a locked tile reads as disabled and not as badly colored. */
 private const val LOCKED_ALPHA = 0.38f
 
 /**
@@ -130,7 +130,7 @@ private const val LOCKED_ALPHA = 0.38f
  * Above Material's 24 dp because a tile is a third of the screen's width and the icon is what the
  * player aims at; at 24 dp it sat in the square like a bullet point. The tiles used to carry
  * characters (a grid of squares, a triangle, a tick), which came from the device's fallback font at
- * whatever size and height that font gave them, and the triangle was a colour emoji on some phones.
+ * whatever size and height that font gave them, and the triangle was a color emoji on some phones.
  */
 private val TILE_ICON_SIZE = 32.dp
 
@@ -179,7 +179,7 @@ private fun PlayTile(
         icon = icon,
         label = stringResource(label),
         // How far in, rather than a word: "2/5" is the reason to go back, and it is the only thing
-        // here that a player cannot already guess from the colour.
+        // here that a player cannot already guess from the color.
         caption = when {
             solvedToday -> stringResource(R.string.tile_play_done_caption)
             started != null -> "${started.found.size}/${started.wordCount}"
@@ -243,13 +243,13 @@ private fun Tile(
                 )
             }
             // The notification dot, in the corner every notification dot has ever been in. It is
-            // redundant with the colour and the label on purpose: this is the one thing on the
+            // redundant with the color and the label on purpose: this is the one thing on the
             // screen that has to survive being seen out of the corner of an eye.
             //
             // Ringed in the page's own background rather than dropped straight onto the tile. Red
             // and the tile's brown sit on the same side of the lightness scale in both themes -
             // dark red on dark brown, then pale pink on pale tan - so the dot alone disappears
-            // whichever way the phone is set. A ring in the one colour that is always opposite the
+            // whichever way the phone is set. A ring in the one color that is always opposite the
             // tile separates it from the tile without having to know what the tile is.
             if (badge) {
                 Box(

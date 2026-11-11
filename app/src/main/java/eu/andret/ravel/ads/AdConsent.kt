@@ -16,9 +16,9 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Whether this device has said an ad may be requested, and what it said about personalisation.
+ * Whether this device has said an ad may be requested, and what it said about personalization.
  *
- * The privacy policy promises a Google-certified CMP before a personalised ad is shown in the
+ * The privacy policy promises a Google-certified CMP before a personalized ad is shown in the
  * EEA, the UK or Switzerland, and this is it: the User Messaging Platform SDK, asked once per
  * launch. Rolling our own dialog would be quicker and would not satisfy that promise - "certified"
  * is the whole point of the sentence, and the certification covers the consent string the form
@@ -100,11 +100,11 @@ class AdConsent(context: Context, private val scope: CoroutineScope) {
      * connection at all. A launch on a dead train line must not be a launch that never finishes, so
      * the wait has an end: after [SETTLE_TIMEOUT] the game opens whatever the SDK is doing.
      *
-     * The timer is deliberately **not** cancelled when the round trip comes back, because the form
+     * The timer is deliberately **not** canceled when the round trip comes back, because the form
      * is the slow part and past that point the player is the one holding it up. Firing behind a
      * form that is already on screen costs nothing - a form is a dialog, and what it uncovers is
      * the game it was about to uncover anyway. Firing before one appears gives back exactly the old
-     * behaviour, where the game opened first and the form arrived on top of it, which is the right
+     * behavior, where the game opened first and the form arrived on top of it, which is the right
      * way for this to degrade.
      *
      * ## An activity rebuilt while the question is out

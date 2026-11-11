@@ -282,7 +282,7 @@ private fun Reviewed(puzzle: Puzzle, share: ShareCard?, seconds: Int?) {
 }
 
 /**
- * What board this is, under the bar and centred.
+ * What board this is, under the bar and centered.
  *
  * Below the controls rather than among them, because it is read once on arrival and never again -
  * and because centring it here costs nothing, where centring it on the bar would have needed a

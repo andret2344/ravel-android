@@ -209,12 +209,12 @@ private fun stateOf(ordinal: Long, progress: DailyProgressState, today: Long): D
  * One day, as a circle with the number in it.
  *
  * A solved day is filled with the same green a found word wears, so the calendar and the board
- * agree on what "done" looks like. Today is its own colour and a bold number rather than a ring,
+ * agree on what "done" looks like. Today is its own color and a bold number rather than a ring,
  * because the ring is now spoken for: the ring means "this is the day the card below is talking
  * about", and two rings meaning two different things on the same grid is one ring too many.
  *
- * Nothing here leans on colour alone - the weight of the number carries the same distinctions -
- * because a month of green and grey circles is exactly the sort of thing colour blindness flattens
+ * Nothing here leans on color alone - the weight of the number carries the same distinctions -
+ * because a month of green and gray circles is exactly the sort of thing color blindness flattens
  * into one circle repeated.
  */
 @Composable

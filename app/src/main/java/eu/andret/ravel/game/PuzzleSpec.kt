@@ -243,7 +243,7 @@ data class PuzzleSpec(
          * 1.3 s and a 12x12 at 4.5. Levels past 250 are made harder by the vocabulary curve alone,
          * which is why that one runs ten times further. See [rankFor].
          *
-         * Sizes are still drawn from the seed inside the tier, so neighbouring levels do not march
+         * Sizes are still drawn from the seed inside the tier, so neighboring levels do not march
          * upwards one square at a time - see [PuzzleId].
          */
         val SIZE_TIERS: List<Pair<Long, IntRange>> = listOf(

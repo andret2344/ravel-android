@@ -99,7 +99,7 @@ fun StatsScreen(modifier: Modifier = Modifier, viewModel: StatsViewModel = viewM
             )
         }
     }
-    // The wide one, alone on its line and in the filled colour. Time is the total the other two are
+    // The wide one, alone on its line and in the filled color. Time is the total the other two are
     // measured in - boards and words are what the hours went on - and a clock squeezed into a third
     // of a row is also the one value here that can outgrow its tile.
     val time: @Composable () -> Unit = {
@@ -226,8 +226,8 @@ private fun StatTile(
         colors = CardDefaults.cardColors(containerColor = container, contentColor = content),
     ) {
         Column(
-            // Fills whatever height the row settled on, and centres what is in it. A tile stretched
-            // to match its neighbour would otherwise hang its number from the top and leave the
+            // Fills whatever height the row settled on, and centers what is in it. A tile stretched
+            // to match its neighbor would otherwise hang its number from the top and leave the
             // spare line as a gap underneath, which looks like a missing caption rather than a
             // tile that had none.
             modifier = Modifier.fillMaxSize().padding(vertical = 16.dp, horizontal = 12.dp),

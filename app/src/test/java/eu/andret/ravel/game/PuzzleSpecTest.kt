@@ -27,7 +27,7 @@ class PuzzleSpecTest {
     }
 
     @Test
-    fun `sizes are spread over the whole range rather than favouring one`() {
+    fun `sizes are spread over the whole range rather than favoring one`() {
         // A size taken from a slice of a hash should land on each of the six about a sixth of the
         // time. Anything lopsided here would mean the slice is not as well mixed as assumed.
         val counts = (1L..6_000L)
@@ -147,7 +147,7 @@ class PuzzleSpecTest {
     @Test
     fun `consecutive levels do not march up or down in size`() {
         // The size follows the seed, and the seed is a hash, so a run of levels must not be a
-        // staircase. Twenty levels that all differ from their neighbour would be as suspicious as
+        // staircase. Twenty levels that all differ from their neighbor would be as suspicious as
         // twenty that never do.
         //
         // Taken from past the last tier, where the whole range is in play. Inside a tier the sizes

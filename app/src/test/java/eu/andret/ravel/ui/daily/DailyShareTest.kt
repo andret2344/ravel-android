@@ -9,13 +9,13 @@ import org.junit.Test
  * The row, which is the only part of the share text that is not a resource.
  *
  * Worth pinning because it is the part that leaves the app: the rest is assembled by the platform
- * out of a translated layout, and a wrong separator is a wrong separator - a wrong colour is a
+ * out of a translated layout, and a wrong separator is a wrong separator - a wrong color is a
  * player telling everyone they bought a word they found themselves.
  */
 class DailyShareTest {
 
     @Test
-    fun `each mark has its own colour`() {
+    fun `each mark has its own color`() {
         assertEquals("3🟩", DailyShare.row(listOf(WordResult(3, WordMark.UNAIDED))))
         assertEquals("3🟨", DailyShare.row(listOf(WordResult(3, WordMark.PARTLY_REVEALED))))
         assertEquals("3🟥", DailyShare.row(listOf(WordResult(3, WordMark.REVEALED))))

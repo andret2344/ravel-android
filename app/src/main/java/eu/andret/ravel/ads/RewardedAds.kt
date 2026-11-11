@@ -37,7 +37,7 @@ import kotlinx.coroutines.launch
  * some time after launch. Rather than have the shop poll for it or the activity remember to call
  * back, this watches [AdConsent.canRequestAds] and starts the SDK the moment it turns true. The flag
  * turning true is a permission and not a request - see [AdConsent] - so all that happens then is the
- * SDK being initialised, which fetches no ad.
+ * SDK being initialized, which fetches no ad.
  *
  * ## Why the first ad waits for the shop
  *
@@ -79,7 +79,7 @@ class RewardedAds(
 
     /**
      * Whether a fetch is out and not yet answered. The shop can be opened while the SDK is still
-     * initialising, and both that and the initialisation's callback ask for an ad: without this
+     * initializing, and both that and the initialization's callback ask for an ad: without this
      * they would fetch two and throw one away.
      */
     private var fetching = false
@@ -134,8 +134,8 @@ class RewardedAds(
         if (started) return
         started = true
         _state.value = State.LOADING
-        // Before initialisation, not after: the configuration has to be in place when the first
-        // request goes out, and the first request is made by load() the moment initialisation
+        // Before initialization, not after: the configuration has to be in place when the first
+        // request goes out, and the first request is made by load() the moment initialization
         // finishes. See res/values/ads.xml for why an unlisted developer device is a suspended
         // AdMob account rather than a wasted impression.
         val testDevices = application.resources.getStringArray(R.array.ad_test_devices).toList()

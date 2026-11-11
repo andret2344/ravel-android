@@ -71,7 +71,7 @@ enum class Language(
  * stays at zero; doubling back is controlled where it is actually visible, by [maxFoldRatio].
  *
  * [maxFoldRatio] caps how much a word may run alongside itself - see [foldRatioOf]. Left alone,
- * paths fill 2x2 and 3x3 squares and the board reads as coloured clumps rather than threaded
+ * paths fill 2x2 and 3x3 squares and the board reads as colored clumps rather than threaded
  * words. The reference's worst word carries one fold over six cells, so the cap sits just above
  * that. [foldAvoidance] steers the search away from those cells in the first place, so the cap
  * rarely has to reject anything.

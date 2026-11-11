@@ -54,7 +54,7 @@ class PathsTest {
     }
 
     @Test
-    fun `neighbours are the four cells sharing an edge`() {
+    fun `neighbors are the four cells sharing an edge`() {
         // On a board four wide: 5 sits in the middle of the second row.
         assertTrue(areAdjacent(4, 5, 1))
         assertTrue(areAdjacent(4, 5, 4))

@@ -18,7 +18,7 @@ package eu.andret.ravel.game
  * The sums are deliberately of the same order as the game they are attached to: a full week pays
  * `6 * `[DAY]` + `[SEVENTH]` = 140`, against the 105 a week of solving pays through
  * [Rewards.FOR_COMPLETING]. Showing up is therefore worth roughly as much as playing and not
- * several times more, which is the only version where a player optimising for coins is still a
+ * several times more, which is the only version where a player optimizing for coins is still a
  * player who opens a board.
  *
  * [DAY] has always moved with [Rewards.FOR_COMPLETING] - multiplied by two and a half when that

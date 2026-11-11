@@ -188,7 +188,7 @@
          square), the row of squares, the word count with its noun, the clock, and the link.
 
          The squares themselves are not here. They are not language, and two locales disagreeing
-         about which colour means "found it" would make two players' results incomparable, which is
+         about which color means "found it" would make two players' results incomparable, which is
          the one thing the row exists to be. See DailyShare. -->
     <string name="share_action">Share result</string>
     <plurals name="share_words">
@@ -345,7 +345,7 @@
         setting rather than linking to it - every manufacturer buries it somewhere different, and a
         button that opened the wrong screen would be worse than a sentence that says what to look for.
 
-        When the phone's setting is known to be off, or there is no vibrator, the switch is greyed out
+        When the phone's setting is known to be off, or there is no vibrator, the switch is grayed out
         and the note is replaced by one of the two below - see SystemHaptics for when that is known.
     -->
     <string name="settings_feedback">Feedback</string>
@@ -398,11 +398,11 @@
     <!--
         Where the words come from, listed on the settings tab and opened one at a time.
 
-        Everything below marked translatable="false" is either a proper name or a licence notice.
+        Everything below marked translatable="false" is either a proper name or a license notice.
         The names are not translated because they are what the resources are called; the notices are
-        not translated because CC BY 4.0 and the WordNet licence both say what has to appear, and an
+        not translated because CC BY 4.0 and the WordNet license both say what has to appear, and an
         unofficial rendering of a required notice is not the notice. The two Creative Commons entries
-        carry the statement that the material was modified, which that licence requires and which is
+        carry the statement that the material was modified, which that license requires and which is
         the one part of these paragraphs that is about this game rather than about the source.
     -->
     <!--
@@ -415,54 +415,54 @@
     <string name="settings_privacy_note">Change what ads on this device are allowed to use. Ads are only ever shown when you ask for one in the shop.</string>
 
     <string name="settings_sources">Word sources</string>
-    <string name="settings_sources_note">The dictionaries are built from public word lists and corpora. Tap a source to see its licence.</string>
-    <string name="licence_open">Open the licence</string>
-    <string name="licence_back">Back</string>
+    <string name="settings_sources_note">The dictionaries are built from public word lists and corpora. Tap a source to see its license.</string>
+    <string name="license_open">Open the license</string>
+    <string name="license_back">Back</string>
 
-    <string name="settings_licence">Licences</string>
+    <string name="settings_license">Licenses</string>
     <!--
-        The one row in the options that opens every licence, and the heading over it. The note names
+        The one row in the options that opens every license, and the heading over it. The note names
         what is behind the row, because a player looking for where the words come from would not
         otherwise know to open a row called "licenses".
     -->
     <string name="settings_about">About</string>
-    <string name="settings_licences_title">Licenses and word sources</string>
-    <string name="settings_licences_note">Where the dictionaries come from, and the licenses of the game, its word lists and its icons.</string>
+    <string name="settings_licenses_title">Licenses and word sources</string>
+    <string name="settings_licenses_note">Where the dictionaries come from, and the licenses of the game, its word lists and its icons.</string>
 
-    <string name="licence_name_cc_by" translatable="false">CC BY 4.0</string>
-    <string name="licence_name_bsd" translatable="false">BSD 2-clause</string>
-    <string name="licence_name_wordnet" translatable="false">WordNet licence</string>
-    <string name="licence_name_public_domain" translatable="false">Public domain</string>
-    <string name="licence_name_unrestricted" translatable="false">No restrictions</string>
-    <string name="licence_name_polyform" translatable="false">PolyForm Noncommercial 1.0.0</string>
-    <string name="licence_name_apache" translatable="false">Apache License 2.0</string>
+    <string name="license_name_cc_by" translatable="false">CC BY 4.0</string>
+    <string name="license_name_bsd" translatable="false">BSD 2-clause</string>
+    <string name="license_name_wordnet" translatable="false">WordNet license</string>
+    <string name="license_name_public_domain" translatable="false">Public domain</string>
+    <string name="license_name_unrestricted" translatable="false">No restrictions</string>
+    <string name="license_name_polyform" translatable="false">PolyForm Noncommercial 1.0.0</string>
+    <string name="license_name_apache" translatable="false">Apache License 2.0</string>
 
-    <string name="licence_sjp_source" translatable="false">SJP.PL word list</string>
-    <string name="licence_sjp_notice" translatable="false">The Polish dictionary is based on the SJP.PL Dictionary (https://sjp.pl), made available under the Creative Commons Attribution 4.0 International licence. The material has been modified: a subset of words was selected and ordered by frequency.</string>
+    <string name="license_sjp_source" translatable="false">SJP.PL word list</string>
+    <string name="license_sjp_notice" translatable="false">The Polish dictionary is based on the SJP.PL Dictionary (https://sjp.pl), made available under the Creative Commons Attribution 4.0 International license. The material has been modified: a subset of words was selected and ordered by frequency.</string>
 
-    <string name="licence_kwjp_source" translatable="false">KWJP100</string>
-    <string name="licence_kwjp_notice" translatable="false">Polish word frequencies come from the KWJP100 frequency lists — Corpus of Contemporary Polish, Institute of Computer Science, Polish Academy of Sciences (https://kwjp.pl), made available under the Creative Commons Attribution 4.0 International licence. The material has been modified: a subset of words was selected and ordered by frequency.</string>
+    <string name="license_kwjp_source" translatable="false">KWJP100</string>
+    <string name="license_kwjp_notice" translatable="false">Polish word frequencies come from the KWJP100 frequency lists — Corpus of Contemporary Polish, Institute of Computer Science, Polish Academy of Sciences (https://kwjp.pl), made available under the Creative Commons Attribution 4.0 International license. The material has been modified: a subset of words was selected and ordered by frequency.</string>
 
-    <string name="licence_polimorf_source" translatable="false">PoliMorf</string>
-    <string name="licence_polimorf_notice" translatable="false">Polish lemmatisation is based on PoliMorf (Linguistic Engineering Group, Institute of Computer Science PAS, and the Grammatical Dictionary of Polish team), licensed under the BSD 2-clause licence.</string>
+    <string name="license_polimorf_source" translatable="false">PoliMorf</string>
+    <string name="license_polimorf_notice" translatable="false">Polish lemmatization is based on PoliMorf (Linguistic Engineering Group, Institute of Computer Science PAS, and the Grammatical Dictionary of Polish team), licensed under the BSD 2-clause license.</string>
 
-    <string name="licence_wordnet_source" translatable="false">WordNet 3.0</string>
-    <string name="licence_wordnet_notice" translatable="false">English lemmatisation is based on WordNet 3.0, Princeton University (https://wordnet.princeton.edu). WordNet 3.0 Copyright 2006 by Princeton University. All rights reserved. Used under the terms of the WordNet licence.</string>
+    <string name="license_wordnet_source" translatable="false">WordNet 3.0</string>
+    <string name="license_wordnet_notice" translatable="false">English lemmatization is based on WordNet 3.0, Princeton University (https://wordnet.princeton.edu). WordNet 3.0 Copyright 2006 by Princeton University. All rights reserved. Used under the terms of the WordNet license.</string>
 
-    <string name="licence_enable_source" translatable="false">ENABLE word list</string>
-    <string name="licence_enable_notice" translatable="false">The English word list is ENABLE, released by its author into the public domain: “The ENABLE master word list, WORD.LST, is herewith formally released into the Public Domain.”</string>
+    <string name="license_enable_source" translatable="false">ENABLE word list</string>
+    <string name="license_enable_notice" translatable="false">The English word list is ENABLE, released by its author into the public domain: “The ENABLE master word list, WORD.LST, is herewith formally released into the Public Domain.”</string>
 
-    <string name="licence_oanc_source" translatable="false">Open American National Corpus</string>
-    <string name="licence_oanc_notice" translatable="false">English word frequencies are computed from the Open American National Corpus (https://anc.org), which is distributed with no restrictions on use, commercial or otherwise.</string>
+    <string name="license_oanc_source" translatable="false">Open American National Corpus</string>
+    <string name="license_oanc_notice" translatable="false">English word frequencies are computed from the Open American National Corpus (https://anc.org), which is distributed with no restrictions on use, commercial or otherwise.</string>
 
-    <string name="licence_ravel_source" translatable="false">Ravel</string>
+    <string name="license_ravel_source" translatable="false">Ravel</string>
     <!--
         Translated, unlike the six notices above: no one else's required wording is being reproduced
         here, so a Polish player reads this one in Polish. The copyright line stays as it is in every
         locale - it is a name and a year, and PolyForm asks for it to travel with the software.
     -->
-    <string name="licence_ravel_notice">Ravel is published under the PolyForm Noncommercial License 1.0.0. The source code is at https://github.com/andret2344/ravel-android and may be read, built and changed for any noncommercial purpose; commercial use is not licensed. Copyright 2026 Andret2344. The word lists and the icons are not covered by these terms — they are listed in the options, under the licences of the projects they come from.</string>
-    <string name="licence_icons_source" translatable="false">Material Symbols</string>
-    <!-- Translated for the reason licence_ravel_notice is: this project's own wording, not a required one. -->
-    <string name="licence_icons_notice">The icons are Material Symbols and Material Icons by Google (https://fonts.google.com/icons), used under the Apache License, Version 2.0. They have been modified from the originals. The full licence text follows.</string>
+    <string name="license_ravel_notice">Ravel is published under the PolyForm Noncommercial License 1.0.0. The source code is at https://github.com/andret2344/ravel-android and may be read, built and changed for any noncommercial purpose; commercial use is not licensed. Copyright 2026 Andret2344. The word lists and the icons are not covered by these terms — they are listed in the options, under the licenses of the projects they come from.</string>
+    <string name="license_icons_source" translatable="false">Material Symbols</string>
+    <!-- Translated for the reason license_ravel_notice is: this project's own wording, not a required one. -->
+    <string name="license_icons_notice">The icons are Material Symbols and Material Icons by Google (https://fonts.google.com/icons), used under the Apache License, Version 2.0. They have been modified from the originals. The full license text follows.</string>
 </resources>

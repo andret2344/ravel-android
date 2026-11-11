@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!--
-        The only colour that has to exist outside Compose: the window's own background, painted by
+        The only color that has to exist outside Compose: the window's own background, painted by
         the system before the first frame is drawn. Everything else the app shows is chosen in
         RavelTheme, where light and dark live side by side.
     -->

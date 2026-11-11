@@ -34,20 +34,20 @@ import androidx.compose.ui.unit.dp
 import eu.andret.ravel.R
 
 /**
- * One source, what it is used under, and the licence itself when the game carries it.
+ * One source, what it is used under, and the license itself when the game carries it.
  *
  * A page rather than a dialog. Three of these are a screen of legal text, and a dialog that scrolls
  * further than the screen it dims is a worse reading surface than the screen would have been.
  */
 @Composable
-fun LicenceScreen(licence: Licence, onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun LicenseScreen(license: License, onBack: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val links = LocalUriHandler.current
 
-    // Read once per licence rather than per frame. These are one or two kilobytes off the APK's own
+    // Read once per license rather than per frame. These are one or two kilobytes off the APK's own
     // resources, so the read is measured in microseconds and does not deserve a loading state - but
     // it is still a file read, and running it on every recomposition would be one per scrolled row.
-    val body = remember(licence) { licence.fullText?.let { textOf(context, it) } }
+    val body = remember(license) { license.fullText?.let { textOf(context, it) } }
 
     Column(
         modifier = modifier
@@ -56,25 +56,25 @@ fun LicenceScreen(licence: Licence, onBack: () -> Unit, modifier: Modifier = Mod
             .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        BackHeader(title = stringResource(licence.source), onBack = onBack)
+        BackHeader(title = stringResource(license.source), onBack = onBack)
 
         Text(
-            text = stringResource(licence.licence),
+            text = stringResource(license.license),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
-            text = stringResource(licence.notice),
+            text = stringResource(license.notice),
             style = MaterialTheme.typography.bodyMedium,
         )
         TextButton(
-            onClick = { links.openUri(licence.url) },
+            onClick = { links.openUri(license.url) },
             // Flush with the text above it: a button indented by its own default padding reads as
             // belonging to something further right, and there is nothing further right.
             contentPadding = PaddingValues(0.dp),
         ) {
             Text(
-                text = stringResource(R.string.licence_open),
+                text = stringResource(R.string.license_open),
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Start,
             )
@@ -91,12 +91,12 @@ fun LicenceScreen(licence: Licence, onBack: () -> Unit, modifier: Modifier = Mod
 }
 
 /**
- * A page's title with the way back beside it, shared by the licence list and each licence so the
+ * A page's title with the way back beside it, shared by the license list and each license so the
  * two pages of the same place look like one place.
  */
 @Composable
 internal fun BackHeader(title: String, onBack: () -> Unit) {
-    val back = stringResource(R.string.licence_back)
+    val back = stringResource(R.string.license_back)
     Row(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -133,7 +133,7 @@ internal fun BackHeader(title: String, onBack: () -> Unit) {
 }
 
 /**
- * The bundled licence, re-wrapped for a phone.
+ * The bundled license, re-wrapped for a phone.
  *
  * The files are stored exactly as their source ships them, which means hard line breaks at about 72
  * columns - a width no phone has. Left alone they wrap twice, once by the file and once by the

@@ -38,9 +38,9 @@ internal fun commonPrefixLength(first: List<Int>, second: List<Int>): Int {
 }
 
 /**
- * Orthogonal neighbours only, which is the only step a word's path is built from.
+ * Orthogonal neighbors only, which is the only step a word's path is built from.
  *
- * [width] is the board's, since a cell index means nothing without it - 6 and 7 are neighbours on a
+ * [width] is the board's, since a cell index means nothing without it - 6 and 7 are neighbors on a
  * board six wide and opposite corners of nothing on a board one wide.
  */
 internal fun areAdjacent(width: Int, from: Int, to: Int): Boolean {

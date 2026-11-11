@@ -12,7 +12,7 @@ import android.provider.Settings
  * The board plays its feedback through the view (see [eu.andret.ravel.ui.board.BoardHaptics]), which
  * obeys the phone's touch-feedback switch, so [HapticSettings] can only take haptics away. When the
  * phone has them off, the game's own switch does nothing either way, and the settings tab says so
- * and greys the switch out instead of letting a player flip it and feel nothing.
+ * and grays the switch out instead of letting a player flip it and feel nothing.
  *
  * ### Only what is certain
  *

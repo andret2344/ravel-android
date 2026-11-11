@@ -33,7 +33,7 @@ import eu.andret.ravel.R
  *
  * @param started whether the board is half finished rather than untouched, which changes every word
  *   in the dialog. Starting something and finishing it are not the same offer, and a player who left
- *   three words on the board would not recognise "play today's puzzle" as the thing they abandoned.
+ *   three words on the board would not recognize "play today's puzzle" as the thing they abandoned.
  * @param remind whether the prompt is allowed to come back, ticked by default.
  * @param onRemind the player changing that, which takes effect immediately - see
  *   [RavelAppViewModel.remind].

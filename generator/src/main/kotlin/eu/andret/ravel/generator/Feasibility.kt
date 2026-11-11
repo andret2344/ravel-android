@@ -34,10 +34,10 @@ internal class FeasibilityCheck(private val grid: Grid) {
         while (top > 0) {
             val cell = stack[--top]
             size++
-            for (neighbour in grid.neighbours[cell]) {
-                if (!blocked[neighbour] && !visited[neighbour]) {
-                    visited[neighbour] = true
-                    stack[top++] = neighbour
+            for (neighbor in grid.neighbors[cell]) {
+                if (!blocked[neighbor] && !visited[neighbor]) {
+                    visited[neighbor] = true
+                    stack[top++] = neighbor
                 }
             }
         }

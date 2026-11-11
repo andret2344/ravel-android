@@ -11,14 +11,14 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 /**
- * A fixed palette rather than dynamic colour.
+ * A fixed palette rather than dynamic color.
  *
  * The board is read by contrast between four surfaces - open cell, wall, marked cell, found word -
  * and a wallpaper-derived scheme can collapse two of them into near-identical tones on some
- * devices. The puzzle is the product, so the puzzle gets to keep its colours.
+ * devices. The puzzle is the product, so the puzzle gets to keep its colors.
  *
  * Both schemes are written out in full rather than left to the baseline defaults, because a
- * half-specified scheme mixes this palette's colours with Material's purples on exactly the roles
+ * half-specified scheme mixes this palette's colors with Material's purples on exactly the roles
  * nobody remembered to check.
  */
 private val LightColors = lightColorScheme(
@@ -58,10 +58,10 @@ private val DarkColors = darkColorScheme(
 )
 
 /**
- * The colour a finished word wears, on the board and in the list of lengths alike.
+ * The color a finished word wears, on the board and in the list of lengths alike.
  *
  * Material has no role for "done" - the nearest is `tertiary`, which means "an accent" and nothing
- * more - so it is declared here instead of borrowed. One colour has to carry the meaning in both
+ * more - so it is declared here instead of borrowed. One color has to carry the meaning in both
  * places: a player who learns that green means found on the board should not have to learn it
  * again for the row underneath.
  *
@@ -98,16 +98,16 @@ private val DarkFound = FoundColors(
 
 private val LocalFoundColors = staticCompositionLocalOf { LightFound }
 
-/** The found-word colours for the theme in force. */
+/** The found-word colors for the theme in force. */
 val foundColors: FoundColors
     @Composable get() = LocalFoundColors.current
 
 /**
- * The colour of the prize at the end of a week.
+ * The color of the prize at the end of a week.
  *
  * Declared for the same reason as [FoundColors] and not borrowed from a Material role: nothing in
  * the scheme means "this one is worth more than the others". `tertiary` is the usual place people
- * put a colour like this, and it means "an accent" - so a week later somebody uses it for a chip
+ * put a color like this, and it means "an accent" - so a week later somebody uses it for a chip
  * that is not a prize, and the seventh day stops standing out.
  *
  * Gold rather than a brighter version of the primary brown, because the seventh day has to be
@@ -131,7 +131,7 @@ private val LightGold = GoldColors(
 )
 
 /** Lighter and less saturated for the same reason as [DarkFound]: gold at full strength on a
- * near-black background reads as a light source rather than as a colour. */
+ * near-black background reads as a light source rather than as a color. */
 private val DarkGold = GoldColors(
     fill = Color(0xFFE3BE5E),
     onFill = Color(0xFF3A2A00),
@@ -141,12 +141,12 @@ private val DarkGold = GoldColors(
 
 private val LocalGoldColors = staticCompositionLocalOf { LightGold }
 
-/** The prize colours for the theme in force. */
+/** The prize colors for the theme in force. */
 val goldColors: GoldColors
     @Composable get() = LocalGoldColors.current
 
 /**
- * The colours of hard mode: a deep red, on the badge that marks a level played without its lengths,
+ * The colors of hard mode: a deep red, on the badge that marks a level played without its lengths,
  * and an orange for the line under its switch saying a change waits for the next level.
  *
  * Its own role rather than `error`, for the reason [GoldColors] is not `tertiary`: `error` means
@@ -181,7 +181,7 @@ private val DarkHard = HardColors(
 
 private val LocalHardColors = staticCompositionLocalOf { LightHard }
 
-/** The hard-mode colours for the theme in force. */
+/** The hard-mode colors for the theme in force. */
 val hardColors: HardColors
     @Composable get() = LocalHardColors.current
 

@@ -162,7 +162,7 @@ class DailyMenuViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     /**
-     * Keeps [today] current until the caller is cancelled: now, and then at every local midnight.
+     * Keeps [today] current until the caller is canceled: now, and then at every local midnight.
      *
      * Meant to run while the screen is started and no longer - the screen cancels it on stop and
      * calls it again on start, and that restart is the read that catches a night spent in the
