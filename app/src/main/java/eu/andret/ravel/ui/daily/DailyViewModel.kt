@@ -53,6 +53,7 @@ class DailyViewModel(
     private val wallet = (application as RavelApplication).wallet
     private val progress = (application as RavelApplication).progress
     private val puzzles = (application as RavelApplication).puzzles
+    private val notifications = (application as RavelApplication).notifications
 
     /** The day this board belongs to, as a [DailyDate] ordinal. */
     val ordinal: Long = checkNotNull(handle.get<Long>(DailyRoute.ARG_ORDINAL)) {
@@ -343,6 +344,9 @@ class DailyViewModel(
         // mid-solve is paid for the day they were solving.
         val counted = progress.complete(card)
         puzzles.solved(id, card.language)
+        // The notification learns the time from the first finish only, and takes itself down. A
+        // second finish of a day already sealed is not a solve the player made today.
+        if (counted) notifications.solved()
         // Paid only once the store has agreed this is the day's first finish, like the streak
         // below. Paid before asking, the board's coins went out for any finish at all - and a day
         // already sealed could be finished again whenever a fresh grid for it reached the screen.

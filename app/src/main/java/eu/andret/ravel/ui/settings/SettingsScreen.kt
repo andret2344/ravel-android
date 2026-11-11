@@ -1,6 +1,10 @@
 package eu.andret.ravel.ui.settings
 
+import android.Manifest
+import android.os.Build
 import androidx.activity.compose.LocalActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
@@ -39,7 +44,6 @@ import eu.andret.ravel.generator.Language
 import eu.andret.ravel.settings.SystemHaptics
 import eu.andret.ravel.settings.ThemeChoice
 import eu.andret.ravel.ui.AdaptiveScreen
-import eu.andret.ravel.ui.about.Licence
 import java.util.Locale
 
 /**
@@ -51,10 +55,14 @@ import java.util.Locale
  * arrives at having already felt the thing they want changed, while the language is the one people
  * go looking for before the game has told them anything.
  *
+ * The daily notification's switches come after the haptics - see [NotificationSection]. They are
+ * reached here by players who already said yes to them after a solve, or who want them and were
+ * never asked, so they sit with the other settings and not at the top.
+ *
  * The third is the ad privacy row, and it is conditional because the consent SDK says whether this
  * device was ever asked - a player outside the regions that require a form has nothing to change,
  * and a row that opens a form which reports "nothing to show" is worse than no row. It sits above
- * the word sources rather than below them because it is a setting and they are a notice.
+ * the licences row because it is a setting and they are a notice.
  *
  * The language row shows what is set and opens a picker, where it used to lay every option out on
  * the tab. Two changes at once, and they are the same change: "follow the phone" is gone, and with
@@ -71,17 +79,17 @@ import java.util.Locale
  * language the interface is read in, because a player who wants English puzzles wants English
  * buttons - see [eu.andret.ravel.settings.LanguageSettings].
  *
- * The word sources sit under it rather than on an "About" screen of their own. Three of them carry
- * attribution the game is required to show, and a screen holding one setting has room; a second
- * screen reached from this one would be a tap in front of a list that is already short.
+ * The licences are one row at the bottom, opening [eu.andret.ravel.ui.about.LicencesScreen]. They
+ * used to be laid out here - the word sources and the game's own licences, two cards - on the
+ * argument that a screen holding one setting had room for them. It stopped holding one setting:
+ * with the theme, the reminders and the progress reset, the notices were most of the tab's length
+ * and the part a player scrolled past to reach nothing. Every source is still named, one page in.
  *
- * @param onLicence opens one licence - a word source, or the game's own. The names are on this
- *   screen and the licences are a page deeper, because a player who came here to change the language
- *   should not have to scroll past a Princeton disclaimer to find out they have already passed it.
+ * @param onLicences opens the licences page.
  */
 @Composable
 fun SettingsScreen(
-    onLicence: (Licence) -> Unit,
+    onLicences: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = viewModel(),
 ) {
@@ -92,11 +100,53 @@ fun SettingsScreen(
     val systemHaptics by viewModel.systemHaptics.collectAsStateWithLifecycle()
     val themeChoice by viewModel.themeChoice.collectAsStateWithLifecycle()
 
-    // The phone's setting is changed in another app, so coming back to this one is exactly when it
-    // may have moved.
+    val notificationPrefs by viewModel.notificationPrefs.collectAsStateWithLifecycle()
+    val notificationsPermitted by viewModel.notificationsPermitted.collectAsStateWithLifecycle()
+
+    // The phone's settings are changed in another app, so coming back to this one is exactly when
+    // they may have moved - the touch feedback and the notification block alike.
     LifecycleStartEffect(viewModel) {
         viewModel.refreshSystemHaptics()
+        viewModel.refreshNotificationsPermitted()
         onStopOrDispose { }
+    }
+
+    /** Whether the system's notification dialog said no on this visit. See [NotificationSection]. */
+    var notificationsDenied by remember { mutableStateOf(false) }
+
+    /** Whether the time picker is open. */
+    var pickingTime by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+
+    // Switching on asks the system only on Android 13 and later, and only when it has not already
+    // been granted. A no leaves the switch off and the note saying where the block is.
+    val notificationPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        viewModel.refreshNotificationsPermitted()
+        if (granted) viewModel.setNotifications(true) else notificationsDenied = true
+    }
+
+    val notificationSection: @Composable () -> Unit = {
+        NotificationSection(
+            prefs = notificationPrefs,
+            blocked = !notificationsPermitted && (notificationPrefs.enabled || notificationsDenied),
+            onToggle = { on ->
+                when {
+                    !on -> viewModel.setNotifications(false)
+                    // Below 13 there is nothing to ask: switched on, and if the system blocks them
+                    // the note says so.
+                    notificationsPermitted || Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ->
+                        viewModel.setNotifications(true)
+
+                    else -> notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            },
+            onAutomatic = viewModel::setNotificationTimeAutomatic,
+            onPickTime = { pickingTime = true },
+            onOpenSystem = { openNotificationSettings(context) },
+        )
     }
 
     /** Whether the reset confirmation is open. */
@@ -334,51 +384,35 @@ fun SettingsScreen(
         }
     }
 
-    val sourcesSection: @Composable () -> Unit = {
+    // Last, because nobody opens the options for it. One row, the same full-width target as the
+    // tutorial's; the note says what is behind it, so a player looking for where the words come
+    // from knows this is the row.
+    val licencesSection: @Composable () -> Unit = {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
-                text = stringResource(R.string.settings_sources),
+                text = stringResource(R.string.settings_about),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Card(modifier = Modifier.fillMaxWidth()) {
-                Column {
-                    Licence.wordSources.forEach { licence ->
-                        SourceRow(licence = licence, onOpen = { onLicence(licence) })
-                    }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(onClick = onLicences)
+                        .padding(horizontal = 12.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.settings_licences_title),
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
                 }
             }
             Text(
-                text = stringResource(R.string.settings_sources_note),
+                text = stringResource(R.string.settings_licences_note),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-        }
-    }
-
-    /*
-     * The game's own licences - its code and its icons: their own heading, directly under the
-     * sources.
-     *
-     * Under them rather than above because the order on this screen is what somebody came for, and
-     * nobody came for this. Their own card rather than more rows in theirs because that card answers
-     * "where do the words come from", and neither Ravel nor the icons are an answer to it - a row
-     * saying otherwise would be a false attribution sitting among real ones.
-     */
-    val licenceSection: @Composable () -> Unit = {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(
-                text = stringResource(R.string.settings_licence),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column {
-                    Licence.game.forEach { licence ->
-                        SourceRow(licence = licence, onOpen = { onLicence(licence) })
-                    }
-                }
-            }
         }
     }
 
@@ -386,10 +420,8 @@ fun SettingsScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                // Scrolls in both arrangements, and the two columns are not an attempt to stop it.
-                // The sources card is six rows and grows by one every time a dictionary is added, so
-                // this screen has a part whose height is a function of a licence obligation - which
-                // is not something a layout gets to decide is short enough.
+                // Scrolls in both arrangements, and the two columns are not an attempt to stop it:
+                // eight sections on a phone on its side do not fit in one screen's height either way.
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp),
@@ -399,17 +431,13 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.headlineSmall,
             )
             if (wide) {
-                // The switches on the left, the notice on the right, which is the split this screen
-                // already had lengthwise: the first two things here are settings somebody came to
-                // change, and the last is a list they came to read - if they came for it at all.
-                // Side by side, a player looking for the language finds it without passing a
-                // Princeton disclaimer, which is the same argument that kept the licence text itself
-                // one screen deeper.
+                // How the game looks and feels on the left - language, theme, vibration, reminders
+                // - and everything else on the right: the tutorial, the ad privacy row, the reset and
+                // the licences. The right column used to be the licence cards alone; with those one
+                // page in, a split that kept them there would leave half the window holding one row.
                 //
-                // The ad privacy row goes with the switches because it is one, even though it opens
-                // a form rather than flipping. It is also the section that is not always there, and
-                // a column that sometimes has three sections and sometimes two is a column - not a
-                // hole in a grid.
+                // The ad privacy row is the section that is not always there, and a column that
+                // sometimes has four sections and sometimes three is a column - not a hole in a grid.
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(20.dp),
@@ -421,27 +449,27 @@ fun SettingsScreen(
                         languageSection()
                         themeSection()
                         feedbackSection()
-                        tutorialSection()
-                        privacySection()
-                        progressSection()
+                        notificationSection()
                     }
                     Column(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(20.dp),
                     ) {
-                        sourcesSection()
-                        licenceSection()
+                        tutorialSection()
+                        privacySection()
+                        progressSection()
+                        licencesSection()
                     }
                 }
             } else {
                 languageSection()
                 themeSection()
                 feedbackSection()
+                notificationSection()
                 tutorialSection()
                 privacySection()
                 progressSection()
-                sourcesSection()
-                licenceSection()
+                licencesSection()
             }
         }
     }
@@ -469,6 +497,17 @@ fun SettingsScreen(
                     Text(stringResource(R.string.settings_reset_cancel))
                 }
             },
+        )
+    }
+
+    if (pickingTime) {
+        NotificationTimeDialog(
+            minute = notificationPrefs.manualMinute,
+            onPick = { minute ->
+                pickingTime = false
+                viewModel.setNotificationMinute(minute)
+            },
+            onDismiss = { pickingTime = false },
         )
     }
 
@@ -576,33 +615,6 @@ private fun LanguageDialog(
 private fun nameOf(language: Language): String {
     val locale = Locale.forLanguageTag(language.code)
     return locale.getDisplayLanguage(locale).replaceFirstChar { it.titlecase(locale) }
-}
-
-/**
- * One source: what it is called, and what it is used under.
- *
- * The licence label is on the row rather than only on the page behind it, because it is the part a
- * reader is checking. Somebody who opens this list is asking "what is in here and what does it
- * oblige you to", and answering the second half only after a tap makes them open six pages to find
- * out there was nothing to worry about.
- */
-@Composable
-private fun SourceRow(licence: Licence, onOpen: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onOpen)
-            .padding(horizontal = 12.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(text = stringResource(licence.source), style = MaterialTheme.typography.bodyLarge)
-        Text(
-            text = stringResource(licence.licence),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
 }
 
 private fun labelOf(choice: ThemeChoice): Int = when (choice) {

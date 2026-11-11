@@ -205,7 +205,7 @@ board — drag, tap, hint — funnels through `withPath`**. The whole rule set i
 
 `RavelApplication` holds the process-wide singletons — `wallet`, `language`, `haptics`, `hardMode`,
 `theme`, `reminder`, `tutorial`, `progress` (daily), `levels`, `puzzles`, `consent`, `ads`, `adAllowance`,
-`dailyGift`, `stuckOffer`. **Screens reach them through their
+`dailyGift`, `stuckOffer`, `notifications`. **Screens reach them through their
 `AndroidViewModel`, never by constructing their own.**
 
 `RavelApp.kt` is the whole navigation graph: five tabs, each keeping its own back stack. Screens live
@@ -261,6 +261,28 @@ Persistence is SharedPreferences plus JSON (`settings/SavedBoards.kt`, single-le
 - **No `android:configChanges` in the manifest**, deliberately — it would strip the forced locale.
 - **`android:screenOrientation="fullUser"`**; leaving the attribute off is not the same thing, and
   `fullSensor` would ignore the device's rotation lock.
+
+### The daily notification
+
+Every rule is in `notify/NotificationPlan.kt` and `NotificationPlanTest`; `DailyNotifications` only
+does what it answers. Not to be confused with `DailyReminder`, the in-app question at launch - keep
+the two names apart.
+
+- **At most one a day, none once today is solved, decided when the alarm fires** - never when it is
+  set. Solving takes down one still showing.
+- **The automatic time is when today's daily was last solved, not opened.** A solve inside quiet
+  hours (22:00-08:00) means 19:00. A fixed time the player picked ignores quiet hours.
+- **The game on screen postpones by an hour, never skips** - up to 22:00 for the automatic time,
+  midnight for a fixed one.
+- **Three ignored in a row switch them off, visibly in the options**; the next solve asks once to
+  switch them back. Ignored means the day ended unsolved. A player who switched them off is never
+  asked.
+- **Never ask for the permission at launch.** Our dialog after the second solved daily, the system's
+  only after a yes. Off by default on every API level.
+- **No exact alarms.** `setAndAllowWhileIdle`, set again on every process start and from
+  `NotificationReceiver` (boot, update, time and time-zone change).
+- **The channel ids `daily` and `streak` are permanent.**
+- **The copy states what is true about today's board** - no guilt, no exclamation marks, no coins.
 
 ### Ads and consent
 
@@ -393,8 +415,9 @@ the policy with it:
 ## Attribution
 
 `generator/DICTIONARY.md` records the dictionary sources and licences. Three require a notice, and
-the app carries all of them: the options tab lists every source under "Word sources"
-(`ui/about/Licences.kt`), and each name opens `LicenceScreen`.
+the app carries all of them: one row in the options tab ("Licenses and word sources") opens
+`LicencesScreen`, which lists every source under "Word sources" (`ui/about/Licences.kt`), and each
+name opens `LicenceScreen`.
 
 - **SJP.PL word list and KWJP100 frequency data** — CC BY 4.0, attribution **plus** a statement that
   the material was modified. Both notices carry that sentence; deleting it breaks the licence.
@@ -404,8 +427,8 @@ the app carries all of them: the options tab lists every source under "Word sour
 ENABLE and OANC need nothing and are listed anyway.
 
 - **The icons** (Material Symbols, and the path of Material Icons' `lock`) — Apache 2.0, the licence
-  text given to every recipient. They are not word sources: the options tab lists them under
-  "Licences" beside the game's own (`Licence.game`), never under "Word sources". **A new icon copied
+  text given to every recipient. They are not word sources: `LicencesScreen` lists them
+  under "Licences" beside the game's own (`Licence.game`), never under "Word sources". **A new icon copied
   from the set goes into `LICENSE.md`'s "does not cover" list in the same commit**, with a header
   comment saying what was changed.
 

@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import eu.andret.ravel.RavelApplication
 import eu.andret.ravel.game.DailyDate
+import eu.andret.ravel.notify.NoticeOffer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -71,4 +72,39 @@ class RavelAppViewModel(application: Application) : AndroidViewModel(application
     fun dismissPrompt() {
         _prompt.value = false
     }
+
+    private val _openDaily = MutableStateFlow(false)
+
+    /**
+     * Whether the shell owes the player today's board, because they tapped the daily notification.
+     * Held until the shell has navigated, so it survives the consent screen in front of the game.
+     */
+    val openDaily: StateFlow<Boolean> = _openDaily.asStateFlow()
+
+    /**
+     * The notification was tapped. The launch prompt goes with it: the player has just said which
+     * board they want, and asking them whether they want it would be asking twice.
+     */
+    fun openDaily() {
+        _prompt.value = false
+        _openDaily.value = true
+    }
+
+    fun openedDaily() {
+        _openDaily.value = false
+    }
+
+    private val notifications = (application as RavelApplication).notifications
+
+    /** The question owed after a solve, if any - see [eu.andret.ravel.notify.NotificationPlan.offerAfterSolve]. */
+    val offer: StateFlow<NoticeOffer?> = notifications.offer
+
+    /** Whether switching the notifications on can happen at once, without the system's dialog. */
+    fun notificationsPermitted(): Boolean = notifications.permitted()
+
+    /** The question was answered or put away; it is not asked again. */
+    fun closeOffer(offer: NoticeOffer) = notifications.closeOffer(offer)
+
+    /** The player said yes, and the system - where it was asked - agreed. */
+    fun enableNotifications() = notifications.setEnabled(true)
 }

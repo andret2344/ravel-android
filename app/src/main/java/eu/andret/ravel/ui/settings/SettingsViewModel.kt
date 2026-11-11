@@ -5,6 +5,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import eu.andret.ravel.RavelApplication
+import eu.andret.ravel.notify.NotificationPrefs
 import eu.andret.ravel.settings.SystemHaptics
 import eu.andret.ravel.settings.ThemeChoice
 import eu.andret.ravel.generator.Language
@@ -108,6 +109,30 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
      * middle of, since the setting is a flow the board is reading rather than a value it copied.
      */
     fun setHaptics(value: Boolean) = haptics.setEnabled(value)
+
+    private val notifications = (application as RavelApplication).notifications
+
+    /** The daily notification as chosen. See [eu.andret.ravel.notify.NotificationPlan]. */
+    val notificationPrefs: StateFlow<NotificationPrefs> = notifications.prefs
+
+    private val _notificationsPermitted = MutableStateFlow(notifications.permitted())
+
+    /**
+     * Whether the system will show a notification at all - the permission, and the app not blocked
+     * in the system settings. Read again each time the screen comes into view, like
+     * [systemHaptics], because it is changed in another app.
+     */
+    val notificationsPermitted: StateFlow<Boolean> = _notificationsPermitted.asStateFlow()
+
+    fun refreshNotificationsPermitted() {
+        _notificationsPermitted.value = notifications.permitted()
+    }
+
+    fun setNotifications(enabled: Boolean) = notifications.setEnabled(enabled)
+
+    fun setNotificationTimeAutomatic(automatic: Boolean) = notifications.setAutomatic(automatic)
+
+    fun setNotificationMinute(minute: Int) = notifications.setManualMinute(minute)
 
     /** Puts the tutorial back over the game, at once. See [eu.andret.ravel.settings.TutorialSettings]. */
     fun replayTutorial() = tutorial.restart()

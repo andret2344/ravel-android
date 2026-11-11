@@ -18,7 +18,15 @@ arguments in `docs/DECISIONS.md`; an item here points at them rather than repeat
       are missing. Nothing secret in the repo.
    2. `.gitignore`: `*.jks`, `*.keystore`.
 4. **Play Console Data safety form**, matching `docs/privacy-policy.md`: data on the device only,
-   AdMob rewarded ads, UMP consent, the `AD_ID` permission merged in by `play-services-ads`.
+   AdMob rewarded ads, UMP consent, the `AD_ID` permission merged in by `play-services-ads`. The
+   daily notification is local and collects nothing, so it changes no answer on the form.
+5. **The daily notification on a real phone** - nothing here is covered by a test beyond
+   `NotificationPlan`. With a fixed time a few minutes ahead: it arrives with the app closed; it is
+   postponed an hour with the app open; a tap opens today's board without the launch prompt, both
+   from a killed process and from the background; solving takes it down; it still comes after a
+   reboot; the offer after the second solved daily, and the system dialog refused twice, then the
+   options' "blocked" note and its button. Once on a manufacturer's battery saver (Xiaomi, Samsung),
+   which may delay or drop inexact alarms.
 
 ## Code
 

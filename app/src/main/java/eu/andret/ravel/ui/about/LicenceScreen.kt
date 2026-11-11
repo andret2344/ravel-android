@@ -43,7 +43,6 @@ import eu.andret.ravel.R
 fun LicenceScreen(licence: Licence, onBack: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val links = LocalUriHandler.current
-    val back = stringResource(R.string.licence_back)
 
     // Read once per licence rather than per frame. These are one or two kilobytes off the APK's own
     // resources, so the read is measured in microseconds and does not deserve a loading state - but
@@ -57,42 +56,7 @@ fun LicenceScreen(licence: Licence, onBack: () -> Unit, modifier: Modifier = Mod
             .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            // No background: this is a back affordance on a reading page, and a filled tonal button
-            // gives it the weight of an action the page is about. The chevron is drawn rather than
-            // imported because the app carries no icon artifact at all - the tab bar's icons are
-            // vectors copied into res/drawable - and one shape is not worth the several hundred
-            // kilobytes material-icons would add.
-            IconButton(
-                onClick = onBack,
-                modifier = Modifier.semantics { contentDescription = back },
-            ) {
-                val stroke = MaterialTheme.colorScheme.onSurface
-                Canvas(modifier = Modifier.size(20.dp)) {
-                    val path = Path().apply {
-                        moveTo(size.width * 0.62f, size.height * 0.16f)
-                        lineTo(size.width * 0.34f, size.height * 0.5f)
-                        lineTo(size.width * 0.62f, size.height * 0.84f)
-                    }
-                    drawPath(
-                        path = path,
-                        color = stroke,
-                        style = Stroke(
-                            width = size.minDimension * 0.1f,
-                            cap = StrokeCap.Round,
-                            join = StrokeJoin.Round,
-                        ),
-                    )
-                }
-            }
-            Text(
-                text = stringResource(licence.source),
-                style = MaterialTheme.typography.headlineSmall,
-            )
-        }
+        BackHeader(title = stringResource(licence.source), onBack = onBack)
 
         Text(
             text = stringResource(licence.licence),
@@ -123,6 +87,48 @@ fun LicenceScreen(licence: Licence, onBack: () -> Unit, modifier: Modifier = Mod
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+    }
+}
+
+/**
+ * A page's title with the way back beside it, shared by the licence list and each licence so the
+ * two pages of the same place look like one place.
+ */
+@Composable
+internal fun BackHeader(title: String, onBack: () -> Unit) {
+    val back = stringResource(R.string.licence_back)
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // No background: this is a back affordance on a reading page, and a filled tonal button
+        // gives it the weight of an action the page is about. The chevron is drawn rather than
+        // imported because the app carries no icon artifact at all - the tab bar's icons are
+        // vectors copied into res/drawable - and one shape is not worth the several hundred
+        // kilobytes material-icons would add.
+        IconButton(
+            onClick = onBack,
+            modifier = Modifier.semantics { contentDescription = back },
+        ) {
+            val stroke = MaterialTheme.colorScheme.onSurface
+            Canvas(modifier = Modifier.size(20.dp)) {
+                val path = Path().apply {
+                    moveTo(size.width * 0.62f, size.height * 0.16f)
+                    lineTo(size.width * 0.34f, size.height * 0.5f)
+                    lineTo(size.width * 0.62f, size.height * 0.84f)
+                }
+                drawPath(
+                    path = path,
+                    color = stroke,
+                    style = Stroke(
+                        width = size.minDimension * 0.1f,
+                        cap = StrokeCap.Round,
+                        join = StrokeJoin.Round,
+                    ),
+                )
+            }
+        }
+        Text(text = title, style = MaterialTheme.typography.headlineSmall)
     }
 }
 

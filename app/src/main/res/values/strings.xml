@@ -45,6 +45,39 @@
     <string name="daily_prompt_later">Not now</string>
 
     <!--
+        The daily notification: what it says, the question that switches it on, and its two channels
+        in the phone's settings. One a day at most, so each of these is the whole message. It states
+        what is true about today's board - no exclamation marks, no guilt, no coin figures.
+    -->
+    <string name="notify_fresh_title">Today\'s board is waiting</string>
+    <string name="notify_fresh_body">Today: %1$d×%1$d.</string>
+    <string name="notify_started_title">Today\'s board is half done</string>
+    <plurals name="notify_started_body">
+        <item quantity="one">%1$d word left.</item>
+        <item quantity="other">%1$d words left.</item>
+    </plurals>
+    <plurals name="notify_streak_title">
+        <item quantity="one">%1$d day in a row</item>
+        <item quantity="other">%1$d days in a row</item>
+    </plurals>
+    <string name="notify_streak_body">Today\'s board is still waiting.</string>
+    <string name="notify_repair_title">Your streak can still be saved</string>
+    <plurals name="notify_repair_body">
+        <item quantity="one">Yesterday\'s board went unsolved. Your %1$d-day streak can be saved today - not tomorrow.</item>
+        <item quantity="other">Yesterday\'s board went unsolved. Your %1$d-day streak can be saved today - not tomorrow.</item>
+    </plurals>
+    <string name="notify_channel_daily">Daily board</string>
+    <string name="notify_channel_daily_note">Today\'s board, while it is still waiting.</string>
+    <string name="notify_channel_streak">Streak</string>
+    <string name="notify_channel_streak_note">A streak that ends at midnight, or a missed day that can still be saved.</string>
+    <string name="notify_offer_title">Remind you about the daily?</string>
+    <string name="notify_offer_body">At most once a day, only while today\'s board is unsolved, around the time you usually play. You can change it in Options.</string>
+    <string name="notify_offer_back_title">Turn reminders back on?</string>
+    <string name="notify_offer_back_body">They switched themselves off after three in a row went by without a game. This is the only time you will be asked.</string>
+    <string name="notify_offer_yes">Remind me</string>
+    <string name="notify_offer_no">No, thanks</string>
+
+    <!--
         The main mode: one level at a time, in order. The number is always formatted in rather than
         appended, because "Level 7" is a name and the word in front of it moves in other languages.
     -->
@@ -324,6 +357,23 @@
     <string name="settings_haptics_note">A short vibration for each letter, a word found and a finished board. Your phone\'s own touch feedback setting has to be on as well.</string>
     <string name="settings_haptics_system_off">Touch feedback is turned off in your phone\'s settings, so the board can\'t vibrate. Turn it on there to use this switch.</string>
     <string name="settings_haptics_no_vibrator">This device can\'t vibrate.</string>
+
+    <!--
+        The daily notification's switches. The last note carries the rules, because they are what a
+        player would otherwise only find out by being surprised. The block note names the phone's
+        settings and the button under it opens them - unlike the haptics note, there is one standard
+        page for this on every phone.
+    -->
+    <string name="settings_notify">Reminders</string>
+    <string name="settings_notify_daily">Remind me about the daily board</string>
+    <string name="settings_notify_automatic">Pick the time for me</string>
+    <string name="settings_notify_time">Time: %1$s</string>
+    <string name="settings_notify_time_title">Reminder time</string>
+    <string name="settings_notify_time_set">Set</string>
+    <string name="settings_notify_automatic_note">The time follows when you solve the daily. Now: %1$s.</string>
+    <string name="settings_notify_note">At most once a day, and only while today\'s board is unsolved. After three in a row go by without a game, reminders switch themselves off.</string>
+    <string name="settings_notify_blocked">Notifications from the game are blocked in your phone\'s settings.</string>
+    <string name="settings_notify_open_system">Open phone settings</string>
     <string name="settings_tutorial">Tutorial</string>
     <string name="settings_tutorial_replay">Show the tutorial</string>
     <string name="settings_tutorial_note">The rules, on a small board you play. You can skip it at any point.</string>
@@ -370,6 +420,14 @@
     <string name="licence_back">Back</string>
 
     <string name="settings_licence">Licences</string>
+    <!--
+        The one row in the options that opens every licence, and the heading over it. The note names
+        what is behind the row, because a player looking for where the words come from would not
+        otherwise know to open a row called "licenses".
+    -->
+    <string name="settings_about">About</string>
+    <string name="settings_licences_title">Licenses and word sources</string>
+    <string name="settings_licences_note">Where the dictionaries come from, and the licenses of the game, its word lists and its icons.</string>
 
     <string name="licence_name_cc_by" translatable="false">CC BY 4.0</string>
     <string name="licence_name_bsd" translatable="false">BSD 2-clause</string>

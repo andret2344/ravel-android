@@ -563,6 +563,13 @@ bullet says otherwise.
   pass a Princeton disclaimer on the way. Still scrolls in both arrangements: the sources card grows
   by a row every time a dictionary is added, which is a height set by a licence obligation rather
   than by a layout.
+  *Revisited 2026-11-11:* every licence moved to a page of its own (`LicencesScreen`), behind one row
+  at the bottom of the tab. With the theme, the reminders and the reset added, the notices had become
+  most of the tab's length - the argument that "a screen holding one setting has room" no longer
+  described the screen. Attribution is unchanged: every source is still named, one tap in, and each
+  still opens its notice. The tab's split is now the look and feel of the game left (language,
+  theme, vibration, reminders) and everything else right (tutorial, ad privacy, reset, licenses);
+  the licenses page puts its two groups side by side.
 
 ### Why `BoardLayout` is shared by both board screens
 
@@ -771,6 +778,75 @@ allowance and settings stay.** The clearing methods sit on the concrete stores, 
   paid (`StoredDailyProgress`, `lastPaid`) survive `clear`, and a replay at or below them pays
   nothing. Both are seeded from the ladder and the record on `clear`, for installs from before the
   keys existed.
+
+### The daily notification
+
+Built 2026-11-11. The brief was "smart, and not like Duolingo". What was taken from Duolingo is its
+two good mechanics - a time that follows the player's habit, and backing off when ignored. What was
+left behind is the rest: guilt, a mascot, several a day, escalation, invented urgency, and the
+passive-aggressive "these don't seem to be working" message. Every rule is in `notify/NotificationPlan.kt`
+and `NotificationPlanTest`.
+
+- **Is it needed at all?** Raised and answered yes. Wordle grew with no notifications, on sharing
+  alone, and Ravel has the share card. Before 1.0 there are no retention numbers to show either way
+  (no analytics), so the notification was built as a handful of fixed rules, not as anything that
+  learns beyond the last solve.
+- **At most one a day; none once today is solved.** Decided when the alarm goes off, against the
+  state then, never when it was set - an alarm set at noon knows nothing about a solve at 18:00.
+  Solving takes down one still showing: a notification that is no longer true is a lie on the lock
+  screen.
+- **The automatic time is when the daily was last solved, not when it was opened.** Duolingo uses
+  the time of yesterday's lesson, and there is no more to its "smart timing" than that - so neither
+  is there here. The solve and not the open, because with the open time a player who starts at 8:00
+  is notified at 8:00 every day, before sitting down to a board they were about to play anyway.
+  With the solve time, a player keeping their habit has finished by then and gets nothing; only a
+  player who has slipped from it hears from the game.
+- **The solve before last does not matter.** One number, overwritten on every solve. A day without
+  a solve keeps the last one rather than falling back to the default.
+- **Quiet hours, 22:00 to 08:00, for the automatic time only; a solve inside them means the
+  default, 19:00.** One rule covers the 23:40 solve, the after-midnight solve and the 6:00 solve.
+  It also means the automatic notification can never land just before midnight, when a streak
+  warning would be useless. An earlier draft had a separate 21:00 cap for late solves; dropped as a
+  second number doing the same job.
+- **A fixed time, if the player picks one.** Proposed against ("one less setting"), kept by the
+  owner's decision. With it: the fixed time is a contract - no quiet hours, sent until midnight.
+  Two switches (on/off, then automatic/fixed) rather than one three-way choice, because they are two
+  questions asked in that order; the time is only drawn when it is fixed, and switching back to
+  automatic keeps the fixed time for next time.
+- **The game on screen postpones; it never skips.** An hour at a time, up to 22:00 (automatic) or
+  midnight (fixed). "Skip" was the first word used, and it was wrong: a player on a level at 20:00
+  who leaves at 20:10 would hear nothing that day. The alternative - sending a set time after the
+  app leaves the screen - would be more accurate and is a second mechanism that tracks foreground
+  state; the hourly retry is dumber and is the same one alarm. The same rule recovers a lost alarm:
+  "due has passed, nothing went out, still owed" is just "an hour from now".
+- **Three ignored in a row switch them off - visibly.** First proposed silent: stop after a few
+  ignored, resume on the next solve, say nothing. Replaced by the owner's version, which is better:
+  the switch in the options really goes off, so a player wondering why nothing comes sees why, and
+  the next solve asks once whether to switch them back on. A no is final; a player who switched them
+  off themselves is never asked. Applies to the fixed time too: with the state visible, the old
+  argument - that a fixed time going quiet would look like a bug - no longer holds. *Ignored* means
+  the day ended unsolved; a tap is not what counts, since swiping it away and then solving from the
+  launcher did what it asked. A notification the system blocked was never seen and is not counted.
+- **What it says, most pressing first:** a missed day that can still be bought back (the only real
+  deadline in the game), a streak that ends at midnight, a board part-way through ("2 words left"),
+  a fresh board ("Today: 8×8"). The streak kinds need a run of 3 - a two-day run is not worth an
+  urgent sentence. The size comes from `PuzzleSpec`, the remainder from the saved board; nothing
+  runs the generator in the background. Two channels, so the streak ones can be silenced alone.
+- **Asked after the second solved daily, never at launch.** Our dialog first, the system's only
+  after a yes - Android allows two system asks, and a no on our dialog spends neither. Off by
+  default below Android 13 too, where the system would not have asked: the same opt-in everywhere.
+  A player can always switch them on from the options; when the system blocks them, the options say
+  so and open the system's page, the one place a block can be lifted.
+- **Inexact alarm (`setAndAllowWhileIdle`), no exact-alarm permission.** `SCHEDULE_EXACT_ALARM`
+  needs the player to grant it by hand and `USE_EXACT_ALARM` is reserved by Play for alarm clocks
+  and calendars. Minutes late is still the same reminder. Set again on every process start and on
+  boot, package update, time and time-zone change.
+- **A tap opens today's board, and the launch prompt does not follow it** - asking "play today's
+  board?" of a player who just tapped "today's board" is asking twice.
+- **Stored in `ravel-settings`**, so the backup rules already cover it. A restore onto a new phone
+  brings back "on" without the system permission; the options show that as blocked, which is true.
+- **Not to be confused with `DailyReminder`**, the in-app question at launch. That one was named
+  first; the two are separate switches because they are different intrusions.
 
 ---
 

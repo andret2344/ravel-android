@@ -6,6 +6,7 @@ import eu.andret.ravel.ads.RewardedAds
 import eu.andret.ravel.game.PuzzleCache
 import eu.andret.ravel.game.Puzzles
 import eu.andret.ravel.generator.Ravel
+import eu.andret.ravel.notify.DailyNotifications
 import eu.andret.ravel.settings.AdAllowance
 import eu.andret.ravel.settings.DailyGift
 import eu.andret.ravel.settings.DailyReminder
@@ -14,6 +15,7 @@ import eu.andret.ravel.settings.HapticSettings
 import eu.andret.ravel.settings.HardModeSettings
 import eu.andret.ravel.settings.LanguageSettings
 import eu.andret.ravel.settings.LevelProgress
+import eu.andret.ravel.settings.NotificationSettings
 import eu.andret.ravel.settings.StoredDailyProgress
 import eu.andret.ravel.settings.StoredBoards
 import eu.andret.ravel.settings.StoredLevelProgress
@@ -181,6 +183,10 @@ class RavelApplication : Application() {
         scope.launch(Dispatchers.Default) {
             language.current.collect { Puzzles.preload(it) }
         }
+        // Every process start sets the notification's alarm again - a launch, a receiver, anything.
+        // The alarm is the one piece of this app's state the system can drop behind its back (a
+        // force stop clears it), and this is the cheapest point that sees every way back in.
+        notifications.reschedule()
     }
 
     val ads: RewardedAds by lazy { RewardedAds(this, consent.canRequestAds, scope) }
@@ -193,6 +199,15 @@ class RavelApplication : Application() {
 
     /** Today's one "stuck?" dialog on a board, here for the reason [adAllowance] is. */
     val stuckOffer: StuckOffer by lazy { StuckOffer(this) }
+
+    /**
+     * The daily notification - its alarm, its settings and the question after a solve. One for the
+     * process because three places drive it (the options tab, the daily board, the alarm's receiver)
+     * and it owns the one alarm all three are moving.
+     */
+    val notifications: DailyNotifications by lazy {
+        DailyNotifications(this, NotificationSettings(this), progress)
+    }
 
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)

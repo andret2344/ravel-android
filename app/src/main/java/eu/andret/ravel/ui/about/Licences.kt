@@ -134,7 +134,7 @@ enum class Licence(
          * Everything the dictionaries are built from - this enum without [game].
          *
          * Written as a subtraction rather than a second list so that adding a source is adding one
-         * entry above and nothing else. The options screen shows these under "word sources", where
+         * entry above and nothing else. [LicencesScreen] shows these under "word sources", where
          * the game's own licences would be a false claim about where the words come from.
          */
         val wordSources: List<Licence> = entries - game.toSet()
@@ -150,6 +150,13 @@ enum class Licence(
  */
 object LicenceRoute {
     const val ARG_LICENCE = "licence"
+
+    /**
+     * Every licence on one page, behind one row in the options. Under "settings/" like [DETAIL], so
+     * the options tab stays lit while the player is in here.
+     */
+    const val LIST = "settings/licences"
+
     const val DETAIL = "settings/licence/{$ARG_LICENCE}"
 
     fun of(licence: Licence): String = "settings/licence/${licence.name}"

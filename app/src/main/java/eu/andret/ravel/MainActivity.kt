@@ -1,6 +1,7 @@
 package eu.andret.ravel
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -10,11 +11,14 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import eu.andret.ravel.notify.DailyNotifications
 import eu.andret.ravel.settings.LanguageSettings
 import eu.andret.ravel.settings.ThemeChoice
 import eu.andret.ravel.ui.LoadingScreen
 import eu.andret.ravel.ui.RavelApp
+import eu.andret.ravel.ui.RavelAppViewModel
 import eu.andret.ravel.ui.theme.RavelTheme
 
 class MainActivity : ComponentActivity() {
@@ -40,6 +44,10 @@ class MainActivity : ComponentActivity() {
         // shows a form only where one is owed, and it does nothing at all on the second call, so a
         // language switch rebuilding this activity is a check rather than a second form.
         ravel.consent.gather(this)
+        // A tap on the daily notification. Only on a fresh start: a saved state means this activity
+        // is being rebuilt - a rotation, a language switch - and the intent it was started with has
+        // already been acted on once.
+        if (savedInstanceState == null) openFrom(intent)
         val language = ravel.language
         // What this activity was built with. Resources are bound to a context that was localized
         // once, in attachBaseContext, so a language chosen afterwards cannot reach the strings
@@ -91,6 +99,40 @@ class MainActivity : ComponentActivity() {
                  */
                 if (settled) RavelApp() else LoadingScreen()
             }
+        }
+    }
+
+    /** The notification tapped while this activity already existed - see [DailyNotifications]. */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        openFrom(intent)
+    }
+
+    /**
+     * Whether the game is on screen, for the daily notification: one due now is postponed rather
+     * than shown over the game. Start and stop rather than resume and pause, for the reason the
+     * board's clock uses them - a dialog over the game is still the game on screen.
+     */
+    override fun onStart() {
+        super.onStart()
+        (application as RavelApplication).notifications.onScreen = true
+    }
+
+    override fun onStop() {
+        super.onStop()
+        (application as RavelApplication).notifications.onScreen = false
+    }
+
+    /**
+     * Sends the shell to today's board when [intent] came from the daily notification.
+     *
+     * Through the shell's view model, which this activity shares with `RavelApp` - one store, so the
+     * request waits there through the consent screen and is seen by the first frame of the game.
+     */
+    private fun openFrom(intent: Intent?) {
+        if (intent?.action == DailyNotifications.ACTION_OPEN_DAILY) {
+            ViewModelProvider(this)[RavelAppViewModel::class.java].openDaily()
         }
     }
 

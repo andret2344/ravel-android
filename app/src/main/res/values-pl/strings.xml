@@ -25,6 +25,40 @@
     <string name="daily_prompt_remind">Pytaj za każdym razem</string>
     <string name="daily_prompt_later">Nie teraz</string>
 
+    <string name="notify_fresh_title">Dzisiejsza plansza czeka</string>
+    <string name="notify_fresh_body">Dziś %1$d×%1$d.</string>
+    <string name="notify_started_title">Dzisiejsza plansza jest zaczęta</string>
+    <plurals name="notify_started_body">
+        <item quantity="one">Zostało %1$d słowo.</item>
+        <item quantity="few">Zostały %1$d słowa.</item>
+        <item quantity="many">Zostało %1$d słów.</item>
+        <item quantity="other">Zostało %1$d słowa.</item>
+    </plurals>
+    <plurals name="notify_streak_title">
+        <item quantity="one">%1$d dzień z rzędu</item>
+        <item quantity="few">%1$d dni z rzędu</item>
+        <item quantity="many">%1$d dni z rzędu</item>
+        <item quantity="other">%1$d dnia z rzędu</item>
+    </plurals>
+    <string name="notify_streak_body">Dzisiejsza plansza jeszcze czeka.</string>
+    <string name="notify_repair_title">Serię da się jeszcze uratować</string>
+    <plurals name="notify_repair_body">
+        <item quantity="one">Wczorajsza plansza została nierozwiązana. Serię %1$d dnia uratujesz dziś - jutro już nie.</item>
+        <item quantity="few">Wczorajsza plansza została nierozwiązana. Serię %1$d dni uratujesz dziś - jutro już nie.</item>
+        <item quantity="many">Wczorajsza plansza została nierozwiązana. Serię %1$d dni uratujesz dziś - jutro już nie.</item>
+        <item quantity="other">Wczorajsza plansza została nierozwiązana. Serię %1$d dnia uratujesz dziś - jutro już nie.</item>
+    </plurals>
+    <string name="notify_channel_daily">Dzienna plansza</string>
+    <string name="notify_channel_daily_note">Dzisiejsza plansza, dopóki jeszcze czeka.</string>
+    <string name="notify_channel_streak">Seria</string>
+    <string name="notify_channel_streak_note">Seria, która kończy się o północy, albo opuszczony dzień, który da się jeszcze uratować.</string>
+    <string name="notify_offer_title">Przypominać o dziennej planszy?</string>
+    <string name="notify_offer_body">Najwyżej raz dziennie, tylko gdy dzisiejsza plansza czeka, mniej więcej o porze, o której zwykle grasz. Zmienisz to w Opcjach.</string>
+    <string name="notify_offer_back_title">Włączyć przypomnienia z powrotem?</string>
+    <string name="notify_offer_back_body">Wyłączyły się same po trzech z rzędu bez gry. Pytamy o to tylko ten jeden raz.</string>
+    <string name="notify_offer_yes">Przypominaj</string>
+    <string name="notify_offer_no">Nie, dziękuję</string>
+
     <string name="main_title">Gra</string>
     <string name="level_number">Poziom %1$d</string>
     <string name="level_size">%1$d × %2$d</string>
@@ -209,6 +243,17 @@
     <string name="settings_haptics_note">Krótka wibracja przy każdej literze, znalezionym słowie i ukończonej planszy. Reakcja haptyczna w ustawieniach telefonu też musi być włączona.</string>
     <string name="settings_haptics_system_off">Reakcja haptyczna jest wyłączona w ustawieniach telefonu, więc plansza nie zawibruje. Włącz ją tam, żeby korzystać z tego przełącznika.</string>
     <string name="settings_haptics_no_vibrator">To urządzenie nie ma wibracji.</string>
+
+    <string name="settings_notify">Przypomnienia</string>
+    <string name="settings_notify_daily">Przypominaj o dziennej planszy</string>
+    <string name="settings_notify_automatic">Dobieraj godzinę za mnie</string>
+    <string name="settings_notify_time">Godzina: %1$s</string>
+    <string name="settings_notify_time_title">Godzina przypomnienia</string>
+    <string name="settings_notify_time_set">Ustaw</string>
+    <string name="settings_notify_automatic_note">Godzina podąża za tym, kiedy rozwiązujesz dzienną planszę. Teraz: %1$s.</string>
+    <string name="settings_notify_note">Najwyżej raz dziennie i tylko wtedy, gdy dzisiejsza plansza czeka. Po trzech z rzędu bez gry przypomnienia wyłączają się same.</string>
+    <string name="settings_notify_blocked">Powiadomienia z gry są zablokowane w ustawieniach telefonu.</string>
+    <string name="settings_notify_open_system">Otwórz ustawienia telefonu</string>
     <string name="settings_tutorial">Samouczek</string>
     <string name="settings_tutorial_replay">Pokaż samouczek</string>
     <string name="settings_tutorial_note">Zasady gry na małej planszy, którą rozwiązujesz sam. Możesz go pominąć w każdej chwili.</string>
@@ -239,6 +284,9 @@
     <string name="licence_open">Otwórz licencję</string>
     <string name="licence_back">Wstecz</string>
     <string name="settings_licence">Licencje</string>
+    <string name="settings_about">O grze</string>
+    <string name="settings_licences_title">Licencje i źródła słów</string>
+    <string name="settings_licences_note">Skąd pochodzą słowniki oraz licencje gry, list słów i ikon.</string>
     <string name="licence_ravel_notice">Ravel jest wydany na licencji PolyForm Noncommercial 1.0.0. Kod źródłowy jest dostępny pod adresem https://github.com/andret2344/ravel-android i można go czytać, budować i zmieniać w każdym celu niekomercyjnym; użycie komercyjne nie jest objęte licencją. Copyright 2026 Andret2344. Listy słów i ikony nie są objęte tymi warunkami — są wymienione w opcjach, na licencjach projektów, z których pochodzą.</string>
     <string name="licence_icons_notice">Ikony to Material Symbols i Material Icons firmy Google (https://fonts.google.com/icons), użyte na licencji Apache License, Version 2.0. Zostały zmodyfikowane względem oryginałów. Pełny tekst licencji znajduje się poniżej.</string>
 </resources>

@@ -20,7 +20,8 @@ Two languages, Polish and English, each with its own bundled dictionary of base 
 
 - **Daily** — one board per calendar date, the same board for everyone, with a streak and a
   calendar of past days. A solved day can be shared as a picture of its word lengths (`4🟥 5🟩 9🟨`)
-  and nothing else.
+  and nothing else. An opt-in notification, at most once a day and only while the day's board is
+  unsolved, comes around the time the player last solved one, or at a time they pick.
 - **Levels** — an endless ladder. Grid size ramps to 10×10 by level 250; how obscure the words may
   be keeps climbing to level 2500. A hard-mode switch on the game tab hides the word lengths and
   their count, for a larger reward; a level keeps the mode it was first opened in.
@@ -33,7 +34,8 @@ asks for one - from the shop or from that streak repair.
 A short interactive tutorial on a hand-made board opens on first launch - including one real word
 that lies on the board and still does not count; it can be skipped and
 replayed from the options tab. The options tab also holds the language, board haptics, the theme
-(system, light or dark) and a progress reset that never pays the same level or day twice.
+(system, light or dark), the daily notification and a progress reset that never pays the same level
+or day twice.
 
 ## Modules
 
@@ -99,6 +101,6 @@ lists and the Material icons (Apache 2.0) are third-party material under their o
 
 The dictionaries are built from third-party corpora, three of which require a notice: **SJP.PL** and
 **KWJP100** (CC BY 4.0, modified), **PoliMorf** (BSD 2-clause), and **WordNet 3.0** (Princeton).
-The app carries all of them under "Word sources" in the options tab; `generator/DICTIONARY.md`
-records the full list. The icons are Material Symbols by Google (Apache 2.0); the options tab
-carries that licence under "Licences", beside the game's own.
+The app carries all of them under "Word sources" on the licenses page, one row in the options tab;
+`generator/DICTIONARY.md` records the full list. The icons are Material Symbols by Google
+(Apache 2.0); the same page carries that licence under "Licences", beside the game's own.

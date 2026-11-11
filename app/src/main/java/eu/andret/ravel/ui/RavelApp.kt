@@ -1,5 +1,9 @@
 package eu.andret.ravel.ui
 
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContentTransitionScope
@@ -27,6 +31,7 @@ import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -45,8 +50,10 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import eu.andret.ravel.R
+import eu.andret.ravel.game.DailyDate
 import eu.andret.ravel.ui.about.LicenceRoute
 import eu.andret.ravel.ui.about.LicenceScreen
+import eu.andret.ravel.ui.about.LicencesScreen
 import eu.andret.ravel.ui.daily.DailyMenuScreen
 import eu.andret.ravel.ui.daily.DailyRoute
 import eu.andret.ravel.ui.daily.DailyScreen
@@ -151,6 +158,8 @@ fun RavelApp(
     val prompt by viewModel.prompt.collectAsStateWithLifecycle()
     val remind by viewModel.remind.collectAsStateWithLifecycle()
     val tutorial by viewModel.tutorial.collectAsStateWithLifecycle()
+    val openDaily by viewModel.openDaily.collectAsStateWithLifecycle()
+    val offer by viewModel.offer.collectAsStateWithLifecycle()
 
     // The tutorial is laid over the shell rather than swapped in for it, so the tabs keep their back
     // stacks underneath: replayed from the options tab, closing it lands back on the options tab.
@@ -293,7 +302,14 @@ fun RavelApp(
                         composable(STATS_ROUTE) { StatsScreen(modifier = content) }
                         composable(SETTINGS_ROUTE) {
                             SettingsScreen(
+                                onLicences = { navController.navigate(LicenceRoute.LIST) },
+                                modifier = content,
+                            )
+                        }
+                        composable(LicenceRoute.LIST) {
+                            LicencesScreen(
                                 onLicence = { navController.navigate(LicenceRoute.of(it)) },
+                                onBack = { navController.popBackStack() },
                                 modifier = content,
                             )
                         }
@@ -308,6 +324,21 @@ fun RavelApp(
                                 onBack = { navController.popBackStack() },
                                 modifier = content,
                             )
+                        }
+                    }
+                    // Here, after the host, rather than at the top of the shell: the host is
+                    // composed inside this adaptive layout's measuring, and navigating before it has
+                    // set its graph is a crash. Effects run once the composition they sit in is
+                    // applied, and this is the same one.
+                    LaunchedEffect(openDaily) {
+                        if (openDaily) {
+                            // The same two steps as the launch prompt's "Play", for the same reason:
+                            // backing out of the board lands on the daily tab, not where they were.
+                            navController.switchTo(RavelTab.DAILY)
+                            navController.navigate(DailyRoute.board(DailyDate.today(), review = false)) {
+                                launchSingleTop = true
+                            }
+                            viewModel.openedDaily()
                         }
                     }
                 }
@@ -334,6 +365,33 @@ fun RavelApp(
                 navController.navigate(DailyRoute.board(viewModel.today, review = false))
             },
             onDismiss = viewModel::dismissPrompt,
+        )
+    }
+
+    // The system's half of saying yes, on Android 13 and later. A no here leaves them off; the
+    // options tab says they are blocked and opens the system settings from there.
+    val permission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted -> if (granted) viewModel.enableNotifications() }
+
+    // Never over a board: the question follows a solve, and the solve has its own dialog. Leaving
+    // the board - by the completion dialog's own button or any other way - is when it comes up.
+    // Not over the tutorial or the launch prompt either, for the reason the prompt gives above.
+    val onBoard = entry?.destination?.route == DailyRoute.BOARD
+    offer?.takeIf { !onBoard && !tutorial && !prompt }?.let { current ->
+        NotificationOfferDialog(
+            offer = current,
+            onYes = {
+                viewModel.closeOffer(current)
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+                    viewModel.notificationsPermitted()
+                ) {
+                    viewModel.enableNotifications()
+                } else {
+                    permission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            },
+            onNo = { viewModel.closeOffer(current) },
         )
     }
 }

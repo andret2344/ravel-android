@@ -3,6 +3,17 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <!--
+        The daily notification, and nothing else posts one. The permission is asked for only after the
+        player has said yes inside the game - see notify/DailyNotifications.kt and the offer after the
+        second solved daily - never at launch.
+
+        RECEIVE_BOOT_COMPLETED because a reboot clears every alarm, and the notification's is one.
+        No exact-alarm permission: the alarm is deliberately inexact.
+    -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!--
         usesCleartextTraffic is spelled out because leaving it off does not mean "off": the platform
         default is permissive below API 28 and restrictive from 28 up, so an unset attribute is two
         different policies depending on the phone, and the permissive one covers exactly the API
@@ -110,6 +121,23 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!--
+            The daily notification's alarm, and the system broadcasts after which that alarm may be
+            gone or wrong. Not exported: the system delivers its own broadcasts to an unexported
+            receiver, and nothing outside the app should be able to make it post. Every action here is
+            on the list of implicit broadcasts a manifest may still register for.
+        -->
+        <receiver
+            android:name=".notify.NotificationReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

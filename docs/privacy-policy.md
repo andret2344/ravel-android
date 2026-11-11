@@ -29,6 +29,7 @@ The app keeps the following on your device only:
 - boards built in advance, so the next puzzle opens without waiting
 - the coin balance, how many ads were watched today, whether today's free gift was claimed, and whether today's hint suggestion was shown
 - settings: language, theme, vibration, hard mode, whether to be reminded of an unsolved daily puzzle, whether the tutorial was completed, and your advertising consent choice
+- the daily puzzle notification: whether it is on, whether its time is chosen automatically or the time you picked, the time of day you last solved the daily puzzle (which the automatic time follows), the last day a notification was sent and how many in a row went unanswered, and whether you have been asked about turning it on. The notification is scheduled and shown by the app on your device; nothing about it is sent anywhere.
 
 This data is not sent to the publisher or to any server operated by the publisher. It is removed by clearing the app's data or uninstalling the app.
 
