@@ -24,6 +24,11 @@ package eu.andret.ravel.game
  * cost more. So a player who needs a nudge buys letters and a player who is beaten buys the word,
  * and which of those they are is decided by the board rather than by arithmetic. Moving either price
  * without the other moves that break-even, which is the actual design here.
+ *
+ * Counted in boards they are dearer than when the paragraph above was written: [Rewards.FOR_COMPLETING]
+ * came down from 25 to fifteen, which made a word six and two-thirds solved boards rather than four.
+ * That was the pay for playing being cut, not these prices being raised, and the difference matters -
+ * see [Rewards.FOR_COMPLETING] for why the prices were the one thing left alone.
  */
 enum class Hint(val cost: Int) {
     /**

@@ -1,12 +1,16 @@
 package eu.andret.ravel.ui.daily
 
+import android.app.Activity
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import eu.andret.ravel.RavelApplication
+import eu.andret.ravel.ads.RewardedAds
 import eu.andret.ravel.game.DailyDate
 import eu.andret.ravel.game.PuzzleId
 import eu.andret.ravel.game.PuzzleMode
+import eu.andret.ravel.game.Rewards
+import eu.andret.ravel.game.Streak
 import eu.andret.ravel.settings.DailyProgressState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -69,6 +73,61 @@ class DailyMenuViewModel(application: Application) : AndroidViewModel(applicatio
     val state: StateFlow<DailyProgressState> = progress.state
 
     val balance: StateFlow<Int> = (application as RavelApplication).wallet.balance
+
+    private val ravel = application as RavelApplication
+
+    /** The ad the repair dialog can play, and why it cannot when it cannot. */
+    val adState: StateFlow<RewardedAds.State> = ravel.ads.state
+
+    /** Watches left today. A repair paid with an ad is one of them. */
+    val watchesLeft: StateFlow<Int> = ravel.adAllowance.remaining
+
+    /**
+     * The repair dialog is on screen: count the day again and have an ad ready for it.
+     *
+     * The first ad of a process otherwise waits for the shop to be opened - see
+     * [RewardedAds.want]. A player deciding whether to save their run is a player who may want one
+     * now, so the dialog asks for it the way the shop does.
+     */
+    fun prepareRepair() {
+        ravel.adAllowance.refresh()
+        ravel.ads.want()
+    }
+
+    /** Asks for another ad after a failed fetch, as the shop's tile does. */
+    fun retryAd() = ravel.ads.load()
+
+    /** The dialog opened by itself for [ordinal]; from now on the offer waits on the run card. */
+    fun markRepairAsked(ordinal: Long) = progress.markRepairAsked(ordinal)
+
+    /** Said no to saving the run. Final for this gap. */
+    fun declineRepair(ordinal: Long) = progress.declineRepair(ordinal)
+
+    /**
+     * Buys back [ordinal] with [Streak.REPAIR_PRICE] coins.
+     *
+     * Paid before it is recorded, and handed back if recording refuses - a midnight between the
+     * dialog opening and the press turns the gap into two, and the run is then over whatever was
+     * paid. The other order would record a repair the wallet then could not cover.
+     */
+    fun repairWithCoins(ordinal: Long) {
+        if (!ravel.wallet.spend(Streak.REPAIR_PRICE)) return
+        if (!progress.repair(ordinal)) ravel.wallet.earn(Streak.REPAIR_PRICE)
+    }
+
+    /**
+     * Buys back [ordinal] with one rewarded ad, counted against today's [Rewards.ADS_PER_DAY].
+     *
+     * The second of the two places an ad may start, beside the shop's tile. Paid in the reward
+     * callback like the shop's, so an ad abandoned halfway costs nothing and repairs nothing. If the
+     * repair is refused by then - the ad played across midnight - the watch is paid in coins
+     * instead, as the shop would have paid it: the player watched it, and an ad that bought nothing
+     * would be the one thing worse than no offer at all.
+     */
+    fun repairWithAd(activity: Activity, ordinal: Long) = ravel.ads.show(activity) {
+        if (!ravel.adAllowance.consume()) return@show
+        if (!progress.repair(ordinal)) ravel.wallet.earn(Rewards.FOR_WATCHING_AD)
+    }
 
     private val _month = MutableStateFlow(MonthGrid.containing(_today.value))
 

@@ -41,6 +41,7 @@ import eu.andret.ravel.ui.game.FailedBoard
 import eu.andret.ravel.ui.game.GeneratingBoard
 import eu.andret.ravel.ui.game.HintRow
 import eu.andret.ravel.ui.game.PlayableBoard
+import eu.andret.ravel.ui.game.StuckOffer
 import eu.andret.ravel.ui.game.TracedWord
 import eu.andret.ravel.ui.game.afterSolvedPause
 import eu.andret.ravel.ui.game.asClock
@@ -150,6 +151,9 @@ fun DailyScreen(
             }
         },
     )
+
+    // Not on a review: a day already over cannot be stuck on, and nothing on it can be bought.
+    if (!viewModel.review) StuckOffer(puzzle = puzzle, elapsed = elapsed, onShop = onShop)
 
     afterSolvedPause(completion)?.let {
         CompletedDialog(

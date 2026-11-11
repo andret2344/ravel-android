@@ -17,6 +17,7 @@ import eu.andret.ravel.settings.LevelProgress
 import eu.andret.ravel.settings.StoredDailyProgress
 import eu.andret.ravel.settings.StoredBoards
 import eu.andret.ravel.settings.StoredLevelProgress
+import eu.andret.ravel.settings.StuckOffer
 import eu.andret.ravel.settings.ThemeSettings
 import eu.andret.ravel.settings.TutorialSettings
 import eu.andret.ravel.settings.Wallet
@@ -189,6 +190,9 @@ class RavelApplication : Application() {
 
     /** Today's free gift in the shop, here for the reason [adAllowance] is. */
     val dailyGift: DailyGift by lazy { DailyGift(this) }
+
+    /** Today's one "stuck?" dialog on a board, here for the reason [adAllowance] is. */
+    val stuckOffer: StuckOffer by lazy { StuckOffer(this) }
 
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)

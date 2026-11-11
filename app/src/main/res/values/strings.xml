@@ -108,11 +108,30 @@
     <string name="streak_rung_offered">Day %1$d, %2$s, today</string>
     <string name="streak_rung_ahead">Day %1$d, %2$s</string>
 
+    <!--
+        Repairing a run: one missed day bought back the next day, with coins or an ad. The price is
+        never in these strings - it is drawn beside them with the coin, through CoinAmount.
+    -->
+    <string name="streak_repaired">Includes a saved day</string>
+    <string name="streak_repair_info">Missed a day? The next day you can save your streak with coins or an ad - once per seven-day cycle.</string>
+    <string name="streak_at_risk">At risk - save it by midnight</string>
+    <string name="streak_repair_open">Save</string>
+    <string name="repair_title">Save your streak?</string>
+    <plurals name="repair_body">
+        <item quantity="one">Yesterday\'s challenge went unsolved. Your %1$d-day streak ends at midnight unless you save it.</item>
+        <item quantity="other">Yesterday\'s challenge went unsolved. Your %1$d-day streak ends at midnight unless you save it.</item>
+    </plurals>
+    <string name="repair_rule">The saved day pays nothing and does not add to the count. One save per seven-day cycle.</string>
+    <string name="repair_watch">Watch an ad</string>
+    <string name="repair_pay">Pay</string>
+    <string name="repair_decline">Let it go</string>
+
     <string name="calendar_previous">Previous month</string>
     <string name="calendar_next">Next month</string>
     <string name="calendar_day_solved">%1$d, solved</string>
     <string name="calendar_day_today">%1$d, today, not solved yet</string>
     <string name="calendar_day_missed">%1$d, missed</string>
+    <string name="calendar_day_repaired">%1$d, missed, streak saved</string>
     <string name="calendar_day_future">%1$d</string>
 
     <!-- The card under the calendar: one day, spelled out. -->
@@ -244,6 +263,12 @@
 
     <string name="shop_buy">Coin packs</string>
     <string name="shop_coming_soon">Coming soon</string>
+
+    <!-- Shown on a board once a day at most, after a long stretch without a word. Leads to the shop. -->
+    <string name="stuck_title">Need a hint?</string>
+    <string name="stuck_body">Watch an ad in the shop and get enough coins for a whole word:</string>
+    <string name="stuck_go">Go to the shop</string>
+    <string name="stuck_later">Not now</string>
 
     <!--
         The options tab. One setting, so the group heading carries the whole screen.

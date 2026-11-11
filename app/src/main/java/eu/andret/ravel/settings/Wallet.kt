@@ -53,23 +53,24 @@ class Wallet(context: Context) {
         const val KEY_BALANCE = "balance"
 
         /**
-         * Enough to try both hints and still have room to waste some.
+         * Enough to try both hints, and not enough to never need the shop.
          *
          * A player who has never seen a hint cannot know whether it is worth buying, and one who
          * can only afford a single letter has to treat that letter as precious - so they hoard it,
-         * never spend it, and never find out what they were being sold. Six letters, or a word and
-         * three letters, is enough to spend badly twice and still be curious.
+         * never spend it, and never find out what they were being sold. 250 is two words and a
+         * letter, or six letters: enough to spend both kinds once and still be curious.
          *
-         * It was 1000, which was the same idea costed against an economy that paid ten coins a
-         * board. Against the current one it is twenty-four solved boards handed over at install,
-         * and the cost of that is not generosity - it is weeks in which the shop has nothing a new
-         * player needs, which is weeks of the only thing in this game that earns anything going
-         * unlooked at. 600 buys the same lesson in a fortnight instead of a month.
+         * It was 1000, then 600, and each cut had the same reason. Coins handed over at install are
+         * weeks in which the shop has nothing a new player needs, which is weeks of the only thing
+         * in this game that earns anything going unlooked at. At 600 against fifteen a board that was
+         * forty boards of solving; 250 is about seventeen, so the first trip to the shop comes in
+         * the first week or two rather than the second month. 150 was recommended and 250 chosen.
          *
          * Only the default for a wallet that has never been written, so raising it hands the new
          * amount to anyone who has not spent a coin yet. Harmless before release; after it, this
-         * number has to be frozen and a grant written instead.
+         * number has to be frozen and a grant written instead. Lowering it touches only new
+         * installs.
          */
-        const val STARTING_BALANCE = 600
+        const val STARTING_BALANCE = 250
     }
 }

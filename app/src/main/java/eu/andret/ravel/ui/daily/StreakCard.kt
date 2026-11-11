@@ -10,15 +10,19 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -93,6 +97,17 @@ internal fun StreakCard(
                 modifier = if (fillHeight) Modifier.weight(1f) else Modifier,
                 fillHeight = fillHeight,
             )
+            // The one sentence on this card, and unlike the one that used to be here it says
+            // something nothing else on screen does: that a missed day is not the end of the run.
+            // Said up front rather than only in the dialog, so the repair is a rule the player knew
+            // about and not a sales pitch that turns up when they are already losing something. No
+            // price in it: the price is drawn with the coin in the dialog, and a coin figure in a
+            // sentence would be a second way of writing one.
+            Text(
+                text = stringResource(R.string.streak_repair_info),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
@@ -121,7 +136,17 @@ internal fun StreakCard(
  * where looking it up is the point.
  */
 @Composable
-internal fun TotalStreakCard(streak: Int, modifier: Modifier = Modifier) {
+internal fun TotalStreakCard(
+    progress: DailyProgressState,
+    modifier: Modifier = Modifier,
+    onRepair: () -> Unit = {},
+) {
+    // While a repair is on offer the run is not lost yet, so the card shows the run that is at
+    // stake - plus today, when today has already been solved on top of the gap - rather than the
+    // zero the count has fallen to. "No streak yet" over a thirty-day run that can still be saved
+    // would be telling the player it is gone, which is exactly what the repair exists to prevent.
+    val atRisk = progress.repairable != null
+    val shown = if (atRisk) progress.repairStake + progress.streak else progress.streak
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -129,32 +154,58 @@ internal fun TotalStreakCard(streak: Int, modifier: Modifier = Modifier) {
             contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
         ),
     ) {
-        Row(
+        Column(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.Center,
-            // Centred rather than on a shared baseline: the two differ by twenty points of type, and
-            // a baseline would hang the small word off the bottom of the big number.
-            verticalAlignment = Alignment.CenterVertically,
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            // Colours are left to the card's own content colour rather than set here. On a filled
-            // surface the usual onSurfaceVariant grey is a colour from a different background, and
-            // the size difference already says which of the two lines is the important one.
-            if (streak == 0) {
-                Text(
-                    text = stringResource(R.string.streak_none),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-            } else {
-                Text(
-                    text = streak.toString(),
-                    style = MaterialTheme.typography.displaySmall,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    text = pluralStringResource(R.plurals.streak_days, streak),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(start = 10.dp),
-                )
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                // Centred rather than on a shared baseline: the two differ by twenty points of type,
+                // and a baseline would hang the small word off the bottom of the big number.
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                // Colours are left to the card's own content colour rather than set here. On a
+                // filled surface the usual onSurfaceVariant grey is a colour from a different
+                // background, and the size difference already says which line is the important one.
+                if (shown == 0) {
+                    Text(
+                        text = stringResource(R.string.streak_none),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                } else {
+                    Text(
+                        text = shown.toString(),
+                        style = MaterialTheme.typography.displaySmall,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        text = pluralStringResource(R.plurals.streak_days, shown),
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(start = 10.dp),
+                    )
+                    // The run went over a repaired day. Marked so the number is never passed off as
+                    // something it is not: N days solved, with a gap in it that was bought back.
+                    if (progress.runRepaired) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_streak_repaired),
+                            contentDescription = stringResource(R.string.streak_repaired),
+                            modifier = Modifier.padding(start = 8.dp).size(20.dp),
+                        )
+                    }
+                }
+            }
+            if (atRisk) {
+                // The offer, after its dialog has been closed. It waits here until midnight, and the
+                // button reopens the same dialog - closing it was never a refusal.
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = stringResource(R.string.streak_at_risk),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    TextButton(onClick = onRepair) {
+                        Text(stringResource(R.string.streak_repair_open))
+                    }
+                }
             }
         }
     }

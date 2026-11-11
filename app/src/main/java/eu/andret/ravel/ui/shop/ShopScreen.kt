@@ -90,9 +90,10 @@ private const val PULSE_UP_MILLIS = 120
  * pressed without the coins for it - so a line repeating them here repeated what the player had
  * read a second earlier.
  *
- * This screen is the only place in the game an ad can start. That is a commitment made in the
- * privacy policy - every ad is one the player asked for, in exchange for something - and it is kept
- * structurally rather than by discipline: nothing else in the app can reach [RewardedAds.show].
+ * This screen is one of the two places in the game an ad can start; the other is the streak repair
+ * dialog on the daily menu. The privacy policy commits to every ad being one the player asked for,
+ * in exchange for something, and both are exactly that - a button the player presses for a reward
+ * named on it. The "stuck?" dialog on a board only points here; it starts nothing.
  */
 @Composable
 fun ShopScreen(modifier: Modifier = Modifier, viewModel: ShopViewModel = viewModel()) {

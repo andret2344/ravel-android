@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
@@ -168,6 +169,12 @@ private fun Weeks(
     }
 }
 
+/** How much of a repaired day's cell the snowflake behind its number takes. */
+private const val REPAIRED_MARK_SIZE = 0.8f
+
+/** How strongly the snowflake is drawn: enough to see, faint enough that the date reads over it. */
+private const val REPAIRED_MARK_ALPHA = 0.3f
+
 /** What a single day can be, which is the whole vocabulary the calendar has to draw. */
 private enum class DayState {
     /** Solved, and therefore openable: the board is rebuilt from its date and shown finished. */
@@ -179,12 +186,20 @@ private enum class DayState {
     /** Gone by unsolved. Nothing to open; the gap in the run is the entire message. */
     MISSED,
 
+    /**
+     * Gone by unsolved, and bought back the next day. Still nothing to open - it was never played -
+     * but not a gap either: the run went over it. Marked with the same snowflake as the run card, so
+     * the two places that show a run agree on where it was mended.
+     */
+    REPAIRED,
+
     /** Not yet. Drawn, because a month with its future cut off is not a month. */
     FUTURE,
 }
 
 private fun stateOf(ordinal: Long, progress: DailyProgressState, today: Long): DayState = when {
     progress.isSolved(ordinal) -> DayState.SOLVED
+    progress.isRepaired(ordinal) -> DayState.REPAIRED
     ordinal == today -> DayState.TODAY
     ordinal > today -> DayState.FUTURE
     else -> DayState.MISSED
@@ -216,6 +231,7 @@ private fun DayCell(
             DayState.SOLVED -> R.string.calendar_day_solved
             DayState.TODAY -> R.string.calendar_day_today
             DayState.MISSED -> R.string.calendar_day_missed
+            DayState.REPAIRED -> R.string.calendar_day_repaired
             DayState.FUTURE -> R.string.calendar_day_future
         },
         day,
@@ -224,7 +240,7 @@ private fun DayCell(
     val content = when (state) {
         DayState.SOLVED -> foundColors.onContainer
         DayState.TODAY -> MaterialTheme.colorScheme.primary
-        DayState.MISSED -> MaterialTheme.colorScheme.onSurfaceVariant
+        DayState.MISSED, DayState.REPAIRED -> MaterialTheme.colorScheme.onSurfaceVariant
         DayState.FUTURE -> MaterialTheme.colorScheme.outline
     }
     val ring = if (selected) {
@@ -248,6 +264,17 @@ private fun DayCell(
             .semantics { contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
+        // Behind the number rather than above it: drawn above, the mark pushed the date down out of
+        // line with the rest of its week. Faint, so the date - which is what a calendar cell is for -
+        // still reads first. Described by the cell's own sentence, not by itself.
+        if (state == DayState.REPAIRED) {
+            Icon(
+                painter = painterResource(R.drawable.ic_streak_repaired),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary.copy(alpha = REPAIRED_MARK_ALPHA),
+                modifier = Modifier.fillMaxSize(REPAIRED_MARK_SIZE),
+            )
+        }
         Text(
             text = day.toString(),
             style = MaterialTheme.typography.bodyMedium,

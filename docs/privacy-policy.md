@@ -25,9 +25,9 @@ Ravel has no user accounts, no server of its own, and no analytics. The game, it
 
 The app keeps the following on your device only:
 
-- game progress: levels completed, daily puzzle results and streak, the board in progress, times, and hints used
+- game progress: levels completed, daily puzzle results and streak (including missed days you chose to save, or chose not to), the board in progress, times, and hints used
 - boards built in advance, so the next puzzle opens without waiting
-- the coin balance, how many ads were watched today, and whether today's free gift was claimed
+- the coin balance, how many ads were watched today, whether today's free gift was claimed, and whether today's hint suggestion was shown
 - settings: language, theme, vibration, hard mode, whether to be reminded of an unsolved daily puzzle, whether the tutorial was completed, and your advertising consent choice
 
 This data is not sent to the publisher or to any server operated by the publisher. It is removed by clearing the app's data or uninstalling the app.
@@ -38,7 +38,7 @@ If Android backup is turned on in your device settings, this data can be include
 
 ## 4. Advertising
 
-The app shows advertising supplied by Google AdMob, and only as rewarded advertising: an ad is played when you choose to watch one in exchange for in-game coins. Ravel does not show banners, interstitials, or any advertising you did not ask for.
+The app shows advertising supplied by Google AdMob, and only as rewarded advertising: an ad is played when you choose to watch one in exchange for in-game coins or for saving your daily streak. Ravel does not show banners, interstitials, or any advertising you did not ask for.
 
 When an ad is requested or shown, the Google Mobile Ads SDK processes, on Google's side:
 

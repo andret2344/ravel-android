@@ -16,32 +16,60 @@ package eu.andret.ravel.game
  * for that, and [DailyDate] for what a day is called.
  *
  * The sums are deliberately of the same order as the game they are attached to: a full week pays
- * `6 * `[DAY]` + `[SEVENTH]` = 275`, against the 175 a week of solving pays through
+ * `6 * `[DAY]` + `[SEVENTH]` = 140`, against the 105 a week of solving pays through
  * [Rewards.FOR_COMPLETING]. Showing up is therefore worth roughly as much as playing and not
  * several times more, which is the only version where a player optimising for coins is still a
  * player who opens a board.
  *
- * Both numbers here were multiplied by two and a half when [Rewards.FOR_COMPLETING] was, and that
- * is the rule to follow next time rather than a coincidence: the ratio between the two is what the
- * paragraph above is about, so tuning one of them alone silently answers a question this file
- * already answered. At the old scale a week paid 110 against 70, which is the same 1.57.
+ * [DAY] has always moved with [Rewards.FOR_COMPLETING] - multiplied by two and a half when that
+ * was, cut to fifteen when that was - because the ratio between the two is what the paragraph above
+ * is about. The week's ratio is 1.33 now, down from 1.57: [SEVENTH] did not follow [DAY] down in
+ * proportion, see there.
+ *
+ * ## Repairing a run
+ *
+ * A single missed day can be bought back the next day, for [REPAIR_PRICE] or one rewarded ad, once
+ * per cycle. The rules and the reasons are on [StreakRun]; this file only holds the price, beside
+ * the rewards it has to be read against.
  */
 object Streak {
     /** How many days the reward ladder runs before it starts over. */
     const val CYCLE = 7
 
     /** Any of the first six days, and worth exactly one solved board - see [Rewards]. */
-    const val DAY = 25
+    const val DAY = 15
 
     /**
      * The seventh day, which is the one the other six exist to reach.
      *
-     * Five days' worth on top of a sixth, so missing day six costs the player day seven as well and
-     * they can see that coming from the start of the week. A smaller bonus would make the seventh
-     * day a rounding error and the six before it arbitrary. That it is `5 * `[DAY] is the rule, not
-     * the number: move [DAY] and this moves with it.
+     * More than three days' worth on top of a sixth, so missing day six costs the player day seven
+     * as well and they can see that coming from the start of the week. A smaller bonus would make
+     * the seventh day a rounding error and the six before it arbitrary.
+     *
+     * It was `5 * `[DAY], and the rule was the multiple rather than the number. When [DAY] came down
+     * to fifteen that rule would have given 75, and fifty was chosen instead: the economy was being
+     * made leaner on purpose (see [Rewards.FOR_COMPLETING]), and the week's ratio to solving -
+     * guarded by `StreakTest` as a band - drops from 1.57 to 1.33 and stays inside it. It also caps
+     * what a broken run costs in coins at 35, which is less than [REPAIR_PRICE]: a repair is bought
+     * for the count of days, not for the coins it saves, and that is the honest version of it.
      */
-    const val SEVENTH = 5 * DAY
+    const val SEVENTH = 50
+
+    /**
+     * What buying back one missed day costs in coins - or one rewarded ad instead.
+     *
+     * Exactly [Rewards.FOR_WATCHING_AD], so the repair offers one exchange rate and not two: "100
+     * coins or an ad" is the rate the shop already pays, and a player who has learned one has
+     * learned both. `StreakTest` holds the two equal.
+     *
+     * Deliberately more than a broken run costs in coins (see [SEVENTH]). What a repair saves is
+     * the number on the run card, and a price under the coins at stake would make repairing the
+     * rational move every time rather than a choice about how much the run is worth to the player.
+     *
+     * One price for every repair. A second repair in the same cycle costing more was considered and
+     * dropped together with the second repair itself: one per cycle needs no escalation.
+     */
+    const val REPAIR_PRICE = 100
 
     /**
      * What the [day]th day of a cycle pays, counting from 1.

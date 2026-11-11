@@ -30,6 +30,10 @@ arguments in `docs/DECISIONS.md`; an item here points at them rather than repeat
    during generation, process death mid-board and the wide layouts are covered by nothing.
 3. **The `compose-group-mapping` pin** in `app/build.gradle.kts`: on every AGP or Kotlin bump,
    comment it out and run `:app:assembleRelease`; delete it once that passes.
+4. **Measure the leaner economy** (2026-11-11, `DECISIONS.md`, "Why playing pays less"): rewarded
+   impressions per DAU from AdMob against DAU from the Play Console, before and after the release
+   that ships it, read on new installs - existing testers are still spending their old balances.
+   If the game reads as buyable, the next step is `ADS_PER_DAY` 2, not higher hint prices.
 
 ## Planned - decided, not built
 

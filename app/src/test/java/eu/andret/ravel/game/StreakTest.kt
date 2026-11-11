@@ -52,6 +52,21 @@ class StreakTest {
     }
 
     @Test
+    fun `a repair costs exactly what an ad pays`() {
+        // The repair dialog offers coins or an ad, and the two have to be the same offer or one of
+        // them is a trap. Pinned as an equality so moving either number moves the question here.
+        assertEquals(Rewards.FOR_WATCHING_AD, Streak.REPAIR_PRICE)
+    }
+
+    @Test
+    fun `a broken run costs less in coins than repairing it`() {
+        // The most a gap takes from the ladder is the seventh day's premium over an ordinary one. A
+        // repair priced under that would be the rational move every time, and the choice it offers -
+        // how much is the count worth to you - would stop being a choice.
+        assertTrue(Streak.SEVENTH - Streak.DAY < Streak.REPAIR_PRICE)
+    }
+
+    @Test
     fun `a day outside the cycle is a bug and says so`() {
         assertThrows(IllegalArgumentException::class.java) { Streak.rewardFor(0) }
         assertThrows(IllegalArgumentException::class.java) { Streak.rewardFor(Streak.CYCLE + 1) }

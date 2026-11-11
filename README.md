@@ -26,8 +26,9 @@ Two languages, Polish and English, each with its own bundled dictionary of base 
   their count, for a larger reward; a level keeps the mode it was first opened in.
 
 Hints cost coins, earned by completing puzzles, by keeping a daily streak, and in the shop's daily
-rewards: rewarded ads and a small free gift once a day. Ads are rewarded only, shown when the player
-asks for one.
+rewards: rewarded ads and a small free gift once a day. A single missed day can be saved the next
+day, once per seven-day cycle, for coins or an ad. Ads are rewarded only, shown when the player
+asks for one - from the shop or from that streak repair.
 
 A short interactive tutorial on a hand-made board opens on first launch - including one real word
 that lies on the board and still does not count; it can be skipped and

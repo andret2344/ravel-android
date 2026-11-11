@@ -43,6 +43,7 @@ import eu.andret.ravel.ui.game.GeneratingBoard
 import eu.andret.ravel.ui.game.HintRow
 import eu.andret.ravel.ui.game.PlayableBoard
 import eu.andret.ravel.ui.game.StackedDialog
+import eu.andret.ravel.ui.game.StuckOffer
 import eu.andret.ravel.ui.game.TracedWord
 import eu.andret.ravel.ui.game.afterSolvedPause
 import eu.andret.ravel.ui.game.asClock
@@ -170,6 +171,8 @@ fun LevelScreen(
             }
         },
     )
+
+    StuckOffer(puzzle = (state as? BoardState.Playing)?.puzzle, elapsed = elapsed, onShop = onShop)
 
     if (askingToDrop && hard) {
         DropHardDialog(

@@ -80,6 +80,20 @@ fun DailyMenuScreen(
     // this screen can open it, and nothing about the game changes while it is up.
     var calendarOpen by rememberSaveable { mutableStateOf(false) }
 
+    // Whether the repair offer is over the menu. It opens by itself once per gap - the store
+    // remembers that it has been shown - and after that only from the run card's button.
+    var repairOpen by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(progress.repairable, progress.asksForRepair) {
+        val gap = progress.repairable
+        if (gap == null) {
+            // Repaired, declined or past midnight: whatever was open belonged to a gap that is gone.
+            repairOpen = false
+        } else if (progress.asksForRepair) {
+            repairOpen = true
+            viewModel.markRepairAsked(gap)
+        }
+    }
+
     val tiles: @Composable (Modifier) -> Unit = { tileModifier ->
         DailyTiles(
             modifier = tileModifier,
@@ -120,7 +134,7 @@ fun DailyMenuScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Header(today = today, balance = balance, onShop = onShop)
-                    TotalStreakCard(streak = progress.streak)
+                    TotalStreakCard(progress = progress, onRepair = { repairOpen = true })
                     // Pushed to the bottom of its column rather than following the card above it.
                     // The three tiles are the controls and the two things over them are a report, so
                     // the gap between them is doing the same job the wider spacing does in the tall
@@ -150,7 +164,7 @@ fun DailyMenuScreen(
                 // The two streak cards sit closer to each other than to anything else: they are one
                 // subject split across two cards, and the outer spacing would read them as unrelated.
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TotalStreakCard(streak = progress.streak)
+                    TotalStreakCard(progress = progress, onRepair = { repairOpen = true })
                     StreakCard(progress = progress, today = today)
                 }
                 // A wider gap than the card spacing, so the tiles read as a separate band rather
@@ -159,6 +173,29 @@ fun DailyMenuScreen(
                 tiles(Modifier.padding(top = 12.dp))
             }
         }
+    }
+
+    // Drawn only while there is still a gap to repair, so a repair that went through - or a midnight
+    // that ended the offer - closes it without anyone having to say so.
+    val gap = progress.repairable
+    if (repairOpen && gap != null) {
+        val adState by viewModel.adState.collectAsStateWithLifecycle()
+        val watchesLeft by viewModel.watchesLeft.collectAsStateWithLifecycle()
+        StreakRepairDialog(
+            stake = progress.repairStake,
+            balance = balance,
+            adState = adState,
+            watchesLeft = watchesLeft,
+            onPrepare = viewModel::prepareRepair,
+            onWatch = { activity -> viewModel.repairWithAd(activity, gap) },
+            onRetry = viewModel::retryAd,
+            onPay = { viewModel.repairWithCoins(gap) },
+            onDecline = {
+                repairOpen = false
+                viewModel.declineRepair(gap)
+            },
+            onDismiss = { repairOpen = false },
+        )
     }
 
     if (calendarOpen) {

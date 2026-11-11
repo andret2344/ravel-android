@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.core.content.edit
 import eu.andret.ravel.game.DailyDate
 import eu.andret.ravel.game.Hint
+import eu.andret.ravel.game.StreakRun
 import eu.andret.ravel.game.WordMark
 import eu.andret.ravel.game.WordResult
 import eu.andret.ravel.generator.Language
@@ -109,6 +110,7 @@ class StoredDailyProgress(
                 pending = current.pending - card.ordinal,
                 board = null,
                 share = card,
+                repaired = current.repaired,
             ),
         )
         if (card.ordinal > lastPaid()) preferences.edit { putLong(KEY_LAST_PAID, card.ordinal) }
@@ -123,7 +125,29 @@ class StoredDailyProgress(
     override fun refresh() {
         // Nothing is read from disk: only "today" has moved, and the state already holds the rest.
         // An unchanged count makes an equal state, which the flow does not emit again.
-        _state.value = _state.value.let { recount(it.solved, it.pending, it.board, it.share) }
+        _state.value = _state.value.let { recount(it.solved, it.pending, it.board, it.share, it.repaired) }
+    }
+
+    override fun repair(ordinal: Long): Boolean {
+        // Recounted against the clock first: the state in memory may be from before a midnight the
+        // caller's ad played across, and that midnight may have turned this gap into two.
+        refresh()
+        val current = _state.value
+        if (current.repairable != ordinal) return false
+        val repaired = current.repaired + ordinal
+        preferences.edit { putString(KEY_REPAIRED, JSONArray(repaired.sorted()).toString()) }
+        _state.value = recount(current.solved, current.pending, current.board, current.share, repaired)
+        return true
+    }
+
+    override fun declineRepair(ordinal: Long) {
+        preferences.edit { putLong(KEY_REPAIR_DECLINED, ordinal) }
+        refresh()
+    }
+
+    override fun markRepairAsked(ordinal: Long) {
+        preferences.edit { putLong(KEY_REPAIR_ASKED, ordinal) }
+        refresh()
     }
 
     override fun saveBoard(board: SavedBoard) {
@@ -166,12 +190,32 @@ class StoredDailyProgress(
     private fun read(): DailyProgressState {
         val board = storedBoard()?.takeIf { it.language == language.value }
         val share = storedShare()
+        val repaired = storedRepaired()
         val stored = preferences.getString(KEY_DAYS, null)
-            ?: return recount(emptyMap(), emptyMap(), board, share)
+            ?: return recount(emptyMap(), emptyMap(), board, share, repaired)
         val parsed = runCatching { parse(JSONObject(stored)) }.getOrNull()
-            ?: return recount(emptyMap(), emptyMap(), board, share)
-        return recount(parsed.first, parsed.second, board, share)
+            ?: return recount(emptyMap(), emptyMap(), board, share, repaired)
+        return recount(parsed.first, parsed.second, board, share, repaired)
     }
+
+    /**
+     * Every day bought back, or none when the key is missing or unreadable.
+     *
+     * Its own key rather than a flag on the day inside [KEY_DAYS], because a repaired day is by
+     * definition one that has no entry there - it was missed - and giving it one would make every
+     * reader of that map learn to skip days that look solved and are not.
+     */
+    private fun storedRepaired(): Set<Long> = preferences.getString(KEY_REPAIRED, null)
+        ?.let { text ->
+            runCatching {
+                val array = JSONArray(text)
+                (0 until array.length()).map(array::getLong).toSet()
+            }.getOrNull()
+        }
+        ?: emptySet()
+
+    private fun storedDay(key: String): Long? =
+        if (preferences.contains(key)) preferences.getLong(key, 0L) else null
 
     /** Whatever board is on disk, in whatever language, or null when there is none to be had. */
     private fun storedBoard(): SavedBoard? = preferences.getString(KEY_BOARD, null)
@@ -190,23 +234,20 @@ class StoredDailyProgress(
         ?.let { runCatching { shareFromJson(JSONObject(it)) }.getOrNull() }
 
     /**
-     * Walks back from today counting solved days, then sweeps the whole history for the best run.
-     *
-     * The walk starts at today and is allowed one miss only if that miss is today itself - see
-     * [DailyProgressState.streak] for why. Anything earlier ends the count.
+     * Counts the run, the best run and the repair on offer against today - see
+     * [eu.andret.ravel.game.StreakRun] for every rule involved.
      */
     private fun recount(
         solved: Map<Long, DayResult>,
         pending: Map<Long, DayResult>,
         board: SavedBoard?,
         share: ShareCard?,
+        repaired: Set<Long>,
     ): DailyProgressState {
-        var day = if (today in solved) today else DailyDate.shifted(today, -1)
-        var streak = 0
-        while (day in solved) {
-            streak++
-            day = DailyDate.shifted(day, -1)
-        }
+        val days = solved.keys
+        val declined = storedDay(KEY_REPAIR_DECLINED)
+        val repairable = StreakRun.repairable(days, repaired, declined, today)
+        val streak = StreakRun.length(days, repaired, today)
         return DailyProgressState(
             solved = solved,
             pending = pending,
@@ -217,24 +258,14 @@ class StoredDailyProgress(
             // asking about a day rather than reading the slot.
             share = share,
             streak = streak,
-            longest = maxOf(streak, longestIn(solved.keys)),
+            longest = maxOf(streak, StreakRun.longest(days, repaired)),
+            repaired = repaired,
+            repairable = repairable,
+            repairStake = StreakRun.stake(days, repaired, declined, today),
+            runRepaired = StreakRun.includesRepair(days, repaired, today),
+            repairAsked = repairable != null && storedDay(KEY_REPAIR_ASKED) == repairable,
         )
     }
-
-    /** The best run anywhere in [solved]: a day starts a run when the day before it is missing. */
-    private fun longestIn(solved: Set<Long>): Int = solved.maxOfOrNull { start ->
-        if (DailyDate.shifted(start, -1) in solved) {
-            0
-        } else {
-            var day = start
-            var run = 0
-            while (day in solved) {
-                run++
-                day = DailyDate.shifted(day, 1)
-            }
-            run
-        }
-    } ?: 0
 
     private companion object {
         const val FILE = "ravel-daily"
@@ -253,6 +284,18 @@ class StoredDailyProgress(
 
         /** The latest day that has ever paid out, kept through a reset. */
         const val KEY_LAST_PAID = "lastPaid"
+
+        /** Every missed day bought back, as a JSON array of ordinals. */
+        const val KEY_REPAIRED = "repaired"
+
+        /**
+         * The last gap the player said no to repairing. One day, not a list: a refusal only ever
+         * matters on the day after the gap, which is the only day that gap can be repaired.
+         */
+        const val KEY_REPAIR_DECLINED = "repairDeclined"
+
+        /** The last gap whose repair dialog has been shown, so it opens by itself only once. */
+        const val KEY_REPAIR_ASKED = "repairAsked"
 
         // Short names because this string is rewritten on every hint and every pause, and a year of
         // play is a few hundred of these objects.

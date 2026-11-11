@@ -153,11 +153,24 @@ data class ShareCard(
  *   nothing above this line has to know the language exists.
  * @param streak days solved consecutively, ending today or yesterday. Yesterday still counts,
  *   because a streak the player has not yet had a chance to break today is not broken - it is
- *   waiting. It reaches zero only when the day before today was missed too.
+ *   waiting. It reaches zero only when the day before today was missed too - and was not
+ *   [repaired], which bridges the gap without adding a day to the count.
  * @param longest the best run so far, kept because it is the one number a player who has just lost
  *   a streak still owns.
  * @param share the last board solved, for as long as it is still the day it was solved on - see
  *   [ShareCard]. One slot, like [board], and read through [shareFor] for the same reason.
+ * @param repaired every missed day the player bought back. Each one bridges the run it sits in
+ *   without being counted in it - see [eu.andret.ravel.game.StreakRun]. History, like [solved], so
+ *   the calendar can mark them.
+ * @param repairable the missed day that can still be bought back today, or null. Derived, like
+ *   [streak], and for the same reason: it depends on the date, and a stored answer would go stale
+ *   at midnight.
+ * @param repairStake the run a repair would save, in days solved; zero when [repairable] is null.
+ * @param runRepaired whether the run [streak] counts passes over a repaired day, which the run card
+ *   marks so the number is never presented as something it is not.
+ * @param repairAsked whether the player has already been shown the repair for [repairable]. The
+ *   offer arrives as a dialog once; after that it waits on the run card until midnight, so closing
+ *   the dialog by accident is not the same as saying no.
  */
 data class DailyProgressState(
     val solved: Map<Long, DayResult> = emptyMap(),
@@ -166,7 +179,18 @@ data class DailyProgressState(
     val share: ShareCard? = null,
     val streak: Int = 0,
     val longest: Int = 0,
+    val repaired: Set<Long> = emptySet(),
+    val repairable: Long? = null,
+    val repairStake: Int = 0,
+    val runRepaired: Boolean = false,
+    val repairAsked: Boolean = false,
 ) {
+    /** Whether [ordinal] was missed and then bought back. */
+    fun isRepaired(ordinal: Long): Boolean = ordinal in repaired
+
+    /** Whether the repair dialog should open by itself: there is one on offer, not yet shown. */
+    val asksForRepair: Boolean get() = repairable != null && !repairAsked
+
     fun isSolved(ordinal: Long): Boolean = ordinal in solved
 
     /**
@@ -305,6 +329,31 @@ interface DailyProgress {
      * moves - see `DailyMenuViewModel.followToday`.
      */
     fun refresh()
+
+    /**
+     * Buys back [ordinal], the missed day [DailyProgressState.repairable] names.
+     *
+     * Takes no payment: the caller has already taken the coins or seen the ad finish, and this only
+     * records the result. It checks the day again rather than trusting the caller, because the two
+     * can be a midnight apart - an ad watched across one - and a repair recorded for a gap that has
+     * already become two is a run that should have ended.
+     *
+     * @return false when [ordinal] is no longer repairable, so the caller can give back whatever it
+     *   took for it.
+     */
+    fun repair(ordinal: Long): Boolean
+
+    /**
+     * Says no to repairing [ordinal]. Final for that gap: the offer does not come back, and the run
+     * stays broken.
+     */
+    fun declineRepair(ordinal: Long)
+
+    /**
+     * Records that the repair for [ordinal] has been shown, so the dialog does not open again by
+     * itself. The offer stays on the run card until midnight.
+     */
+    fun markRepairAsked(ordinal: Long)
 
     /**
      * Writes down where the player has got to, so closing the screen is not losing the board.

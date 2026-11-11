@@ -74,11 +74,28 @@
     <string name="streak_rung_offered">Dzień %1$d, %2$s, dzisiaj</string>
     <string name="streak_rung_ahead">Dzień %1$d, %2$s</string>
 
+    <string name="streak_repaired">Zawiera uratowany dzień</string>
+    <string name="streak_repair_info">Przegapiony dzień? Następnego dnia możesz uratować serię monetami albo reklamą - raz na siedmiodniowy cykl.</string>
+    <string name="streak_at_risk">Zagrożona - uratuj do północy</string>
+    <string name="streak_repair_open">Uratuj</string>
+    <string name="repair_title">Uratować serię?</string>
+    <plurals name="repair_body">
+        <item quantity="one">Wczorajsze wyzwanie zostało nierozwiązane. Seria %1$d dnia przepadnie o północy, chyba że ją uratujesz.</item>
+        <item quantity="few">Wczorajsze wyzwanie zostało nierozwiązane. Seria %1$d dni przepadnie o północy, chyba że ją uratujesz.</item>
+        <item quantity="many">Wczorajsze wyzwanie zostało nierozwiązane. Seria %1$d dni przepadnie o północy, chyba że ją uratujesz.</item>
+        <item quantity="other">Wczorajsze wyzwanie zostało nierozwiązane. Seria %1$d dnia przepadnie o północy, chyba że ją uratujesz.</item>
+    </plurals>
+    <string name="repair_rule">Uratowany dzień nic nie płaci i nie wlicza się do serii. Jedna naprawa na siedmiodniowy cykl.</string>
+    <string name="repair_watch">Obejrzyj reklamę</string>
+    <string name="repair_pay">Zapłać</string>
+    <string name="repair_decline">Odpuść</string>
+
     <string name="calendar_previous">Poprzedni miesiąc</string>
     <string name="calendar_next">Następny miesiąc</string>
     <string name="calendar_day_solved">%1$d, rozwiązane</string>
     <string name="calendar_day_today">%1$d, dzisiaj, jeszcze nierozwiązane</string>
     <string name="calendar_day_missed">%1$d, pominięte</string>
+    <string name="calendar_day_repaired">%1$d, pominięte, seria uratowana</string>
     <string name="calendar_day_future">%1$d</string>
 
     <string name="day_pick">Wybierz dzień, żeby zobaczyć, jak poszło.</string>
@@ -168,6 +185,11 @@
 
     <string name="shop_buy">Pakiety monet</string>
     <string name="shop_coming_soon">Wkrótce</string>
+
+    <string name="stuck_title">Potrzebna podpowiedź?</string>
+    <string name="stuck_body">W sklepie możesz obejrzeć reklamę i dostać monety na całe słowo:</string>
+    <string name="stuck_go">Do sklepu</string>
+    <string name="stuck_later">Nie teraz</string>
 
     <string name="settings_language">Język</string>
     <string name="settings_change">Zmień</string>

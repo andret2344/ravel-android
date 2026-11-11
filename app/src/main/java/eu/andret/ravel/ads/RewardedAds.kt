@@ -24,7 +24,8 @@ import kotlinx.coroutines.launch
  * Rewarded and nothing else, because that is what the privacy policy committed to in writing - no
  * banners, no interstitials, nothing the player did not ask for. That is also why this class has no
  * "show when convenient" entry point: [show] takes an activity and is called from a button press,
- * and there is no other way in.
+ * and there is no other way in. Two buttons call it: the shop's ad tile, for coins, and the streak
+ * repair dialog, for a missed day bought back.
  *
  * One instance for the process, held by the application, on the same argument the wallet is held
  * there. An ad takes seconds to fetch and is worth having ready before the player asks; a copy per
@@ -40,7 +41,8 @@ import kotlinx.coroutines.launch
  *
  * ## Why the first ad waits for the shop
  *
- * The first fetch goes out when the shop is first opened ([want]), not at launch. Fetched at launch,
+ * The first fetch goes out when the shop is first opened, or the streak repair dialog is ([want]),
+ * not at launch. Fetched at launch,
  * every player who allowed ads requested one, and most of them never open the shop: AdMob counts
  * those as requests without impressions, which is the show rate an account is judged on, and a
  * rewarded ad goes stale after an hour anyway. The cost is a few seconds of "finding an ad" on the
@@ -60,7 +62,7 @@ class RewardedAds(
 
     val state: StateFlow<State> = _state.asStateFlow()
 
-    /** The ad fetched and not yet shown. One at a time: the shop offers one button. */
+    /** The ad fetched and not yet shown. One at a time: only one screen offering it is ever up. */
     private var loaded: RewardedAd? = null
 
     /**
@@ -69,7 +71,10 @@ class RewardedAds(
      */
     private var started = false
 
-    /** Whether the shop has been opened in this process, which is what lets the first fetch out. */
+    /**
+     * Whether the shop or the repair dialog has been opened in this process, which is what lets the
+     * first fetch out.
+     */
     private var wanted = false
 
     /**
@@ -147,8 +152,9 @@ class RewardedAds(
     }
 
     /**
-     * The shop is on screen: fetch the first ad, now or as soon as consent allows. Cheap to call on
-     * every visit - only the first one changes anything. See the class comment.
+     * The shop or the repair dialog is on screen: fetch the first ad, now or as soon as consent
+     * allows. Cheap to call on every visit - only the first one changes anything. See the class
+     * comment.
      */
     fun want() {
         if (wanted) return

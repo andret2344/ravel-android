@@ -97,7 +97,7 @@ material, under their own terms, and stay under them:
 - `app/src/main/res/raw/licence_polimorf.txt`, `licence_wordnet.txt` and `licence_apache.txt` —
   verbatim third-party licence texts, redistributed as those licences require.
 - `app/src/main/res/drawable/ic_tab_*.xml`, `ic_calendar.xml`, `ic_check.xml`, `ic_chevron_left.xml`,
-  `ic_chevron_right.xml`, `ic_close.xml` and `ic_play.xml` — Material Symbols by Google, under the
+  `ic_chevron_right.xml`, `ic_close.xml`, `ic_play.xml` and `ic_streak_repaired.xml` — Material Symbols by Google, under the
   [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0). Modified: renamed, and the
   `android:tint` attribute removed, which names an AppCompat theme attribute this app does not have.
 - `app/src/main/res/drawable/ic_lock.xml` — the path of Material Icons' `lock` by Google, under the

@@ -205,7 +205,7 @@ board — drag, tap, hint — funnels through `withPath`**. The whole rule set i
 
 `RavelApplication` holds the process-wide singletons — `wallet`, `language`, `haptics`, `hardMode`,
 `theme`, `reminder`, `tutorial`, `progress` (daily), `levels`, `puzzles`, `consent`, `ads`, `adAllowance`,
-`dailyGift`. **Screens reach them through their
+`dailyGift`, `stuckOffer`. **Screens reach them through their
 `AndroidViewModel`, never by constructing their own.**
 
 `RavelApp.kt` is the whole navigation graph: five tabs, each keeping its own back stack. Screens live
@@ -264,8 +264,12 @@ Persistence is SharedPreferences plus JSON (`settings/SavedBoards.kt`, single-le
 
 ### Ads and consent
 
-- **`ads/RewardedAds.kt` is reachable only from `ShopScreen`'s ad card.** No other call site may start
-  an ad — that is the structural form of the rewarded-only promise.
+- **`RewardedAds.show` has exactly two call sites: `ShopScreen`'s ad card and the streak repair
+  dialog (`DailyMenuViewModel.repairWithAd`).** No other call site may start an ad — that is the
+  structural form of the rewarded-only promise. Both count against `ADS_PER_DAY`.
+- **The "stuck?" dialog (`ui/game/StuckOffer.kt`) only leads to the shop; it starts nothing.** At
+  most once a day (`settings/StuckOffer.kt`), after `STUCK_AFTER_SECONDS` (99) of solve-clock time
+  without a word, and never with the day's watches spent, ads refused, on a review or the tutorial.
 - **The reward amount is `Rewards.FOR_WATCHING_AD`, never the value the AdMob console attaches to the
   unit.** `ADS_PER_DAY` (3) watches, counted per *completed* watch by `settings/AdAllowance.kt`.
 - **Consent is gathered in `MainActivity.onCreate` before any of the game is drawn**
@@ -302,12 +306,13 @@ share card's squares, and the `translatable="false"` licence notices.
 
 ### The economy
 
-**Four numbers, tuned as a set**: `Rewards.FOR_COMPLETING` (25), `Streak.DAY` (25, `SEVENTH` =
-`5 * DAY`), `Rewards.FOR_WATCHING_AD` (100), against the `Hint` prices (40 / 100). Plus
-`Rewards.FOR_COMPLETING_HARD` (45), which must stay above `FOR_COMPLETING` by less than the cheapest
+**Four numbers, tuned as a set**: `Rewards.FOR_COMPLETING` (15), `Streak.DAY` (15, `SEVENTH` 50),
+`Rewards.FOR_WATCHING_AD` (100), against the `Hint` prices (40 / 100). Plus
+`Rewards.FOR_COMPLETING_HARD` (25), which must stay above `FOR_COMPLETING` by less than the cheapest
 hint - `PuzzleTest` holds it; that is what lets hints leave the hard bonus alone. And
-`Rewards.DAILY_GIFT` (15), the shop's one tap a day, which must stay under half the cheapest hint -
-`PuzzleTest` holds that too.
+`Rewards.DAILY_GIFT` (10), the shop's one tap a day, which must stay under half the cheapest hint and
+under `FOR_COMPLETING` - `PuzzleTest` holds that too. And `Streak.REPAIR_PRICE` (100), which must
+equal `FOR_WATCHING_AD` and exceed `SEVENTH - DAY` - `StreakTest` holds both.
 
 - **Never move one alone.** Three ratios are the design, guarded by `StreakTest` (as a band) and
   `PuzzleTest` (as a pair of inequalities).
@@ -315,8 +320,21 @@ hint - `PuzzleTest` holds it; that is what lets hints leave the hard bonus alone
   grant instead.
 - **If the game turns out winnable through the shop, drop `ADS_PER_DAY` to 2 rather than putting the
   hint prices back.**
+- **Make the economy leaner by paying less for playing, not by raising the hint prices.** The ad
+  stays pinned to one `Hint.WORD`.
 - **Coins for real money are verified on a server and wait for accounts.** Never ship a
   device-only purchase flow. Three consumable packs; prices live in the Play Console.
+
+### Streak repair
+
+- **One missed day, bought back the next day only, once per seven-day cycle**, for
+  `Streak.REPAIR_PRICE` coins or one ad. Two missed days, or a gap left past the next midnight,
+  end the run. Every rule is in `game/StreakRun.kt` and `StreakRunTest`; nothing else counts a run.
+- **A repaired day bridges the run and is not counted in it**, pays nothing and does not move the
+  ladder.
+- **The dialog opens by itself once per gap; closing it is not a refusal.** The offer waits on the
+  run card until midnight, and only "Let it go" (`declineRepair`) ends it.
+- **Repaired days are marked with `ic_streak_repaired`** on the run card and in the calendar.
 
 ### Showing a coin
 

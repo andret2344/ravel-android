@@ -778,21 +778,62 @@ allowance and settings stay.** The clearing methods sit on the concrete stores, 
 
 ### The four numbers and the three ratios
 
-`Rewards.FOR_COMPLETING` (25), `Streak.DAY` (25, with `SEVENTH` defined as `5 * DAY`),
-`Rewards.FOR_WATCHING_AD` (100), against the `Hint` prices (40 / 100).
+`Rewards.FOR_COMPLETING` (15), `Streak.DAY` (15, `SEVENTH` 50), `Rewards.FOR_WATCHING_AD` (100),
+against the `Hint` prices (40 / 100).
 
 Three ratios are the actual design, and all three are written down where they live:
 
-- a week of streak pays roughly 1.5× a week of solving — `StreakTest` guards it as a band,
-  deliberately not as two figures;
-- an ad pays what four solved boards pay;
+- a week of streak pays roughly 1.33× a week of solving (140 against 105) — `StreakTest` guards it
+  as a band, deliberately not as two figures;
+- an ad pays what six and two-thirds solved boards pay;
 - a word costs 2.5 letters, which is what puts the hint break-even at two letters — `PuzzleTest`
   guards that as the pair of inequalities, not as the ratio.
 
 Moving one number alone silently answers a question those comments already answered.
 
 The first three were all multiplied by 2.5 together when solving turned out to earn 10 coins against
-300 a day from ads.
+300 a day from ads, and cut together on 2026-11-11 - see below.
+
+### Why playing pays less: 25 to 15 (2026-11-11)
+
+The complaint was the opposite of the one that cut the hint prices: nobody needed the shop. At 25 a
+board a word cost four boards, so any player stuck less often than once in four saw their balance
+climb for good. A daily-only player was paid 555 a week (175 solving, 275 streak, 105 gift) for
+seven boards - five and a half words, nearly one per board. Add 600 at install, and the first reason
+to watch an ad arrived, if ever, in the second month. Rewarded ads only earn when a player has a
+reason to want one, so the economy had to produce that reason.
+
+What changed, together:
+
+| Number | Was | Now |
+|---|---|---|
+| `FOR_COMPLETING` | 25 | 15 |
+| `Streak.DAY` | 25 | 15 |
+| `Streak.SEVENTH` | 125 (`5 * DAY`) | 50 |
+| `FOR_COMPLETING_HARD` | 45 | 25 |
+| `DAILY_GIFT` | 15 | 10 |
+| `Wallet.STARTING_BALANCE` | 600 | 250 |
+
+A daily-only week is now 105 + 140 + 70 = 315. The ad stays at 100, one whole word, so it is now
+worth six and two-thirds boards instead of four: being stuck is one ad away from the word rather than
+an evening of other boards away. That is the trade being made, on purpose.
+
+- **Pay was cut, prices were left.** Raising the hint prices was asked about and turned down. Counted
+  in boards the cut already made a word two-thirds dearer; raising prices too would have tightened
+  the same screw twice before the first turn was measured, would have cut the ad loose from the word
+  it buys, and is the one lever the grinding complaint already ruled out. The one argument for it -
+  it is the only lever that devalues the coins existing testers have banked - was judged not worth
+  the signal it sends to the first players.
+- **`SEVENTH` stopped being `5 * DAY`.** 75 was the proportional figure; 50 was chosen to make the
+  economy leaner still. It keeps the week inside `StreakTest`'s band and caps a broken run at 35
+  coins, under the repair price - see "Streak repair".
+- **`FOR_COMPLETING_HARD` is a flat +10**, chosen over the proportional 27.
+- **`DAILY_GIFT` had to move**: at 15 it would equal a solved board, which `PuzzleTest` forbids.
+- **`STARTING_BALANCE` 250** over the 150 recommended: two words and a letter, about seventeen boards.
+- **Existing balances are not touched.** The economy may change before 1.0.0, but taking coins back
+  from testers was rejected. The cost is a slow signal: players sitting on 600+ will not reach the
+  shop for weeks, so "rewarded impressions per DAU" before and after will move slowly, and new
+  installs are the ones to watch.
 
 ### Why the hint prices came down alone
 
@@ -824,12 +865,47 @@ what keeps it that rather than income. Against a week of solving every daily (25
 | 15 | 105 | 60% |
 | 25 | 175 | 100% - a tap pays what a solved board pays |
 
-15 was chosen deliberately over the 10 that was recommended. `PuzzleTest` holds it under half the
-cheapest hint and under `FOR_COMPLETING`, which is the line that keeps a tap from being worth a board.
+15 was chosen deliberately over the 10 that was recommended. When `FOR_COMPLETING` came down to 15
+on 2026-11-11 the gift came down to 10: `PuzzleTest` holds it under half the cheapest hint and under
+`FOR_COMPLETING`, which is the line that keeps a tap from being worth a board. Against the new week
+of solving (105) it is 70, two-thirds.
 
 Its day rule is `AdAllowance`'s three-way comparison, stored as the day of the last claim in
 `ravel-ads`: a restore on the same day keeps it taken, a clock wound back gets nothing, and a progress
 reset does not touch it.
+
+### Streak repair
+
+Decided 2026-11-11. A single missed day can be bought back the next day, for `Streak.REPAIR_PRICE`
+(100) coins or one rewarded ad, once per seven-day cycle. The rules are `game/StreakRun.kt`.
+
+- **Why a repair after the fact and not a freeze bought in advance.** The question is asked at the
+  moment the loss is real, which is when it is worth something to the player; a stock of freezes
+  bought on a calm day is a decision made without that weight, and a stock is one more balance to
+  explain.
+- **Why 100, the same as an ad.** The dialog offers "100 coins or an ad" and so teaches the rate the
+  shop already pays. In coins a broken run costs at most 35 (`SEVENTH - DAY`), so the price is
+  deliberately above what it saves: a repair buys the count on the run card, not coins, and pricing
+  it under the coins at stake would make it the automatic answer instead of a choice. Players who
+  will not pay 100 for a count watch the ad, which is the point.
+- **Why one day only, and only the next day.** Two missed days end the run, and a gap not repaired
+  by the following midnight stays a gap - otherwise a player back after a month buys a month-old run
+  back with one ad.
+- **Why once per cycle.** Two per cycle were asked for first, with the second one priced higher; both
+  were dropped for one. A run kept alive through two gaps in seven days is five days a week, which
+  is not "in a row". One per cycle also needs no escalating price to explain. A repair belongs to the
+  cycle of the solved day after it, so a repair at the turn of a cycle cannot be paired with another
+  just after it.
+- **Why a repaired day is not counted.** "N days in a row" stays N days actually solved; the repair
+  only stops a gap from setting it to zero. It pays nothing and the ladder does not move. Solving
+  today before repairing is allowed, and the repair then does not top up today's pay.
+- **Why closing the dialog is not a refusal.** It opens by itself once per gap; a stray back gesture
+  must not cost a thirty-day run, so the offer then waits on the run card until midnight. Only "Let
+  it go" ends it.
+- **Why it says so up front.** The week card carries one sentence about the repair, so it is a rule
+  the player knew and not an offer that appears only when they are losing something.
+- **Why a repaired day is marked.** The snowflake (`ic_streak_repaired`, Material Symbols `ac_unit`)
+  on the run card and in the calendar keeps the run honest about having been mended.
 
 ### Why `STARTING_BALANCE` cannot be raised after release
 
@@ -963,6 +1039,26 @@ dialog landing on a screen the player had already started reading.
 That wait is capped at `SETTLE_TIMEOUT` and the timer is deliberately not cancelled — a word puzzle
 that works offline must never have a launch that depends on a network, and past the cap the form
 simply arrives on top of the game as it used to.
+
+### Why an ad can start from two places, and a dialog can point at a third
+
+Until 2026-11-11 the shop's tile was the only way into an ad. The streak repair dialog is now a
+second: the moment a run is about to be lost is the moment an ad is most worth watching, and sending
+the player to the shop and back would lose most of them on the way. It is still an ad the player
+asked for, by a button naming what it buys, so the privacy policy's promise - rewarded only, nothing
+unasked - holds. The policy's wording was widened from "for in-game coins" to "for in-game coins or
+for saving your daily streak".
+
+The "stuck?" dialog on a board is the one thing in the game that interrupts unasked, and it starts
+no ad: it points at the shop, with a way out. A repair-style "watch now" button there was not chosen;
+the shop keeps that role. Its rules:
+
+- **99 seconds of solve-clock time without a word.** 23 was the first figure and a guess; a player
+  on a 6x6 or larger routinely looks for a minute or two before the next word shows itself, so 23
+  would have interrupted nearly every board in the middle of the thinking the board asks for.
+- **Once a day, not once a board**, counted like the gift (`settings/StuckOffer.kt`, in `ravel-ads`).
+- **Never when it leads nowhere**: the day's watches spent, ads refused at consent, a review, the
+  tutorial.
 
 ### Why the reward amount is a local constant
 
