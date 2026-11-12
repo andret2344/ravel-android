@@ -376,6 +376,17 @@ equal `FOR_WATCHING_AD` and exceed `SEVENTH - DAY` - `StreakTest` holds both.
   happens to be coins.
 - **`coins_balance` is an accessibility string only.** Never put it back on screen beside a coin.
 
+### Attention dots
+
+- **A dot means two things only: today's daily unsolved (daily tab) and today's gift untaken (shop
+  tab and the gift tile).** Never the ad watches left, never a number in it.
+- **Every dot is `AttentionDot` (`ui/AttentionDot.kt`)**, not Material's `Badge`: one size, one red
+  for both themes, a ring in the color behind it.
+- **It pops once when it appears and never pulses.**
+- **The daily dot ignores `DailyReminder`.** The switch turns off the launch question, not the dot.
+- **The shell follows the date itself (`RavelAppViewModel.followToday`, while started)**; a dot never
+  waits for a screen to be opened to notice midnight.
+
 ### Shipping a release
 
 - **Release builds are shrunk (`optimization { enable = true }`) and R8 breaks things no test can

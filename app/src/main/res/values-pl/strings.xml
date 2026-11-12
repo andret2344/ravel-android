@@ -4,6 +4,8 @@
     <string name="tab_main">Gra</string>
     <string name="tab_shop">Sklep</string>
     <string name="tab_settings">Opcje</string>
+    <string name="tab_dot_daily">Dzisiejsza plansza nie jest jeszcze rozwiązana</string>
+    <string name="tab_dot_gift">Dzisiejszy prezent czeka</string>
 
     <string name="board_generating">Układam planszę…</string>
     <string name="board_slow">Ta plansza jest duża i układa się dłużej. Nie musisz tu czekać: będzie się układać dalej, gdy zagrasz w wyzwanie dnia.</string>

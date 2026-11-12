@@ -17,6 +17,9 @@
     <string name="tab_main">Game</string>
     <string name="tab_shop">Shop</string>
     <string name="tab_settings">Options</string>
+    <!-- Read by TalkBack for the dot on a tab; the dot itself has no text. -->
+    <string name="tab_dot_daily">Today\'s board is not solved yet</string>
+    <string name="tab_dot_gift">Today\'s gift is waiting</string>
 
     <!-- The board screen itself, which is the same screen in both game modes. -->
     <string name="board_generating">Building the board…</string>

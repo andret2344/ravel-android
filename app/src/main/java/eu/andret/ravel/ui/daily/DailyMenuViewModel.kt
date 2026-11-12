@@ -179,7 +179,7 @@ class DailyMenuViewModel(application: Application) : AndroidViewModel(applicatio
         while (true) {
             progress.refresh()
             rollTo(DailyDate.today())
-            delay(DailyDate.millisUntilNextDay(System.currentTimeMillis()) + MIDNIGHT_MARGIN_MILLIS)
+            delay(DailyDate.millisUntilNextDay(System.currentTimeMillis()) + DailyDate.MIDNIGHT_MARGIN_MILLIS)
         }
     }
 
@@ -202,9 +202,5 @@ class DailyMenuViewModel(application: Application) : AndroidViewModel(applicatio
     private fun show(next: MonthGrid) {
         _month.value = next
         _selected.value = _selected.value?.takeIf(next::contains)
-    }
-
-    private companion object {
-        const val MIDNIGHT_MARGIN_MILLIS = 1_000L
     }
 }

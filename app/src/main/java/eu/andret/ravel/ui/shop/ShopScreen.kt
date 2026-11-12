@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -24,6 +25,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
@@ -53,6 +55,7 @@ import eu.andret.ravel.R
 import eu.andret.ravel.ads.RewardedAds
 import eu.andret.ravel.debug.ShopDebug
 import eu.andret.ravel.game.Rewards
+import eu.andret.ravel.ui.AttentionDot
 import eu.andret.ravel.ui.CoinAmount
 
 /** How wide a tile is allowed to get, so a phone screen is not one edge-to-edge slab per offer. */
@@ -60,6 +63,16 @@ private val TILE_WIDTH = 280.dp
 
 /** The glyph at the top of a daily tile, and the box the loading spinner takes its place in. */
 private val GLYPH_SIZE = 56.dp
+
+/**
+ * Where the gift's dot moves from the glyph's corner, so it sits on the box's corner the way a tab's
+ * dot sits on its icon. Left in the corner it hung in the empty band above the box, beside the bow,
+ * and read as belonging to nothing. `ic_gift` draws the lid's top-right corner at (21, 7) of 24, which
+ * at 56 dp is about 7 dp in from the right and 16 dp down; these put the dot's center just inside it,
+ * so the ring cuts into the lid.
+ */
+private val GIFT_DOT_SHIFT_X = (-2).dp
+private val GIFT_DOT_SHIFT_Y = 6.dp
 
 /** Smaller than the glyph's box: a ring that size would read heavier than the glyph it replaces. */
 private val SPINNER_SIZE = 40.dp
@@ -297,6 +310,7 @@ private fun AdTile(
         leftDescription = stringResource(R.string.shop_ad_left_description, watchesLeft, Rewards.ADS_PER_DAY),
         status = status,
         press = press,
+        dot = false,
         modifier = modifier,
     )
 }
@@ -307,6 +321,9 @@ private fun AdTile(
  *
  * Taken, the box is drawn open, and it stays open for the rest of the day: the open lid is the
  * thing that says "already had it" before the count in the corner is read.
+ *
+ * Untaken, the box carries the same dot as the shop tab, so the dot that brought the player here
+ * is found again on the thing it was about, and goes out on both at the same tap.
  */
 @Composable
 private fun GiftTile(available: Boolean, onClaim: () -> Unit, modifier: Modifier = Modifier) {
@@ -321,6 +338,7 @@ private fun GiftTile(available: Boolean, onClaim: () -> Unit, modifier: Modifier
         leftDescription = stringResource(R.string.shop_gift_left_description, left, 1),
         status = null,
         press = if (available) onClaim else null,
+        dot = available,
         modifier = modifier,
     )
 }
@@ -344,6 +362,9 @@ private fun GiftTile(available: Boolean, onClaim: () -> Unit, modifier: Modifier
  * is the rule. It is the number left, so it reads 3/3 first thing and 0/3 when the day is spent.
  *
  * @param press what a tap does, or null when the tile is dead.
+ * @param dot whether the glyph carries the tab bar's dot. On the glyph rather than the card's
+ *   corner, which the count already holds - and a dot beside "1/1" would say it a second time.
+ *   No description of its own: the glyph's already says what can be done.
  * @param status a line under the reward for a reason the count cannot give, or null for none -
  *   a real state rather than an empty string, so a working tile reserves no gap for it.
  */
@@ -358,6 +379,7 @@ private fun DailyTile(
     leftDescription: String,
     status: String?,
     press: (() -> Unit)?,
+    dot: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Card(
@@ -419,6 +441,14 @@ private fun DailyTile(
                                 modifier = Modifier.fillMaxSize(),
                             )
                         }
+                    }
+                    if (dot) {
+                        AttentionDot(
+                            ring = CardDefaults.cardColors().containerColor,
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .offset(x = GIFT_DOT_SHIFT_X, y = GIFT_DOT_SHIFT_Y),
+                        )
                     }
                 }
                 CoinAmount(

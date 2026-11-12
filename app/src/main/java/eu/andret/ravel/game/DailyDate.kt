@@ -60,6 +60,14 @@ object DailyDate {
     fun millisUntilNextDay(now: Long): Long = startOfDay(shifted(ordinalOf(now), 1)) - now
 
     /**
+     * How far past [millisUntilNextDay] a loop following the date should sleep, so that the date it
+     * reads on waking is already the new one. A wake-up landing exactly on midnight, or a clock a
+     * few milliseconds behind the one that set the delay, would otherwise read yesterday and sleep
+     * a whole day more.
+     */
+    const val MIDNIGHT_MARGIN_MILLIS = 1_000L
+
+    /**
      * The ordinal [days] after [ordinal], negative to go back.
      *
      * Done through [Calendar] rather than by adding to the number itself, because the number is a

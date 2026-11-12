@@ -955,6 +955,31 @@ and `NotificationPlanTest`.
 - **Not to be confused with `DailyReminder`**, the in-app question at launch. That one was named
   first; the two are separate switches because they are different intrusions.
 
+### The attention dots (2026-11-12)
+
+A dot on the daily tab while today's board is unsolved, on the shop tab and on the gift tile while
+today's gift is untaken.
+
+- **Not Material's `Badge`.** That was the first version and read as timid: 6 dp at the corner of a
+  24 dp icon, in `colorScheme.error`, which this palette does not set - so Material's baseline, a
+  brick red close to the brown primary in the light theme and a pale pink (`#F2B8B5`) in the dark one.
+  `AttentionDot` is 10 dp of `#E53935` in both themes, with a 2 dp ring in the container's color so a
+  dot that size cuts into the icon's outline instead of merging into it. Still hung on `BadgedBox`,
+  which places it on the icon in the bar and the rail alike; on device the position came out right.
+- **No continuous pulse.** Asked about and turned down: something blinking at the edge of the eye all
+  day, including while a board is being solved, is the pressure the notification's "no guilt" rule
+  already refuses. One pop on appearing - launch, midnight, a rotation, opening the shop - is the
+  compromise.
+- **No dot for ad watches.** A dot lit until three ads are watched pressures toward ads, against the
+  rewarded-only promise; the gift is one free tap and goes out with it.
+- **The daily dot does not follow `DailyReminder`.** Asked and answered: the switch is about the
+  launch question only.
+- **The gift's dot is shifted onto the lid's corner** (`GIFT_DOT_SHIFT_X/Y`). In the glyph box's
+  corner it hung in the empty band above `ic_gift`, beside the bow, belonging to nothing.
+- **The shell follows the date** the way the daily menu does (see above), and refreshes `DailyGift`
+  as it goes - which also turns the gift tile back on at midnight for a player looking at the shop,
+  something the shop's own refresh on opening missed.
+
 ---
 
 ## Economy

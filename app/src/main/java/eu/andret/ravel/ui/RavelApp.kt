@@ -23,10 +23,13 @@ import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailDefaults
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -34,11 +37,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntOffset
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -160,6 +169,25 @@ fun RavelApp(
     val tutorial by viewModel.tutorial.collectAsStateWithLifecycle()
     val openDaily by viewModel.openDaily.collectAsStateWithLifecycle()
     val offer by viewModel.offer.collectAsStateWithLifecycle()
+    val dailyWaiting by viewModel.dailyWaiting.collectAsStateWithLifecycle()
+    val giftWaiting by viewModel.giftWaiting.collectAsStateWithLifecycle()
+
+    // Which tabs carry a dot, as what the dot says to TalkBack, or null for no dot. Worked out once,
+    // here, so the bar and the rail cannot disagree.
+    val dotOf = { tab: RavelTab ->
+        when (tab) {
+            RavelTab.DAILY -> R.string.tab_dot_daily.takeIf { dailyWaiting }
+            RavelTab.SHOP -> R.string.tab_dot_gift.takeIf { giftWaiting }
+            else -> null
+        }
+    }
+
+    // The dots follow the date while the game is on screen and stop with it, so nothing ticks for
+    // an app nobody is looking at - the same arrangement as the daily menu's own.
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(lifecycle, viewModel) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { viewModel.followToday() }
+    }
 
     // The tutorial is laid over the shell rather than swapped in for it, so the tabs keep their back
     // stacks underneath: replayed from the options tab, closing it lands back on the options tab.
@@ -188,7 +216,9 @@ fun RavelApp(
                                     selected = tab == selected,
                                     onClick = { navController.switchTo(tab) },
                                     enabled = tab.enabled,
-                                    icon = { TabIcon(tab, tab == selected) },
+                                    icon = {
+                                        TabIcon(tab, tab == selected, dotOf(tab), NavigationBarDefaults.containerColor)
+                                    },
                                     label = { Text(stringResource(tab.label)) },
                                 )
                             }
@@ -227,7 +257,9 @@ fun RavelApp(
                                     selected = tab == selected,
                                     onClick = { navController.switchTo(tab) },
                                     enabled = tab.enabled,
-                                    icon = { TabIcon(tab, tab == selected) },
+                                    icon = {
+                                        TabIcon(tab, tab == selected, dotOf(tab), NavigationRailDefaults.ContainerColor)
+                                    },
                                     label = { Text(stringResource(tab.label)) },
                                 )
                             }
@@ -397,21 +429,38 @@ fun RavelApp(
 }
 
 /**
- * One tab's shape, drawn the same whichever container it is sitting in.
+ * One tab's shape, drawn the same whichever container it is sitting in, with a dot on it when
+ * something there is waiting for the player - today's daily unsolved, today's gift untaken.
  *
  * Shared rather than written out twice, because the icon is the part of an item with a decision
  * behind it - see [RavelTab.icon] on why these are vectors and not characters - and a rail whose
  * icons had drifted from the bar's would be five tabs that looked like a different app on its side.
  *
- * No content description: the item's label is right under it and already names the tab, and a
- * description would have TalkBack read the name twice.
+ * No content description on the icon: the item's label is right under it and already names the
+ * tab, and a description would have TalkBack read the name twice. The dot does get one, since it
+ * is the one thing on the item the label does not say.
+ *
+ * The dot is [AttentionDot], with no number in it: there is only ever one thing waiting per tab,
+ * and a "1" would be a count of something that cannot be more. Still hung on Material's
+ * [BadgedBox], which knows where a badge goes on an icon in both containers.
+ *
+ * @param ring the color of the container the item sits in, for the dot's ring.
  */
 @Composable
-private fun TabIcon(tab: RavelTab, selected: Boolean) {
-    Icon(
-        painter = painterResource(if (selected) tab.selectedIcon else tab.icon),
-        contentDescription = null,
-    )
+private fun TabIcon(tab: RavelTab, selected: Boolean, @StringRes dot: Int?, ring: Color) {
+    BadgedBox(
+        badge = {
+            if (dot != null) {
+                val description = stringResource(dot)
+                AttentionDot(ring = ring, modifier = Modifier.semantics { contentDescription = description })
+            }
+        },
+    ) {
+        Icon(
+            painter = painterResource(if (selected) tab.selectedIcon else tab.icon),
+            contentDescription = null,
+        )
+    }
 }
 
 /**
