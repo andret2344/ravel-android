@@ -259,6 +259,8 @@ Persistence is SharedPreferences plus JSON (`settings/SavedBoards.kt`, single-le
 - **Every screen that lays out differently on its side asks `AdaptiveScreen { wide -> }`
   (`ui/Adaptive.kt`), never the device.** Material's window size classes are deliberately unused.
 - **`BoardLayout` is shared by both board screens.** Do not re-copy it.
+- **`MenuHeader` (`ui/MenuHeader.kt`) is shared by both game menus**, and lines the balance up with
+  the title by baseline, never by centering. Do not re-copy it.
 - **The board's half is a ceiling, `weight(5f)` against `4f`, not a share.**
 - **The board must never scroll**, in either arrangement. Every other overflowing screen may.
 - **No `android:configChanges` in the manifest**, deliberately — it would strip the forced locale.

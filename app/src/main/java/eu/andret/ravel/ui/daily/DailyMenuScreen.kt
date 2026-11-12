@@ -8,12 +8,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -21,7 +18,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -35,7 +31,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import eu.andret.ravel.R
 import eu.andret.ravel.game.DailyDate
 import eu.andret.ravel.ui.AdaptiveScreen
-import eu.andret.ravel.ui.game.BalanceButton
+import eu.andret.ravel.ui.MenuHeader
 import java.util.Date
 
 /**
@@ -236,22 +232,10 @@ private fun Header(today: Long, balance: Int, onShop: () -> Unit) {
     val date = remember(today, context) {
         DateFormat.getLongDateFormat(context).format(Date(DailyDate.startOfDay(today)))
     }
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column {
-            Text(
-                text = stringResource(R.string.daily_title),
-                style = MaterialTheme.typography.headlineSmall,
-            )
-            Text(
-                text = date,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        BalanceButton(balance = balance, onShop = onShop)
-    }
+    MenuHeader(
+        title = stringResource(R.string.daily_title),
+        balance = balance,
+        onShop = onShop,
+        subtitle = date,
+    )
 }

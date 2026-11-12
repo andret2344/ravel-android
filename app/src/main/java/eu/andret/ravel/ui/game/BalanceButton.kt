@@ -5,6 +5,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import eu.andret.ravel.ui.CoinAmount
 
@@ -27,9 +28,10 @@ import eu.andret.ravel.ui.CoinAmount
  * button asks for it like everything else does.
  */
 @Composable
-internal fun BalanceButton(balance: Int, onShop: () -> Unit) {
+internal fun BalanceButton(balance: Int, onShop: () -> Unit, modifier: Modifier = Modifier) {
     TextButton(
         onClick = onShop,
+        modifier = modifier,
         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
         colors = ButtonDefaults.textButtonColors(
             contentColor = MaterialTheme.colorScheme.onSurfaceVariant,

@@ -53,7 +53,7 @@ import eu.andret.ravel.settings.LevelProgressState
 import eu.andret.ravel.settings.SavedBoard
 import eu.andret.ravel.ui.AdaptiveScreen
 import eu.andret.ravel.ui.CoinAmount
-import eu.andret.ravel.ui.game.BalanceButton
+import eu.andret.ravel.ui.MenuHeader
 import eu.andret.ravel.ui.game.asClock
 import eu.andret.ravel.ui.theme.foundColors
 import eu.andret.ravel.ui.theme.hardColors
@@ -226,17 +226,7 @@ private fun WideMenu(
 
 @Composable
 private fun Header(balance: Int, onShop: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = stringResource(R.string.main_title),
-            style = MaterialTheme.typography.headlineSmall,
-        )
-        BalanceButton(balance = balance, onShop = onShop)
-    }
+    MenuHeader(title = stringResource(R.string.main_title), balance = balance, onShop = onShop)
 }
 
 /**

@@ -980,6 +980,20 @@ today's gift is untaken.
   as it goes - which also turns the gift tile back on at midnight for a player looking at the shop,
   something the shop's own refresh on opening missed.
 
+### Why the menus share one header, aligned by baseline (2026-11-12)
+
+Reported: the title and the coins moved "by about a pixel" between the game and daily tabs. Measured
+on a 420 dpi emulator it was 8 dp for the title and 2 dp for the coins. Each menu had its own copy of
+the header row, both centering vertically against the 48 dp balance button: the game's one-line
+title was centered in 48 dp, the daily's title-and-date block (52 dp) set the row's height itself, so
+the title sat at the top and the button 2 dp down.
+
+`MenuHeader` is the one copy, and aligns the title and the coin figure by first baseline, so the date
+under the daily's title adds height without moving either. Rejected: a fixed 8 dp over the title
+(48 - 32), which matches today's picture and comes apart at a larger font scale; and an empty second
+line under the game's title, which fakes content to match a height. After the change both tabs
+measured identical to the pixel.
+
 ---
 
 ## Economy
