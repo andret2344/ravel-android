@@ -6,10 +6,13 @@
 # These words stay in the dictionary and in the trie. Only the draw pool leaves them out
 # (Dictionary.poolTo), so the solver still sees each one as a word when it hunts for a second
 # solution, and a board where one of them would spell an alternative tiling is still rejected.
-# That is the difference from generator/blocklist-pl.txt, which removes vulgar stems from the
+# That is the difference from generator/blocklist-pl-PL.txt, which removes vulgar stems from the
 # dictionary altogether at build time. DICTIONARY.md, "Excluded answers", has the full argument.
 #
 # Reviewed word by word on 2026-11-08. Grouped by why a word is here; alphabetical within a group.
+# Extended on 2026-11-12 with medical words for sex organs, venereal disease,
+# menstruation and excretion; general medicine and words with an innocent
+# second meaning were left alone.
 # DictionaryTest checks that every entry is a word of the shipped dictionary and that none of them
 # reaches a pool.
 
@@ -267,6 +270,9 @@ zwłoki
 biust
 biustonosz
 cycek
+dopochwowy
+erekcja
+erekcyjny
 erotoman
 erotycznie
 erotyczny
@@ -274,14 +280,26 @@ erotyk
 erotyka
 erotyzacja
 erotyzm
+falliczny
+fallus
+genitalia
+genitalny
 golas
+impotencja
+impotent
+kopulacja
+kopulować
+krocze
+libido
 łechtaczka
 łechtaczkowy
 majtki
 masturbacja
 masturbować
+moszna
 nagi
 nagość
+napletek
 nasieniowód
 odbyt
 odbytnica
@@ -292,6 +310,9 @@ onanizować
 orgazm
 orgazmiczny
 penis
+płciowo
+płciowość
+płciowy
 pochwa
 pochwowy
 porno
@@ -300,6 +321,8 @@ pornografia
 pornol
 pornos
 poronienie
+pośladek
+prącie
 prezerwatywa
 prostytucja
 prostytuować
@@ -334,6 +357,26 @@ stringi
 sutek
 szczytować
 szczytowanie
+wagina
+waginalny
+wzwód
+
+# Venereal disease and menstruation
+aids
+kiła
+menopauza
+menstruacja
+miesiączka
+miesiączkowy
+opryszczka
+opryszczkowy
+owulacja
+podpaska
+rzeżączka
+syfilis
+tampon
+upławy
+weneryczny
 
 # Drugs
 amfetamina
@@ -407,17 +450,40 @@ piwosz
 # Bodily functions
 bekać
 beknąć
+biegunka
+czopek
+defekacja
+hemoroid
+hemoroidy
 kał
 kałowy
+lewatywa
 mocz
 moczowy
+nasikać
+obsikać
+osikać
+posikać
+rozwolnienie
+sikać
 siki
+siurek
+siusiać
+siusiak
+siusiu
 smark
 smarkać
 smarki
 wymiotny
 wymiotować
 wymioty
+wypróżniać
+wypróżnić
+wypróżnienie
+wysikać
+wzdęcie
+zasikać
+zsikać
 
 # Abortion
 aborcja

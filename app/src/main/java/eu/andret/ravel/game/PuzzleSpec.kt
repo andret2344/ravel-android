@@ -128,7 +128,7 @@ data class PuzzleSpec(
          * The dictionary behind these numbers is lemmas rather than inflected forms, so they buy
          * more than they look like they should: rank 4000 is *cierpienie* and *naprawa*, rank 10 000
          * is *kredens* and *ślubny*, and even the 25 000 mark is still ordinary Polish. See
-         * `generator/DICTIONARY.md`, and the length histogram `buildDictionaryPl` prints - a cap is
+         * `generator/DICTIONARY.md`, and the length histogram `buildDictionaryPlPl` prints - a cap is
          * only movable as far as the pools behind the *shortest* words allow, which is always the
          * binding constraint.
          *

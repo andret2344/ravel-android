@@ -34,9 +34,9 @@
 
         The suppression below is for localeConfig, which lint reports as unused because it does
         nothing under API 33 - which is true, and is the whole design rather than an oversight. It
-        is what puts Ravel in the system's per-app language picker on Android 13 and later, and the
-        options tab is what covers the years below that; see res/xml/locales_config.xml for why the
-        two settings do not fight. There is no way to scope tools:ignore to one attribute, so this
+        is what puts Ravel in the system's per-app language picker on Android 13 and later, which is
+        the same setting as the one in the options tab there; below 13 the options tab is the only
+        way in. See res/xml/locales_config.xml. There is no way to scope tools:ignore to one attribute, so this
         covers the element: a later attribute here that is genuinely too new for minSdk will be
         silent, and the place to notice that is a review of this file rather than a warning.
     -->

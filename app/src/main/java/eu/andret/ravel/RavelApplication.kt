@@ -1,6 +1,7 @@
 package eu.andret.ravel
 
 import android.app.Application
+import android.content.res.Configuration
 import eu.andret.ravel.ads.AdConsent
 import eu.andret.ravel.ads.RewardedAds
 import eu.andret.ravel.game.PuzzleCache
@@ -14,6 +15,7 @@ import eu.andret.ravel.settings.DailyProgress
 import eu.andret.ravel.settings.HapticSettings
 import eu.andret.ravel.settings.HardModeSettings
 import eu.andret.ravel.settings.LanguageSettings
+import eu.andret.ravel.settings.LegacyLanguageKeys
 import eu.andret.ravel.settings.LevelProgress
 import eu.andret.ravel.settings.NotificationSettings
 import eu.andret.ravel.settings.StoredDailyProgress
@@ -180,6 +182,8 @@ class RavelApplication : Application() {
     @Suppress("kotlin:S6310")
     override fun onCreate() {
         super.onCreate()
+        // Before anything reads a store: the keys it renames are the ones every store opens with.
+        LegacyLanguageKeys.migrate(this)
         scope.launch(Dispatchers.Default) {
             language.current.collect { Puzzles.preload(it) }
         }
@@ -207,6 +211,17 @@ class RavelApplication : Application() {
      */
     val notifications: DailyNotifications by lazy {
         DailyNotifications(this, NotificationSettings(this), progress)
+    }
+
+    /**
+     * From API 33 the language can be changed in Android's own settings while this process lives,
+     * and that arrives as a configuration change. The activity reads it again when it is rebuilt;
+     * this is for the process with no activity, so a notification built from a receiver is not
+     * written in the language the player has just left.
+     */
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        language.refresh()
     }
 
     override fun onTrimMemory(level: Int) {

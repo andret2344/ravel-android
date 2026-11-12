@@ -28,7 +28,7 @@ import org.json.JSONObject
  *
  * ## Which keys belong to a language
  *
- * The per-language ones carry the code in front of them - `pl.completed`, `en.board` - and the
+ * The per-language ones carry the code in front of them - `pl-PL.completed`, `en-US.board` - and the
  * lifetime ones carry nothing. Prefixes rather than a file per language: one file is one `edit` per
  * change, and it keeps the two kinds of number side by side where the difference between them is
  * visible in the key. A file per language would put them in different files, which is where a reader

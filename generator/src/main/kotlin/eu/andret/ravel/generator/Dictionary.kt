@@ -134,7 +134,7 @@ class Dictionary private constructor(
         fun loadBundled(language: Language, maxRank: Int = Int.MAX_VALUE): Dictionary {
             val resource = language.dictionaryResource
             val stream = requireNotNull(Dictionary::class.java.getResourceAsStream(resource)) {
-                "Missing $resource - run the buildDictionary${language.code.uppercase()} Gradle task first"
+                "Missing $resource - run the ${language.buildTask} Gradle task first"
             }
             return stream.reader(Charsets.UTF_8).use { load(language, it, maxRank, excludedAnswers(language)) }
         }

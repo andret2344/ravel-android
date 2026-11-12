@@ -76,7 +76,7 @@ CI (`.github/workflows/tests.yml`) runs exactly those four, in that order.
 ./gradlew :app:sweepLevels --args="--to 300" --quiet > sweep.csv
 
 # The generator directly: a width and a seed, for experiments with the difficulty dials
-./gradlew :generator:run --args="--width 8 --language en --difficulty hard --count 5"
+./gradlew :generator:run --args="--width 8 --language en-US --difficulty hard --count 5"
 
 # Rebuild the bundled dictionaries from the corpora in generator/data/
 ./gradlew :generator:buildDictionaries

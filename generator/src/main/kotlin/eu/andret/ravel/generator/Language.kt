@@ -8,6 +8,12 @@ package eu.andret.ravel.generator
  * vulgar *stems* and is applied when the dictionary is built, so what it matches is not a word of
  * the game at all. [excludedAnswersResource] lists whole *words* that stay words - the solver still
  * reads them - but that no board may ask the player to find. See [Dictionary.poolTo].
+ *
+ * [code] is a full language tag, `pl-PL` and `en-US`, and it is also what names the language's files
+ * and its keys on a device. The region says what the data is: the English word list is ranked by an
+ * American corpus (OANC), and a player choosing it should see "English (United States)". Both used to
+ * be the bare `pl` and `en`; the app still reads those wherever they were stored (see the app's
+ * `LanguageSettings.byCode`).
  */
 enum class Language(
     val code: String,
@@ -16,9 +22,31 @@ enum class Language(
     val blocklistFile: String,
     val excludedAnswersResource: String,
 ) {
-    POLISH("pl", Alphabet.POLISH, "/dictionary-pl.txt", "blocklist-pl.txt", "/excluded-answers-pl.txt"),
-    ENGLISH("en", Alphabet.ENGLISH, "/dictionary-en.txt", "blocklist-en.txt", "/excluded-answers-en.txt"),
+    POLISH(
+        code = "pl-PL",
+        alphabet = Alphabet.POLISH,
+        dictionaryResource = "/dictionary-pl-PL.txt",
+        blocklistFile = "blocklist-pl-PL.txt",
+        excludedAnswersResource = "/excluded-answers-pl-PL.txt",
+    ),
+    ENGLISH(
+        code = "en-US",
+        alphabet = Alphabet.ENGLISH,
+        dictionaryResource = "/dictionary-en-US.txt",
+        blocklistFile = "blocklist-en-US.txt",
+        excludedAnswersResource = "/excluded-answers-en-US.txt",
+    ),
     ;
+
+    /**
+     * The Gradle task that builds this language's dictionary: `buildDictionaryPlPl`,
+     * `buildDictionaryEnUs`. Named here so the messages that tell somebody to run it cannot drift
+     * from it; `generator/build.gradle.kts` derives the name by the same rule.
+     */
+    val buildTask: String
+        get() = "buildDictionary" + code.split('-').joinToString("") { part ->
+            part.lowercase().replaceFirstChar(Char::uppercase)
+        }
 
     companion object {
         fun of(code: String): Language = entries.firstOrNull { it.code == code }

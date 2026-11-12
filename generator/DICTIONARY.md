@@ -9,7 +9,7 @@ blocklist and its own list of excluded answers — none of the four carries acro
 | license | **CC BY 4.0** (choice of GPL 2, LGPL 2.1, MPL 1.1, Apache 2.0) | **public domain** |
 | frequency | KWJP100, IPI PAN | OANC (Open American National Corpus) |
 | license | **CC BY 4.0** | **unrestricted**, commercial use allowed |
-| ARF | supplied by the source | computed by `buildDictionaryEn` |
+| ARF | supplied by the source | computed by `buildDictionaryEnUs` |
 | inflection | PoliMorf (SGJP) | WordNet 3.0 (Princeton) |
 | license | **BSD 2-clause** | **WordNet license** (permissive, notice required) |
 | words after intersection | 51 685 **lemmas** | 42 554 **base forms** |
@@ -220,7 +220,7 @@ Excluded words keep their rank and stay in the trie, so `Solver` still rejects a
 solution would run through one. `docs/DECISIONS.md`, "Excluded answers", has the argument, the
 options turned down and where the line was drawn.
 
-Polish excludes 391 lemmas, English 280. `DictionaryTest` checks that every entry is still a word of
+Polish excludes 452 lemmas, English 361. `DictionaryTest` checks that every entry is still a word of
 the shipped dictionary — so a rebuild that drops one is noticed — that none reaches a pool, and that
 every dictionary word starting with a sensitive stem is either excluded or named as innocent.
 **After a rebuild, read that test's failures as a list of new words to decide on.**
@@ -326,7 +326,7 @@ shared dial, because difficulty follows position in the ranking rather than the 
 
 This is the table to read before moving any threshold. A cap is only usable when every length a board
 can ask for has enough candidates behind it to letter the board without repeating itself — and the
-bottleneck is always the **shortest** words. `buildDictionaryPl` prints this table on every run.
+bottleneck is always the **shortest** words. `buildDictionaryPlPl` prints this table on every run.
 
 Polish (lemmas):
 

@@ -351,7 +351,7 @@
     <string name="settings_feedback">Feedback</string>
     <string name="settings_haptics">Vibration on the board</string>
     <string name="settings_theme">Theme</string>
-    <string name="settings_theme_system">Same as the phone</string>
+    <string name="settings_theme_system">System default</string>
     <string name="settings_theme_light">Light</string>
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_haptics_note">A short vibration for each letter, a word found and a finished board. Your phone\'s own touch feedback setting has to be on as well.</string>
@@ -392,7 +392,7 @@
     <string name="tutorial_step_decoy">Not every word on the board counts. Trace %1$s.</string>
     <string name="tutorial_step_decoy_traced">%1$s is a real word, and a word of that length is waiting below the board, yet it does not count. The words have to fill the whole board together, and only one set of them does.</string>
     <string name="tutorial_step_second">A word counts only when traced from its first letter. Went wrong? Slide back along your trail, or tap a letter to cut the path back to it.</string>
-    <string name="tutorial_step_last">Below the board you only get the word lengths, and every letter belongs to exactly one word. Find the last one on your own.</string>
+    <string name="tutorial_step_last">Below the board you only get the word lengths, and every letter belongs to exactly one word. Finish the board on your own.</string>
     <string name="tutorial_step_done">That\'s it! When you get stuck, a hint reveals a letter or a whole word for coins.</string>
 
     <!--

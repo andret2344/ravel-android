@@ -183,6 +183,14 @@ by `Dictionary.poolTo` and nowhere else. Every one stays in the dictionary and i
   a word that is missing from a hidden pool), drunkenness and alcoholism, bodily functions. Kept:
   death in general, war and weapons, drinks themselves (*piwo*, *beer*), mild oaths and the devil,
   and words whose dominant sense is ordinary (*członek*, *pierś*, *jądro*, *zbocze*).
+- **Medical words, added 2026-11-12** at the owner's request: sex organs and their derivatives
+  (*płciowy*, *wagina*, *genitalia*, *foreskin*), venereal disease (*kiła*, *syphilis*),
+  menstruation (*podpaska*, *menopause*) and excretion (*biegunka*, *urinate*) - 61 Polish lemmas,
+  81 English. Left alone: general medicine (*prostata*, *ovary*, *uterus*), household words
+  (*pielucha*, *diaper*, *potty*), and every word with an innocent second sense (*kupa*, *bąk*,
+  *zaparcie*, *wytrysk*, *nasienie*, *stool*, *bosom*, *intercourse*). They went into this list,
+  not the blocklist, which the owner first named: they are not vulgar, and the blocklist would have
+  taken them out of the trie the uniqueness proof reads.
 
 The cost is about 1% of each pool, and an excluded word keeps its rank, so a cap still means "the N
 most common words" minus the excluded ones rather than reaching deeper to make up the number.
@@ -429,6 +437,9 @@ Board identity is really *(id, generator version)*.
   Its same-day revision to 18–28% / 8–18% reissued everything a second time.
 - **Excluded answers** (2026-11-08) reissued every puzzle in both modes: taking words out of a pool
   shifts every draw that follows. Boards already on the shelf keep their words until solved.
+- **Medical words** (2026-11-12) reissued the **Polish daily** only. Of the 142 lemmas, two are
+  inside any pool - *płciowy* (5956) and *pośladek* (7095), under `DAILY_MAX_RANK` (8000) - and
+  none is under the levels' cap (2500), so the level ladders and the English daily are untouched.
 
 ### Why `DayResult.wordCount` is a record, not a derivation, and is `Int?`
 
@@ -593,10 +604,75 @@ finger being dragged across it is a grid that loses the drag.
 
 ### Why there is no `android:configChanges`
 
-The player's locale is forced by wrapping the base context in `MainActivity.attachBaseContext`, and a
-configuration change the activity swallows is one the system then applies to those resources — taking
-the forced locale with it. Recreation re-runs `attachBaseContext`, which is the whole mechanism; the
-view models outlive it, so a board being generated survives the turn.
+Below API 33 the player's locale is forced by wrapping the base context in
+`MainActivity.attachBaseContext`, and a configuration change the activity swallows is one the system
+then applies to those resources — taking the forced locale with it. Recreation re-runs
+`attachBaseContext`, which is the whole mechanism; the view models outlive it, so a board being
+generated survives the turn. From API 33 a language switch *is* a configuration change, and the
+system's rebuild of the activity is what puts the new language on screen.
+
+### Why the language is the system's from Android 13, and why language splits are off
+
+Decided 2026-11-12, after a tester's phone (English, MIUI 14, API 33, Play install of
+`0.1.0-alpha.6`) showed Polish boards under an English interface with Polish chosen in the game.
+
+**The splits.** `pm path` listed `base`, `split_config.en`, `arm64_v8a` and `xxhdpi` - no `pl`. Play
+installs only the language splits matching the phone, so the forced Polish locale had no strings
+and fell back to English; the dictionaries are not split, so the boards were right. The pre-upload
+check uses a universal APK, which holds every language, so it could not have shown it. Splits are
+off (`app/build.gradle.kts`): two languages of strings are a few kilobytes. Rejected: requesting
+the split on demand through Play Core (a dependency, a network wait and a "downloading" state, and
+nothing for installs outside Play), and relying on Play fetching it for a per-app language by itself
+(API 33 and later only, late, and Play-only).
+
+**The system's per-app language.** The manifest already listed the languages (`localeConfig`), so
+Android's own app-language screen offered them - and was obeyed only until the player first chose
+in the game, after which a pick there changed nothing, silently. The comment that said the two did
+not fight was written for a "follow the phone" option that has since been removed. Now, from API 33,
+the game's picker writes `LocaleManager.setApplicationLocales` and reads the language back from the
+system, so both screens are one setting; the system backs it up. Below 33 the stored code and
+`attachBaseContext` stay. Decisions inside it:
+
+- **One store per device, never a mirror.** A copy in the settings file would bring the conflict
+  back: "System default" on Android's screen would fall back to the copy, not to the phone.
+- **No hand-over of a code stored before the update to 13.** Before 1.0.0 only testers have one.
+- **The game's picker stays in the game** rather than sending the player to Android's screen, which
+  was the first idea: the API keeps the two in step without the player leaving, and an OEM build
+  without that screen would have needed a fallback.
+- **Read again on every activity creation and every configuration change** (`refresh`), since a
+  change made in Android's settings arrives while the process lives. The cost, accepted: a switch
+  made there skips the in-game warning about an unfinished board.
+- **The activity does not recreate itself from 33**: the system rebuilds it, and a second rebuild
+  would race the first.
+
+### Why the language codes carry a region
+
+Decided 2026-11-12. The codes were `pl` and `en`; they are `pl-PL` and `en-US` everywhere - the
+picker ("English (United States)", "Polski (Polska)"), the tag the system is given, the dictionary
+and filter files, the Gradle tasks (`buildDictionaryPlPl`, `buildDictionaryEnUs`) and the keys on
+the device. The region is true of the data: the English list is ranked by OANC, an American corpus.
+The first prompt was cosmetic - on an emulator with several system languages, Android's
+app-language screen listed a bare "English" beside "English (United States)" - and the first answer
+was to change only the tag the system sees. The owner chose the whole rename instead, before 1.0.0
+while it is cheap.
+
+- **One migration, at start, not one stage per release.** Staging (write new, read both, sweep,
+  drop) is for data two versions read at once; a device runs one version at a time. Staging would
+  also lose data for a tester whose Play auto-update skipped the sweeping release.
+  `LegacyLanguageKeys` renames keys on every process start - idempotent, no flag - and goes before
+  1.0.0 (`docs/TODO.md`).
+- **The old codes are read forever** (`LanguageSettings.byCode`). They also sit inside stored JSON
+  until it is next written, and a backup from before the rename can be restored at any time; a
+  code nobody reads is a saved board that throws on load.
+- **Anything from the system is matched by language alone** (`byLanguage`): a phone in `en-GB`, or
+  "English (Poland)" picked on Android's screen, is English.
+- **The share card says "EN" / "PL"**, not "EN-US": the region describes the dictionary, and to the
+  friend reading the message it is noise.
+- **Language is still not part of a board's identity**, so no board changed.
+- Rejected: a separate `en-GB` with a British dictionary. A third ladder, tutorial, filter set and
+  frequency source (BNC's licence unverified) for spelling differences; the cheaper answer, if it is
+  ever wanted, is to keep words spelled differently in the UK out of the answer pool through
+  `excluded-answers-en-US.txt`.
 
 ### Why `screenOrientation="fullUser"` and not the default or `fullSensor`
 
@@ -673,6 +749,37 @@ and explains it, with a button to move on.
 - **The step is skipped, not forced,** when the player's own order has already taken the decoy's cells
   or its length - the lesson bends the way the outline already did.
 - **The decoy is not outlined:** the outline is a hint and hints index the answer. The text names it.
+
+### The tutorial's correction step
+
+Decided 2026-11-12. The step that says how to undo a path ("Went wrong? Slide back along your
+trail, or tap a letter...") was read and never tried: the button under the decoy's explanation
+cleared the board, so the text arrived with nothing on it to correct. Worse, the step was chosen by
+counting found words (one meant this step, two meant the last), so a player who found a second word
+while the decoy's explanation was up, or straight after the first word, never saw it at all - and
+the owner, testing it, could not make it appear.
+
+- **The refused decoy stays on the board** past the explanation, and the correction step is passed
+  by cutting a path back (`TutorialViewModel.cutBack`), not by finding a word. Every text stays as
+  it was except the last step's closing sentence, now "Finish the board on your own": with the cut
+  as the gate, two words may be left at that point, and "find the last one" would be false.
+- **A cut is a shorter start of the previous path, the empty one included.** "A letter of the decoy
+  went" was the first proposal and was rejected: nearly every move does that, a new path drawn
+  elsewhere included, so the step would pass without the gesture it teaches. The empty path lets
+  a tap off the board through too; it cannot be told from tapping the first letter, and a
+  stricter rule risks a player left with nothing to cut.
+- **No exception when the decoy was skipped.** The step then waits for a cut on any path. Nobody is
+  trapped: the board can still be finished, and the finished step outranks every other.
+- **Past the first word, steps come from the lesson's state, not from the count of found words.**
+  That is what closes both ways the step used to be skipped.
+- **The second word's outline stays through the last step** until that word is found, so passing
+  the correction does not take the help away halfway through a word. The cost, accepted: "on your
+  own" beside an outlined letter.
+- Rejected: moving the correction sentence into the decoy's explanation (already the longest text),
+  and freezing the board during the explanation (closed one of the two skips and made the board
+  look broken). Considered and found unnecessary: a new English decoy. "man" is the end of "human",
+  not its start, so cutting it never leads into the next word as cutting "paw" leads into "powód" -
+  but with the cut as the gate, it does not have to.
 
 ### Hard mode
 

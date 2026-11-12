@@ -42,6 +42,10 @@ arguments in `docs/DECISIONS.md`; an item here points at them rather than repeat
    impressions per DAU from AdMob against DAU from the Play Console, before and after the release
    that ships it, read on new installs - existing testers are still spending their old balances.
    If the game reads as buyable, the next step is `ADS_PER_DAY` 2, not higher hint prices.
+5. **Delete `LegacyLanguageKeys`** (and its call in `RavelApplication.onCreate` and its test)
+   before 1.0.0, once every tester has launched a build that has it. Keep the bare `pl` / `en`
+   alias in `LanguageSettings.byCode` for good - see `DECISIONS.md`, "Why the language codes carry
+   a region".
 
 ## Planned - decided, not built
 

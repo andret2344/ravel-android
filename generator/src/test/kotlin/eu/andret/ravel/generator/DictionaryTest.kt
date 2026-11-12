@@ -18,7 +18,7 @@ class DictionaryTest {
             assertContentEquals(
                 emptyList(),
                 offenders,
-                "rebuild it: ./gradlew :generator:buildDictionary${language.code.replaceFirstChar(Char::uppercase)}",
+                "rebuild it: ./gradlew :generator:${language.buildTask}",
             )
         }
     }

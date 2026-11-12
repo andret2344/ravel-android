@@ -3,6 +3,7 @@ package eu.andret.ravel
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -49,6 +50,10 @@ class MainActivity : ComponentActivity() {
         // already been acted on once.
         if (savedInstanceState == null) openFrom(intent)
         val language = ravel.language
+        // From API 33 the language may have been changed from Android's own settings since the
+        // last activity was built - that change is what rebuilt this one - so it is read again
+        // before anything below captures it. A no-op below 33.
+        language.refresh()
         // What this activity was built with. Resources are bound to a context that was localized
         // once, in attachBaseContext, so a language chosen afterwards cannot reach the strings
         // already on screen: the activity has to be built again. Captured rather than re-read so
@@ -78,8 +83,14 @@ class MainActivity : ComponentActivity() {
             // Recreated rather than restarted, so the navigation state survives the switch: the
             // player who changes the language from the options tab is still on the options tab
             // afterwards, reading it in the language they just picked.
+            //
+            // Below API 33 only. From 33 the choice is the system's per-app language, setting it is
+            // a configuration change, and the system rebuilds this activity on its own; a recreate
+            // here as well would race it and rebuild twice.
             LaunchedEffect(current) {
-                if (current != built) recreate()
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU && current != built) {
+                    recreate()
+                }
             }
             RavelTheme(darkTheme = dark) {
                 /*

@@ -77,13 +77,13 @@ CI (`.github/workflows/tests.yml`) runs exactly those four, in that order, on JD
 ./gradlew :app:sweepLevels --args="--to 300" --quiet > sweep.csv
 
 # The generator directly: a width and a seed, for experiments with the difficulty dials
-./gradlew :generator:run --args="--width 8 --language en --difficulty hard --count 5"
+./gradlew :generator:run --args="--width 8 --language en-US --difficulty hard --count 5"
 
 # Rebuild the bundled dictionaries from the corpora in generator/data/
-./gradlew :generator:buildDictionaries        # or buildDictionaryPl / buildDictionaryEn
+./gradlew :generator:buildDictionaries        # or buildDictionaryPlPl / buildDictionaryEnUs
 ```
 
-- `buildDictionaryPl` prints a per-length histogram at each rank tier. **Read it before moving any
+- `buildDictionaryPlPl` prints a per-length histogram at each rank tier. **Read it before moving any
   cap in `PuzzleSpec.rankFor`**: the binding constraint is always the *shortest* words.
 - `printPuzzle` and `sweepLevels` live in `:app`'s **test** source set (`app/src/test/.../tools/`)
   so a developer tool is never packaged into the APK. Gradle's own `--quiet` would silence the board along
@@ -251,6 +251,9 @@ Persistence is SharedPreferences plus JSON (`settings/SavedBoards.kt`, single-le
   is frozen when its board first comes up (`LevelProgress.open`) and never read from the switch
   again; the switch acts from the next unopened level. The one change is giving hard mode up on the
   board (`LevelProgress.dropHard`), never the other way. Levels only - the daily has no hard mode.
+- **Past the first word, tutorial steps come from the lesson's state (`DecoyState`, `corrected`),
+  never from how many words are found.** The correction step passes on a cut (`cutBack`), not on a
+  word, and the refused decoy stays on the board for it.
 - **Skipping the tutorial counts as finishing it**; the options tab replays it in one tap.
 - **A word is accepted only traced from its first letter** (`matchesPlacement`), not from either end.
 - **Every screen that lays out differently on its side asks `AdaptiveScreen { wide -> }`
@@ -302,9 +305,17 @@ the two names apart.
 
 ### Localization
 
-`LanguageSettings` drives **both** the dictionary and the UI locale, forced in
-`MainActivity.attachBaseContext` — not appcompat (not a dependency), not `LocaleManager` (API 33,
-this ships to 24). The activity recreates itself on a switch.
+`LanguageSettings` drives **both** the dictionary and the UI locale. **From API 33 the choice is
+the system's per-app language (`LocaleManager`)**, the same setting as Android's own app-language
+screen, and the system rebuilds the activity on a switch; **below 33 it is a stored code forced in
+`MainActivity.attachBaseContext`** and the activity recreates itself. Never both stores on one
+device. Not appcompat (not a dependency).
+
+- **Language splits stay off** (`bundle { language { enableSplit = false } }`): Play installs only
+  the phone's languages, and a forced locale with no strings on the phone reads English.
+- **Language codes are full tags, `pl-PL` and `en-US`**, in files, keys and the picker.
+  `LanguageSettings.byCode` reads the old bare `pl` / `en` forever; never remove that alias.
+  Anything from the system is matched by language alone (`byLanguage`).
 
 **Every user-facing string goes into both `app/src/main/res/values/strings.xml` and
 `values-pl/strings.xml`.** `lintDebug` treats a missing translation as an error, which is the main

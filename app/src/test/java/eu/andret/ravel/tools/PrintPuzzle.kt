@@ -15,7 +15,7 @@ import kotlin.system.exitProcess
  *
  *     --level N            the main mode's level N.
  *     --daily YYYYMMDD     one day's board; "today" for today's.
- *     --language pl|en     which dictionary, Polish by default, as in the game.
+ *     --language TAG       pl-PL or en-US: which dictionary, Polish by default, as in the game.
  *     --quiet              board only, no solution.
  *
  * This is not `:generator:run` with a seed typed in. That command takes a width and a seed and
@@ -65,7 +65,7 @@ fun main(args: Array<String>) {
 }
 
 private const val USAGE =
-    "Usage: --level N | --daily YYYYMMDD|today [--language pl|en] [--quiet]"
+    "Usage: --level N | --daily YYYYMMDD|today [--language pl-PL|en-US] [--quiet]"
 
 private class Options(
     val id: PuzzleId,

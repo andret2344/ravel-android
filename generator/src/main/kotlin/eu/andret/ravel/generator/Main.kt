@@ -7,7 +7,7 @@ import kotlin.system.exitProcess
 /**
  * Command line entry point.
  *
- * Usage: generator [--language pl|en] [--difficulty easy|hard] [--width N] [--height N]
+ * Usage: generator [--language pl-PL|en-US] [--difficulty easy|hard] [--width N] [--height N]
  *                  [--count N] [--seed N] [--max-rank N] [--dictionary PATH]
  *                  [--timeout SECONDS] [--min-turns R] [--max-turns R] [--turn-bias R]
  *                  [--min-walls R] [--max-walls R] [--target-length R] [--quiet]

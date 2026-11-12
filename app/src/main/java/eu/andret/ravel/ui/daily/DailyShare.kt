@@ -106,7 +106,9 @@ internal object DailyShare {
     fun text(context: Context, card: ShareCard, seconds: Int?): String = context.getString(
         R.string.share_text,
         DateFormat.getDateFormat(context).format(Date(DailyDate.startOfDay(card.ordinal))),
-        card.language.code.uppercase(),
+        // The language alone, "EN" and "PL": the region in the code ("en-US") describes the
+        // dictionary, and to the friend reading the message it is noise.
+        card.language.code.substringBefore('-').uppercase(),
         card.size,
         row(card.words),
         context.resources.getQuantityString(

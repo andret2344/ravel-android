@@ -13,15 +13,35 @@ android {
         applicationId = "eu.andret.ravel"
         minSdk = 24
         targetSdk = 37
-        versionCode = 7
+        versionCode = 8
         // Not 1.0: nothing has shipped, so claiming a first release is claiming something that has
         // not happened. The version the first internal build carries should be the version its
         // crash reports carry, and "1.0" is a name to spend once.
-        versionName = "0.1.0-alpha.6"
+        versionName = "0.1.0-alpha.7"
     }
 
     buildFeatures {
         compose = true
+    }
+
+    /*
+     * Every language in the base APK, not one split per language.
+     *
+     * Play installs only the language splits that match the phone's own languages. The game's
+     * language is the player's choice, not the phone's, so a Polish choice on an English phone got
+     * a locale with no strings installed for it and read English everywhere - while the boards,
+     * which are not split, were Polish. Seen on a Play install of 0.1.0-alpha.6: base, en, arm64
+     * and xxhdpi splits, and no pl. A universal APK built from the bundle holds every language, so
+     * the pre-upload check never showed it.
+     *
+     * From API 33 Play would fetch a missing split for a per-app language by itself, but late, over
+     * the network and only for Play installs, and below 33 never. Two languages of strings cost a
+     * few kilobytes.
+     */
+    bundle {
+        language {
+            enableSplit = false
+        }
     }
 
     buildTypes {

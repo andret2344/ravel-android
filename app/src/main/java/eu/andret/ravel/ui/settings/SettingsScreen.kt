@@ -602,7 +602,9 @@ private fun LanguageDialog(
 }
 
 /**
- * A language's name in that language - "polski", "English" - and never translated.
+ * A language's name in that language - "Polski (Polska)", "English (United States)" - and never
+ * translated. The region is shown because it is true of the dictionary: the English words are
+ * ranked by an American corpus.
  *
  * A player looking for English on a Polish screen is looking for the word "English", and a list that
  * offered them "angielski" would be a list they have to already read Polish to escape. Taken from
@@ -614,7 +616,7 @@ private fun LanguageDialog(
  */
 private fun nameOf(language: Language): String {
     val locale = Locale.forLanguageTag(language.code)
-    return locale.getDisplayLanguage(locale).replaceFirstChar { it.titlecase(locale) }
+    return locale.getDisplayName(locale).replaceFirstChar { it.titlecase(locale) }
 }
 
 private fun labelOf(choice: ThemeChoice): Int = when (choice) {

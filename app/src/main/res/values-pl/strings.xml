@@ -237,7 +237,7 @@
     <string name="settings_feedback">Reakcje</string>
     <string name="settings_haptics">Wibracje na planszy</string>
     <string name="settings_theme">Motyw</string>
-    <string name="settings_theme_system">Jak w telefonie</string>
+    <string name="settings_theme_system">Ustawienie systemowe</string>
     <string name="settings_theme_light">Jasny</string>
     <string name="settings_theme_dark">Ciemny</string>
     <string name="settings_haptics_note">Krótka wibracja przy każdej literze, znalezionym słowie i ukończonej planszy. Reakcja haptyczna w ustawieniach telefonu też musi być włączona.</string>
@@ -272,7 +272,7 @@
     <string name="tutorial_step_decoy">Nie każde słowo na planszy się liczy. Ułóż słowo %1$s.</string>
     <string name="tutorial_step_decoy_traced">%1$s to prawdziwe słowo i pod planszą czeka słowo tej długości, a jednak się nie liczy. Słowa muszą razem wypełnić całą planszę, a pasuje do niej tylko jeden taki układ.</string>
     <string name="tutorial_step_second">Słowo liczy się tylko czytane od pierwszej litery. Pomyłka? Cofnij palec po swoim śladzie albo stuknij literę, żeby uciąć ścieżkę do niej.</string>
-    <string name="tutorial_step_last">Pod planszą widzisz tylko długości słów, a każda litera należy do dokładnie jednego słowa. Ostatnie znajdź sam.</string>
+    <string name="tutorial_step_last">Pod planszą widzisz tylko długości słów, a każda litera należy do dokładnie jednego słowa. Dokończ planszę samodzielnie.</string>
     <string name="tutorial_step_done">Gotowe! Gdy utkniesz, podpowiedź odsłoni literę albo całe słowo za monety.</string>
 
     <string name="settings_privacy">Prywatność</string>

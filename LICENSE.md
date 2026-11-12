@@ -90,10 +90,10 @@ app's icon, or to publish this game, or a work based on it, on any app store.
 The word lists, the license texts that ship with them and the Material icons are third-party
 material, under their own terms, and stay under them:
 
-- `generator/src/main/resources/dictionary-pl.txt` and `dictionary-en.txt` — built from SJP.PL and
-  KWJP100 (CC BY 4.0), PoliMorf (BSD 2-clause), ENABLE (public domain), OANC (open access) and
-  WordNet 3.0 (Princeton). The CC BY 4.0 sources were modified; that statement and the full
-  attribution are in `generator/DICTIONARY.md`, which travels with them.
+- `generator/src/main/resources/dictionary-pl-PL.txt` and `dictionary-en-US.txt` — built from
+  SJP.PL and KWJP100 (CC BY 4.0), PoliMorf (BSD 2-clause), ENABLE (public domain), OANC (open
+  access) and WordNet 3.0 (Princeton). The CC BY 4.0 sources were modified; that statement and
+  the full attribution are in `generator/DICTIONARY.md`, which travels with them.
 - `app/src/main/res/raw/license_polimorf.txt`, `license_wordnet.txt` and `license_apache.txt` —
   verbatim third-party license texts, redistributed as those licenses require.
 - `app/src/main/res/drawable/ic_tab_*.xml`, `ic_calendar.xml`, `ic_check.xml`, `ic_chevron_left.xml`,

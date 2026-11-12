@@ -51,8 +51,8 @@ import java.io.File
  * covers.
  *
  * Usage:
- *   buildDictionary pl <output> <blocklist> <removed> <sjp-words.txt> <kwjp100.csv> <polimorf.tab.gz>
- *   buildDictionary en <output> <blocklist> <removed> <enable1.txt> <oanc-dir> <wordnet-dir>
+ *   buildDictionary pl-PL <output> <blocklist> <removed> <sjp-words.txt> <kwjp100.csv> <polimorf.tab.gz>
+ *   buildDictionary en-US <output> <blocklist> <removed> <enable1.txt> <oanc-dir> <wordnet-dir>
  */
 fun main(args: Array<String>) {
     require(args.size == 7) { USAGE }
@@ -218,6 +218,6 @@ private val REPORTED_TIERS = listOf(1_500, 4_000, 10_000, 25_000)
 
 private const val USAGE = """
 Usage:
-  buildDictionary pl <output> <blocklist> <removed> <sjp-words.txt> <kwjp100.csv> <polimorf.tab.gz>
-  buildDictionary en <output> <blocklist> <removed> <enable1.txt> <oanc-dir> <wordnet-dir>
+  buildDictionary pl-PL <output> <blocklist> <removed> <sjp-words.txt> <kwjp100.csv> <polimorf.tab.gz>
+  buildDictionary en-US <output> <blocklist> <removed> <enable1.txt> <oanc-dir> <wordnet-dir>
 """

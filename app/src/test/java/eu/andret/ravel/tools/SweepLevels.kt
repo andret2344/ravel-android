@@ -22,7 +22,7 @@ import kotlin.system.exitProcess
  *     --from N             first level, 1 by default.
  *     --to N               last level, 300 by default.
  *     --levels a,b,c       an explicit list instead of a range.
- *     --language pl|en     which dictionary, Polish by default, as in the game.
+ *     --language TAG       pl-PL or en-US: which dictionary, Polish by default, as in the game.
  *     --timeout MS         give up on one level after this long; 20000, as [eu.andret.ravel.game.Puzzles].
  *     --repeat N           runs per level, 1 by default. See below - this measures the JVM, not the board.
  *     --warmup N           unrecorded runs before the sweep, 3 by default.
@@ -96,7 +96,7 @@ fun main(args: Array<String>) {
 }
 
 private const val SWEEP_USAGE =
-    "Usage: [--from N] [--to N] [--levels a,b,c] [--language pl|en] [--timeout MS] " +
+    "Usage: [--from N] [--to N] [--levels a,b,c] [--language pl-PL|en-US] [--timeout MS] " +
         "[--repeat N] [--warmup N] [--slow MS]"
 
 private const val CSV_HEADER =

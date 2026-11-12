@@ -6,10 +6,13 @@
 # These words stay in the dictionary and in the trie. Only the draw pool leaves them out
 # (Dictionary.poolTo), so the solver still sees each one as a word when it hunts for a second
 # solution, and a board where one of them would spell an alternative tiling is still rejected.
-# That is the difference from generator/blocklist-en.txt, which removes vulgar stems from the
+# That is the difference from generator/blocklist-en-US.txt, which removes vulgar stems from the
 # dictionary altogether at build time. DICTIONARY.md, "Excluded answers", has the full argument.
 #
 # Reviewed word by word on 2026-11-08. Grouped by why a word is here; alphabetical within a group.
+# Extended on 2026-11-12 with medical words for sex organs, venereal disease,
+# menstruation and excretion; general medicine and words with an innocent
+# second meaning were left alone.
 # DictionaryTest checks that every entry is a word of the shipped dictionary and that none of them
 # reaches a pool.
 
@@ -187,9 +190,18 @@ anality
 anus
 bondage
 brothel
+circumcised
+circumcising
+circumcision
 clitoral
 clitoris
 condom
+copulate
+copulation
+crotch
+ejaculate
+ejaculation
+erectile
 erotic
 erotica
 erotically
@@ -199,7 +211,15 @@ fetish
 fetishism
 fetishist
 fetishistic
+foreskin
+genital
+genitalia
+genitals
 homosex
+impotence
+impotent
+labia
+libido
 masochism
 masochist
 masochistic
@@ -214,7 +234,11 @@ nipple
 nude
 orgasm
 orgasmic
+penile
 penis
+phalli
+phallic
+phallus
 porn
 porno
 pornographer
@@ -222,6 +246,10 @@ pornographic
 pornography
 prostitute
 prostitution
+pubic
+pubis
+rectal
+rectally
 rectum
 scrotal
 scrotum
@@ -248,9 +276,37 @@ spermatozoa
 spermine
 testicle
 testicular
+testis
+urogenital
 vagina
 vaginal
 vaginally
+vaginitis
+vulva
+vulval
+
+# Venereal disease and menstruation
+anovulatory
+chlamydia
+chlamydiae
+chlamydial
+gonorrhea
+herpes
+herpesvirus
+menopausal
+menopause
+menses
+menstrual
+menstruate
+menstruation
+ovulate
+ovulation
+premenstrual
+preovulatory
+syphilis
+syphilitic
+tampon
+venereal
 
 # Drugs
 amphetamine
@@ -301,13 +357,43 @@ drunkenly
 drunkenness
 
 # Bodily functions
+constipated
+constipation
+defecate
+defecation
+diarrhea
+diarrheal
+diarrhetic
+diarrhoea
+dung
+enema
+excrement
+excreta
+excrete
+excreting
+excretion
+excretory
 faeces
+fecal
 feces
+flatulence
+flatulent
+hemorrhoid
+incontinence
+incontinent
+laxative
+pee
+peeing
 poop
 puke
 snot
 snottily
 snotty
+urinal
+urinalyses
+urinalysis
+urinate
+urination
 urine
 vomit
 vomiting

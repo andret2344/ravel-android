@@ -38,6 +38,16 @@ tasks.test {
 }
 
 /**
+ * The task name for a language tag: `pl-PL` builds with `buildDictionaryPlPl`. The same rule as
+ * `Language.buildTask` in the generator, which this script cannot call - the messages that tell
+ * somebody which task to run come from there.
+ */
+fun dictionaryTaskName(language: String): String =
+    "buildDictionary" + language.split('-').joinToString("") { part ->
+        part.lowercase().replaceFirstChar(Char::uppercase)
+    }
+
+/**
  * Builds a ranked game dictionary from the raw corpora. Run after the sources or a blocklist
  * change; see DICTIONARY.md for where the inputs come from.
  */
@@ -46,7 +56,7 @@ fun registerDictionaryTask(
     admissibility: String,
     frequency: String,
     inflection: String,
-) = tasks.register<JavaExec>("buildDictionary${language.replaceFirstChar(Char::uppercase)}") {
+) = tasks.register<JavaExec>(dictionaryTaskName(language)) {
     group = "ravel"
     description = "Builds the $language game dictionary from its word list and frequency data."
     classpath = sourceSets["main"].runtimeClasspath
@@ -64,13 +74,13 @@ fun registerDictionaryTask(
 }
 
 registerDictionaryTask(
-    "pl",
+    "pl-PL",
     admissibility = "sjp-words.txt",
     frequency = "kwjp100-orth_lc-all.csv",
     inflection = "polimorf.tab.gz",
 )
 registerDictionaryTask(
-    "en",
+    "en-US",
     admissibility = "enable1.txt",
     frequency = "oanc",
     inflection = "wordnet",
@@ -79,5 +89,5 @@ registerDictionaryTask(
 tasks.register("buildDictionaries") {
     group = "ravel"
     description = "Builds every language dictionary."
-    dependsOn("buildDictionaryPl", "buildDictionaryEn")
+    dependsOn(dictionaryTaskName("pl-PL"), dictionaryTaskName("en-US"))
 }
