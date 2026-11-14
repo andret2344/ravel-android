@@ -121,6 +121,18 @@ enum class License(
         notice = R.string.license_icons_notice,
         url = "https://www.apache.org/licenses/LICENSE-2.0",
         fullText = R.raw.license_apache,
+    ),
+
+    /**
+     * The table of manufacturers behind the link under the reminder settings - see
+     * `notify/BackgroundRestrictions.kt`. CC BY 4.0, so the notice names the site and its authors,
+     * as the site's own README asks of anyone using its API, and says what was changed.
+     */
+    DONT_KILL_MY_APP(
+        source = R.string.license_dkma_source,
+        license = R.string.license_name_cc_by,
+        notice = R.string.license_dkma_notice,
+        url = CC_BY_4_0,
     );
 
     companion object {
@@ -128,7 +140,7 @@ enum class License(
          * The game's own licenses, shown under their own heading below the word sources: its code
          * and the icons it carries.
          */
-        val game: List<License> = listOf(RAVEL, MATERIAL_SYMBOLS)
+        val game: List<License> = listOf(RAVEL, MATERIAL_SYMBOLS, DONT_KILL_MY_APP)
 
         /**
          * Everything the dictionaries are built from - this enum without [game].

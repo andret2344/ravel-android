@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.core.content.edit
 import eu.andret.ravel.game.DailyDate
 import eu.andret.ravel.game.Hint
+import eu.andret.ravel.game.SolvedWords
 import eu.andret.ravel.game.StreakRun
 import eu.andret.ravel.game.WordMark
 import eu.andret.ravel.game.WordResult
@@ -21,8 +22,9 @@ import org.json.JSONObject
  *
  * Written through on every change rather than at some later save point, for the same reason as
  * [Wallet]: the thing being protected is a streak, and a streak that survives everything except the
- * system reclaiming memory is not a streak anyone will trust. The whole file is a few hundred bytes
- * of JSON per year of play, so rewriting it on each change costs less than tracking what changed.
+ * system reclaiming memory is not a streak anyone will trust. A day is a few dozen bytes of JSON, and
+ * about 150 once its words are on it (see [DayResult.words]) - some fifty kilobytes for a year
+ * of play - so rewriting it on each change still costs less than tracking what changed.
  *
  * JSON in a single preference rather than one key per field, because the shape is two maps and a
  * record, and flattening a map into preference keys means inventing a key format, parsing it back,
@@ -89,14 +91,16 @@ class StoredDailyProgress(
         addToPending(ordinal) { soFar -> soFar.copy(seconds = (soFar.seconds ?: 0) + seconds) }
     }
 
-    override fun complete(card: ShareCard): Boolean {
+    override fun complete(card: ShareCard, words: SolvedWords): Boolean {
+        require(words.describes(card)) { "The words given are not the board the card describes" }
         val current = _state.value
         if (current.isSolved(card.ordinal)) return false
         // The running cost stops running and becomes the record; nothing can be added to it after.
         // The count comes off the card rather than beside it, so "nobody counted" stays the only
         // thing a null DayResult.wordCount can mean: ShareCard cannot be built without at least one
         // mark, so a zero can no longer arrive here from a caller that has lost its board.
-        val cost = (current.pending[card.ordinal] ?: DayResult()).copy(wordCount = card.wordCount)
+        val cost = (current.pending[card.ordinal] ?: DayResult())
+            .copy(wordCount = card.wordCount, words = words)
         preferences.edit {
             // The board is finished, so the half-finished copy of it is no longer a thing to go
             // back to. The card replaces it in the same edit: one is what the player was doing and
@@ -305,6 +309,11 @@ class StoredDailyProgress(
         const val DONE = "d"
         const val FOUND = "f"
 
+        /** A solved day's words: an object of the language's code and the words in clue order. */
+        const val ANSWERS = "a"
+        const val ANSWERS_LANGUAGE = "g"
+        const val ANSWERS_WORDS = "w"
+
         /** Both maps in one object, each day carrying whether it was finished. */
         fun days(state: DailyProgressState): JSONObject {
             val json = JSONObject()
@@ -332,6 +341,10 @@ class StoredDailyProgress(
                     // counting their words. Null and not zero, for the same reason as the seconds
                     // above and rather more sharply - see DayResult.wordCount.
                     wordCount = if (day.has(FOUND)) day.getInt(FOUND) else null,
+                    // Read on its own terms: a list this release cannot place is a day without a
+                    // list, never a reason to throw the whole history away with it.
+                    words = day.optJSONObject(ANSWERS)
+                        ?.let { runCatching { answersFromJson(it) }.getOrNull() },
                 )
                 if (day.optBoolean(DONE)) solved[ordinal] = result else pending[ordinal] = result
             }
@@ -409,8 +422,28 @@ class StoredDailyProgress(
             // The test is now the null and not `> 0`: those agreed on every value the field could
             // hold, but one of them was reading a count and the other was reading a flag.
             wordCount?.let { put(FOUND, it) }
+            words?.let { put(ANSWERS, answersJson(it)) }
             if (done) put(DONE, true)
         }
+
+        /**
+         * The words as an array of their own rather than one joined string: a separator would have
+         * to be a character no dictionary can hold, and that is a promise about every future
+         * dictionary made by this file.
+         */
+        fun answersJson(words: SolvedWords): JSONObject = JSONObject().apply {
+            put(ANSWERS_LANGUAGE, words.language.code)
+            put(ANSWERS_WORDS, JSONArray(words.words))
+        }
+
+        fun answersFromJson(json: JSONObject): SolvedWords = SolvedWords(
+            language = checkNotNull(LanguageSettings.byCode(json.getString(ANSWERS_LANGUAGE))) {
+                "Words in a language this release does not speak"
+            },
+            words = json.getJSONArray(ANSWERS_WORDS).let { array ->
+                (0 until array.length()).map(array::getString)
+            },
+        )
 
     }
 }

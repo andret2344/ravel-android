@@ -25,6 +25,7 @@ import eu.andret.ravel.settings.StuckOffer
 import eu.andret.ravel.settings.ThemeSettings
 import eu.andret.ravel.settings.TutorialSettings
 import eu.andret.ravel.settings.Wallet
+import eu.andret.ravel.settings.WordListSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -88,6 +89,12 @@ class RavelApplication : Application() {
 
     /** The theme the player picked, applied by the activity and chosen in the options tab. */
     val theme: ThemeSettings by lazy { ThemeSettings(this) }
+
+    /**
+     * Whether a finished board's words come up unfolded - one answer for both completion dialogs
+     * and the calendar, which are three screens that must not each remember their own.
+     */
+    val wordList: WordListSettings by lazy { WordListSettings(this) }
 
     /**
      * Whether the launch prompt about an unsolved daily may appear. Read and written by the shell

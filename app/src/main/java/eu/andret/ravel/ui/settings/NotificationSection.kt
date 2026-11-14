@@ -28,10 +28,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import eu.andret.ravel.R
+import eu.andret.ravel.notify.BackgroundRestrictions
 import eu.andret.ravel.notify.NotificationPlan
 import eu.andret.ravel.notify.NotificationPrefs
 import java.util.Calendar
@@ -139,6 +142,44 @@ internal fun NotificationSection(
             text = stringResource(R.string.settings_notify_note),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        if (prefs.enabled) BackgroundNote(modifier = Modifier.align(Alignment.CenterHorizontally))
+    }
+}
+
+/**
+ * Where to read what to do when a reminder does not come, for this phone's manufacturer.
+ *
+ * Some manufacturers stop an app closed from the recent apps list as if it had been force-stopped,
+ * and a stopped app gets no alarm - see [BackgroundRestrictions]. The setting that lets it through
+ * has a different name and place on every one of them, so this does not try to name it: it links
+ * the page for this phone's manufacturer. Only while reminders are on, which is the only time it
+ * matters, and on every phone rather than a guessed list of the guilty ones.
+ *
+ * A button alone, with no line of its own above it: a second small note under the one the section
+ * already has ran into it, and the two read as one block nobody finishes. The button's label says
+ * when it is needed. Centered, label and all, so it reads as the section's closing action rather
+ * than as one more line of the notes above it.
+ */
+@Composable
+private fun BackgroundNote(modifier: Modifier = Modifier) {
+    val uriHandler = LocalUriHandler.current
+    TextButton(
+        modifier = modifier,
+        onClick = {
+            // A phone with no browser gets a button that does nothing, rather than a crash.
+            try {
+                uriHandler.openUri(BackgroundRestrictions.helpUrl(Build.MANUFACTURER))
+            } catch (noBrowser: ActivityNotFoundException) {
+                // Nothing to open it with.
+            } catch (noBrowser: IllegalArgumentException) {
+                // The same, wrapped by newer Compose versions.
+            }
+        },
+    ) {
+        Text(
+            text = stringResource(R.string.settings_notify_background_help),
+            textAlign = TextAlign.Center,
         )
     }
 }

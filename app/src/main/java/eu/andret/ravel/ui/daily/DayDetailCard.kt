@@ -24,6 +24,7 @@ import eu.andret.ravel.R
 import eu.andret.ravel.game.DailyDate
 import eu.andret.ravel.settings.DayResult
 import eu.andret.ravel.settings.ShareCard
+import eu.andret.ravel.ui.game.WordList
 import eu.andret.ravel.ui.game.asClock
 import java.util.Date
 
@@ -39,6 +40,8 @@ import java.util.Date
  * else moves here, where there is room for it and room for whatever is added next. The time is
  * already drawn as a dash: the column is being reserved now so that the clock, when it arrives,
  * fills a gap rather than forcing this card to be laid out again.
+ *
+ * A solved day also lists its words, folded, for looking up - see [WordList].
  */
 @Composable
 internal fun DayDetailCard(
@@ -46,6 +49,8 @@ internal fun DayDetailCard(
     result: DayResult?,
     share: ShareCard?,
     today: Long,
+    wordsOpen: Boolean,
+    onWordsOpen: (Boolean) -> Unit,
     onOpen: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -72,6 +77,11 @@ internal fun DayDetailCard(
                 // reading of the clock on this screen would be a second chance to disagree about
                 // which day it is.
                 share?.let { ShareButton(card = it, seconds = result?.seconds) }
+                // Absent on a day solved before boards wrote their words down, and never derived for
+                // one - see DayResult.words. The card then simply has no list, which is true.
+                result?.words?.let {
+                    WordList(words = it, open = wordsOpen, onOpenChange = onWordsOpen)
+                }
             }
         }
     }

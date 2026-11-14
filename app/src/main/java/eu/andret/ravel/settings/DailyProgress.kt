@@ -2,6 +2,7 @@ package eu.andret.ravel.settings
 
 import eu.andret.ravel.game.DailyDate
 import eu.andret.ravel.game.Hint
+import eu.andret.ravel.game.SolvedWords
 import eu.andret.ravel.game.WordResult
 import eu.andret.ravel.generator.Language
 import kotlinx.coroutines.flow.StateFlow
@@ -53,7 +54,33 @@ data class DayResult(
      * board is empty of them. That is what lets [DailyProgressState.totalWordsFound] sum it.
      */
     val wordCount: Int? = null,
+    /**
+     * The words the day's board held, so the calendar can list them for looking up, or null on a
+     * day still running and on every day solved before boards wrote their words down.
+     *
+     * **A record, on [wordCount]'s argument exactly.** Regenerating the board for its words would
+     * answer with what today's generator builds for that date, and a player who solved the day
+     * under an older one would be shown words that were never on their board. Days solved before
+     * this was stored stay without a list rather than being given a derived one.
+     *
+     * In the history and not in the [ShareCard] slot, the opposite of the marks: a card is for the
+     * day it was solved on and nobody asks after it later, while "what was that word" is exactly a
+     * question asked about a day gone by. It is also kept off the card for a second reason - the
+     * card is what the share text is built from, and the answer must never be within reach of it.
+     */
+    val words: SolvedWords? = null,
 )
+
+/**
+ * Whether these words are the board [card] describes: the same dictionary, and one word per entry
+ * with the length that entry records, in the same order.
+ *
+ * The two are built from the same finished puzzle by two functions that each sort by length, so
+ * they agree today. This is what notices the day one of them stops sorting the way the other does,
+ * which would otherwise file the calendar's words against the wrong lengths with nothing failing.
+ */
+fun SolvedWords.describes(card: ShareCard): Boolean =
+    language == card.language && words.map(String::length) == card.words.map(WordResult::length)
 
 /**
  * A board part-way through, reduced to the least that has to be written down.
@@ -303,12 +330,16 @@ interface DailyProgress {
      *   share button needs, which is why this is one call and not two: a count written down by one
      *   method and a list of that many marks written by another are two chances to record a board
      *   nobody played.
+     * @param words the words the board held, kept with the day for the calendar's list - see
+     *   [DayResult.words]. Beside the card rather than on it, so the answer is never on the object
+     *   the share text is built from. Checked against the card: the same language, and one word per
+     *   entry with the length that entry records.
      * @return false when it was already recorded, which is how the caller knows not to pay for it
      *   twice - a board can be finished, left and finished again, and the streak only ever buys the
      *   first time. The first finish is the one that happened, and a second pass with hints already
      *   revealed would only ever flatter it.
      */
-    fun complete(card: ShareCard): Boolean
+    fun complete(card: ShareCard, words: SolvedWords): Boolean
 
     /**
      * Whether [ordinal] already paid out once, before a progress reset wiped its record.

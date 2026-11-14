@@ -66,6 +66,12 @@ On Windows use `gradlew.bat`; the paths below use the POSIX wrapper.
 
 CI (`.github/workflows/tests.yml`) runs exactly those four, in that order, on JDK 21.
 
+```bash
+# The smoke tests in app/src/androidTest - by hand, before every signed bundle, never in CI.
+# On an emulator of API 30 or later only: every test wipes the app's data on the device it runs on.
+ANDROID_SERIAL=emulator-5554 ./gradlew :app:connectedDebugAndroidTest
+```
+
 ### Developer tools
 
 ```bash
@@ -78,6 +84,9 @@ CI (`.github/workflows/tests.yml`) runs exactly those four, in that order, on JD
 
 # The generator directly: a width and a seed, for experiments with the difficulty dials
 ./gradlew :generator:run --args="--width 8 --language en-US --difficulty hard --count 5"
+
+# A release build for timing on a phone: R8 like release, debug key, the debug tools, its own id
+./gradlew :app:assembleMeasure        # app/build/outputs/apk/measure/app-measure.apk
 
 # Rebuild the bundled dictionaries from the corpora in generator/data/
 ./gradlew :generator:buildDictionaries        # or buildDictionaryPlPl / buildDictionaryEnUs
@@ -94,6 +103,10 @@ CI (`.github/workflows/tests.yml`) runs exactly those four, in that order, on JD
 - **"Debug: today"** at the bottom of the shop is the same kind of pair (`ShopDebug.kt`), on the same
   rules: it sets today's ad watches and gift through `AdAllowance.setRemaining` and
   `DailyGift.setAvailable`, which nothing in `main` may call.
+- **The `measure` build type** (`eu.andret.ravel.measure`, "Ravel measure") is `release` signed with
+  the debug key, compiled with `src/debug/java` for the two tools above. It installs beside the Play
+  game, and it is what generation is timed on: a debuggable build runs slower. **Never uploaded**, and
+  its shop is left alone - the AdMob ids are live and this package is not registered with them.
 
 ## Architecture
 
@@ -137,8 +150,7 @@ Rules:
 - **Generation blocks and must be called inside `runInterruptible`** so canceling its coroutine
   stops the search - a screen's own build when the screen goes, a cache build on eviction or a
   language switch. Design against the tail, not the median — and against a phone, not the desktop table
-  (10x10 worst 0.5–1.0 s at rank 4000 with distinct lengths and `LAYOUT_NODES` 20 000; an order of
-  magnitude more on a mid-range phone).
+  (levels 126-300: desktop worst 0.28 s; a Redmi Note 10 5G two to four times that, worst 0.67 s).
 - **The tail is the layout search, not uniqueness.** `SearchBudget.LAYOUT_NODES` (20 000) bounds
   each failed layout; lowering it further trips the shape easing (`LAYOUTS_BEFORE_EASING`).
 - Dictionaries are cached per (language, difficulty); `RavelApplication.onTrimMemory` calls
@@ -205,7 +217,7 @@ board — drag, tap, hint — funnels through `withPath`**. The whole rule set i
 
 `RavelApplication` holds the process-wide singletons — `wallet`, `language`, `haptics`, `hardMode`,
 `theme`, `reminder`, `tutorial`, `progress` (daily), `levels`, `puzzles`, `consent`, `ads`, `adAllowance`,
-`dailyGift`, `stuckOffer`, `notifications`. **Screens reach them through their
+`dailyGift`, `stuckOffer`, `notifications`, `wordList`. **Screens reach them through their
 `AndroidViewModel`, never by constructing their own.**
 
 `RavelApp.kt` is the whole navigation graph: five tabs, each keeping its own back stack. Screens live
@@ -263,6 +275,11 @@ Persistence is SharedPreferences plus JSON (`settings/SavedBoards.kt`, single-le
   the title by baseline, never by centering. Do not re-copy it.
 - **The board's half is a ceiling, `weight(5f)` against `4f`, not a share.**
 - **The board must never scroll**, in either arrangement. Every other overflowing screen may.
+- **A finished board's words (`ui/game/WordList.kt`) show in the completion dialogs and the
+  calendar's day card only, never on a board being played.** Folded until opened, the choice kept
+  in `WordListSettings`. The calendar reads them from `DayResult.words`, written at solve time and
+  never regenerated; they stay off `ShareCard`. Polish opens sjp.pl, English Wiktionary
+  (`definitionUrl`, exhaustive over `Language`).
 - **No `android:configChanges` in the manifest**, deliberately — it would strip the forced locale.
 - **`android:screenOrientation="fullUser"`**; leaving the attribute off is not the same thing, and
   `fullSensor` would ignore the device's rotation lock.
@@ -288,6 +305,10 @@ the two names apart.
   `NotificationReceiver` (boot, update, time and time-zone change).
 - **The channel ids `daily` and `streak` are permanent.**
 - **The copy states what is true about today's board** - no guilt, no exclamation marks, no coins.
+- **Phones that stop an app closed from recents get a link, not a workaround** (`BackgroundRestrictions`,
+  shown under the reminder switches while they are on): dontkillmyapp.com at the manufacturer's page,
+  from a copy of the site's own vendor list, `/general` for the rest. Never fetched by the app.
+  Nothing in the app can wake a stopped process.
 
 ### Ads and consent
 
@@ -296,11 +317,15 @@ the two names apart.
   structural form of the rewarded-only promise. Both count against `ADS_PER_DAY`.
 - **The "stuck?" dialog (`ui/game/StuckOffer.kt`) only leads to the shop; it starts nothing.** At
   most once a day (`settings/StuckOffer.kt`), after `STUCK_AFTER_SECONDS` (99) of solve-clock time
-  without a word, and never with the day's watches spent, ads refused, on a review or the tutorial.
+  without a word, and never with the day's watches spent, ads not allowed by consent, on a review or
+  the tutorial.
 - **The reward amount is `Rewards.FOR_WATCHING_AD`, never the value the AdMob console attaches to the
   unit.** `ADS_PER_DAY` (3) watches, counted per *completed* watch by `settings/AdAllowance.kt`.
 - **Consent is gathered in `MainActivity.onCreate` before any of the game is drawn**
   (`ads/AdConsent.kt`; `LoadingScreen` until `AdConsent.settled`, capped at `SETTLE_TIMEOUT`).
+- **`RewardedAds.State.BLOCKED` is a consent question never answered, not a refusal** - a player who
+  says no has answered, and gets `UNAVAILABLE`. Never word it as the player's choice. The shop's ad
+  tile asks again on a tap (`AdConsent.retry`); nothing else does.
 - **The AdMob ids in `res/values/ads.xml` are live.** Any device testing ads must have its hash in
   `ad_test_devices` in the same file — and that array is deliberately not debug-only.
 - `play-services-ads` merges in the `AD_ID` permission on its own; the Data safety form must say so.
@@ -400,6 +425,13 @@ equal `FOR_WATCHING_AD` and exceed `SEVENTH - DAY` - `StreakTest` holds both.
   crash on the board.
 - **Before upload, the AAB itself is checked: a universal APK from it (bundletool), and at least two
   words dragged on a board.** Opening the app is not enough; the crash came on the second drag.
+- **Before every signed bundle, the smoke tests pass on an emulator** (`connectedDebugAndroidTest`,
+  command above): back stacks, a turn mid-generation, the wide layouts, progress on disk. **Never on
+  a phone someone plays on** - the orchestrator clears the app's data before each test, and debug
+  shares the release's application id. `ANDROID_SERIAL` keeps a connected phone out of the run.
+- **Process death mid-board is checked by hand on the release build**: a hint bought on a board,
+  Home, `adb shell am kill eu.andret.ravel`, reopen - the board, the revealed letter and the balance
+  come back. A test cannot kill its own process; `SavedProgressTest` covers only the disk half.
 - **Backup rules are written out by name in both `res/xml/data_extraction_rules.xml` (API 31+) and
   `res/xml/backup_rules.xml` (below). Both are live at `minSdk 24` and must be edited together.**
   Every preference file is included, `ravel-ads` among them.
@@ -449,6 +481,10 @@ name opens `LicenseScreen`.
 - **WordNet 3.0** (English lemmatization) — Princeton copyright notice retained.
 
 ENABLE and OANC need nothing and are listed anyway.
+
+- **Don't kill my app!** (the manufacturer table in `BackgroundRestrictions`) — CC BY 4.0, by Urbandroid
+  Team, modified. Not a word source: listed under "Licenses" (`License.game`) with its notice, and
+  carved out in `LICENSE.md`. Refreshing the table from the site's API keeps the notice.
 
 - **The icons** (Material Symbols, and the path of Material Icons' `lock`) — Apache 2.0, the license
   text given to every recipient. They are not word sources: `LicensesScreen` lists them

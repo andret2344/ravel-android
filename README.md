@@ -20,7 +20,7 @@ Two languages, Polish and English, each with its own bundled dictionary of base 
 
 - **Daily** — one board per calendar date, the same board for everyone, with a streak and a
   calendar of past days. A solved day can be shared as a picture of its word lengths (`4🟥 5🟩 9🟨`)
-  and nothing else. An opt-in notification, at most once a day and only while the day's board is
+  and nothing else; its words stay listed in the calendar, each opening its meaning. An opt-in notification, at most once a day and only while the day's board is
   unsolved, comes around the time the player last solved one, or at a time they pick.
 - **Levels** — an endless ladder. Grid size ramps to 10×10 by level 250; how obscure the words may
   be keeps climbing to level 2500. A hard-mode switch on the game tab hides the word lengths and
@@ -65,6 +65,15 @@ Requires JDK 21 to run the build; both modules compile to Java 11. On Windows us
 
 CI (`.github/workflows/tests.yml`) runs exactly those four, in that order.
 
+The smoke tests in `app/src/androidTest` - the five tabs' back stacks, turning the phone while a
+board is built, the layouts on the phone's side, progress written to disk - run on an emulator
+(API 30 or later), by hand before a release. Each test clears the app's data on the device it runs
+on, so `ANDROID_SERIAL` names the emulator and keeps any connected phone out of it:
+
+```bash
+ANDROID_SERIAL=emulator-5554 ./gradlew :app:connectedDebugAndroidTest
+```
+
 ## Developer tools
 
 ```bash
@@ -103,4 +112,6 @@ The dictionaries are built from third-party corpora, three of which require a no
 **KWJP100** (CC BY 4.0, modified), **PoliMorf** (BSD 2-clause), and **WordNet 3.0** (Princeton).
 The app carries all of them under "Word sources" on the licenses page, one row in the options tab;
 `generator/DICTIONARY.md` records the full list. The icons are Material Symbols by Google
-(Apache 2.0); the same page carries that license under "Licenses", beside the game's own.
+(Apache 2.0), and the list of phone manufacturers behind the reminder settings' help link comes from
+Don't kill my app! by Urbandroid Team (CC BY 4.0, modified); the same page carries both under
+"Licenses", beside the game's own.

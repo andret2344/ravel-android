@@ -93,12 +93,18 @@ class RewardedAds(
     /**
      * What the shop button should say.
      *
-     * A refusal and a failed fetch are different states rather than one "not now", because they are
-     * different answers to the player: [BLOCKED] is a choice they made and can change from settings,
-     * [UNAVAILABLE] is nobody having an ad to show and is worth a retry.
+     * A missing consent and a failed fetch are different states rather than one "not now", because
+     * they are retried differently: [BLOCKED] asks the consent service again, [UNAVAILABLE] asks for
+     * another ad.
      */
     enum class State {
-        /** No consent, so nothing may be requested. The shop points at the settings screen. */
+        /**
+         * The consent service has not said ads may be requested, so nothing may be. In practice this
+         * is a question never answered - a launch with no connection - and not a refusal: a player
+         * who says no in the consent form has still answered, and the SDK then serves what that
+         * answer allows, or nothing, which arrives as [UNAVAILABLE]. The shop's tile asks again on
+         * a tap - see [AdConsent.retry].
+         */
         BLOCKED,
 
         /** Consent is in, an ad is on its way. */

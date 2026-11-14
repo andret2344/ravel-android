@@ -16,16 +16,17 @@ import kotlinx.coroutines.sync.withLock
  *
  * ## Why this exists
  *
- * Generation is far more expensive on a phone than the code around it assumed. Measured on a Redmi
- * Note 10 5G against a desktop JVM, the same search runs about 19 times slower: the median 10x10
- * takes 7.7 seconds, 58% of 10x10 boards take over five, and **7 of the 24 10x10 levels below 300
- * cannot be built inside [Puzzles.DEFAULT_TIMEOUT_MILLIS] at all**. Those seven are not unlucky.
- * The seed fixes the search, so the same level fails the same way on the same device every time,
- * and the "try again" the board screen offers is an invitation to watch it fail again. The full
- * numbers are in `docs/DECISIONS.md`.
+ * Generation was far more expensive on a phone than the code around it assumed. On the generator of
+ * the time, a Redmi Note 10 5G ran the search about 19 times slower than a desktop JVM: the median
+ * 10x10 took 7.7 seconds, and **7 of the 24 10x10 levels below 300 could not be built inside
+ * [Puzzles.DEFAULT_TIMEOUT_MILLIS] at all** - the same level failing the same way every time, since
+ * the seed fixes the search. The generator has since been made much cheaper, and the same phone now
+ * builds the slowest board of levels 126-300 in under 0.7 seconds (2026-11-14, `docs/DECISIONS.md`,
+ * "Generation cost, measured"). This stays, because a phone slower than that one is ordinary, and a
+ * wait the player never sees is worth having at any size.
  *
  * The cure that does not change what a board *is* is to start earlier. A player spends minutes on
- * one board, and the next one needs seconds - so the next one is built while they are busy, with
+ * one board, and the next one needs a moment - so the next one is built while they are busy, with
  * [Puzzles.PREFETCH_TIMEOUT_MILLIS] instead of a player's patience, and by the time they arrive it
  * is already sitting here. Board identity is untouched, which matters more than it sounds: changing
  * the size ramp or the shape dials to make these levels cheaper would reissue puzzles, and this

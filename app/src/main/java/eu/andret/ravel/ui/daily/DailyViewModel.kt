@@ -13,6 +13,7 @@ import eu.andret.ravel.game.PuzzleMode
 import eu.andret.ravel.game.Puzzles
 import eu.andret.ravel.game.Rewards
 import eu.andret.ravel.game.Streak
+import eu.andret.ravel.game.solvedWords
 import eu.andret.ravel.game.wordResults
 import eu.andret.ravel.settings.DayResult
 import eu.andret.ravel.settings.SavedBoard
@@ -88,6 +89,16 @@ class DailyViewModel(
     /** Whether the board may buzz. Straight through from the store, since nothing here decides it. */
     val hapticsEnabled: StateFlow<Boolean> =
         (application as RavelApplication).haptics.enabled
+
+    private val wordList = (application as RavelApplication).wordList
+
+    /**
+     * Whether the completion dialog's list of words comes up unfolded - one answer for every screen
+     * that shows the list, see [eu.andret.ravel.settings.WordListSettings].
+     */
+    val wordsOpen: StateFlow<Boolean> = wordList.open
+
+    fun setWordsOpen(open: Boolean) = wordList.setOpen(open)
 
     /**
      * What this day has cost in hints, across every visit to it and not just this one.
@@ -342,7 +353,8 @@ class DailyViewModel(
         // board that can be played is the one that was today when it was opened - [review] makes
         // every other one a review, which never reaches this method. A player who crosses midnight
         // mid-solve is paid for the day they were solving.
-        val counted = progress.complete(card)
+        val words = puzzle.solvedWords(card.language)
+        val counted = progress.complete(card, words)
         puzzles.solved(id, card.language)
         // The notification learns the time from the first finish only, and takes itself down. A
         // second finish of a day already sealed is not a solve the player made today.
@@ -366,6 +378,7 @@ class DailyViewModel(
             // one read back afterwards. They are the same object, and asking the store for it would
             // make the dialog depend on a write having landed to show a button about it.
             card = card,
+            words = words,
         )
     }
 

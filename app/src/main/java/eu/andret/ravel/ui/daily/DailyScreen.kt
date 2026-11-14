@@ -43,6 +43,7 @@ import eu.andret.ravel.ui.game.HintRow
 import eu.andret.ravel.ui.game.PlayableBoard
 import eu.andret.ravel.ui.game.StuckOffer
 import eu.andret.ravel.ui.game.TracedWord
+import eu.andret.ravel.ui.game.WordList
 import eu.andret.ravel.ui.game.afterSolvedPause
 import eu.andret.ravel.ui.game.asClock
 import eu.andret.ravel.ui.theme.goldColors
@@ -70,6 +71,7 @@ fun DailyScreen(
     val bought by viewModel.bought.collectAsStateWithLifecycle()
     val share by viewModel.share.collectAsStateWithLifecycle()
     val completion by viewModel.completion.collectAsStateWithLifecycle()
+    val wordsOpen by viewModel.wordsOpen.collectAsStateWithLifecycle()
     val elapsed by viewModel.elapsed.collectAsStateWithLifecycle()
     val hapticsEnabled by viewModel.hapticsEnabled.collectAsStateWithLifecycle()
 
@@ -158,6 +160,8 @@ fun DailyScreen(
     afterSolvedPause(completion)?.let {
         CompletedDialog(
             completion = it,
+            wordsOpen = wordsOpen,
+            onWordsOpen = viewModel::setWordsOpen,
             onExit = {
                 viewModel.dismissCompletion()
                 onBack()
@@ -182,9 +186,18 @@ fun DailyScreen(
  * - stay or leave - and sharing is about the board behind it, so a third button there would be a
  * third answer to a two-answer question. It is also the moment the player is most likely to want it,
  * which is why it is here at all and not only on the calendar afterwards.
+ *
+ * The board's words come after it, folded - see [WordList]. After and not before: sharing is the
+ * thing done on the day, looking a word up is the thing some players do.
  */
 @Composable
-private fun CompletedDialog(completion: Completion, onExit: () -> Unit, onStay: () -> Unit) {
+private fun CompletedDialog(
+    completion: Completion,
+    wordsOpen: Boolean,
+    onWordsOpen: (Boolean) -> Unit,
+    onExit: () -> Unit,
+    onStay: () -> Unit,
+) {
     CompletionDialog(
         title = stringResource(R.string.done_title),
         primary = stringResource(R.string.done_exit),
@@ -225,6 +238,7 @@ private fun CompletedDialog(completion: Completion, onExit: () -> Unit, onStay: 
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         ShareButton(completion.card, completion.seconds)
+        WordList(words = completion.words, open = wordsOpen, onOpenChange = onWordsOpen)
     }
 }
 

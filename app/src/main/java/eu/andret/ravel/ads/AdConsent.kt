@@ -144,6 +144,38 @@ class AdConsent(context: Context, private val scope: CoroutineScope) {
     }
 
     /** The newest activity [gather] was called from, for the form to sit in front of. */
+    /**
+     * Asks the consent service again, for a launch whose question never got an answer.
+     *
+     * [gather] asks once per process, and a launch with no connection gets no answer: the service
+     * cannot be reached, nothing is decided, and [canRequestAds] stays false for the rest of the
+     * process. Without this the shop would show ads as off until the game was restarted, however
+     * soon the connection came back. Called from the shop's ad tile when the player taps it, so the
+     * form, if the service asks for one, comes up in answer to that tap and never unasked.
+     *
+     * Does nothing once ads may be requested, and while an earlier retry is still out.
+     */
+    fun retry(activity: Activity) {
+        if (_canRequestAds.value || retrying) return
+        retrying = true
+        information.requestConsentInfoUpdate(
+            activity,
+            ConsentRequestParameters.Builder().build(),
+            {
+                UserMessagingPlatform.loadAndShowConsentFormIfRequired(activity) {
+                    retrying = false
+                    publish()
+                }
+            },
+            {
+                retrying = false
+                publish()
+            },
+        )
+    }
+
+    private var retrying = false
+
     private var host: WeakReference<Activity>? = null
 
     /** Whether this process has sent the consent request already. See [gather]. */

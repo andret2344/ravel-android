@@ -45,6 +45,7 @@ import eu.andret.ravel.ui.game.PlayableBoard
 import eu.andret.ravel.ui.game.StackedDialog
 import eu.andret.ravel.ui.game.StuckOffer
 import eu.andret.ravel.ui.game.TracedWord
+import eu.andret.ravel.ui.game.WordList
 import eu.andret.ravel.ui.game.afterSolvedPause
 import eu.andret.ravel.ui.game.asClock
 import eu.andret.ravel.ui.theme.goldColors
@@ -80,6 +81,7 @@ fun LevelScreen(
     val unreachable by viewModel.unreachable.collectAsStateWithLifecycle()
     val hapticsEnabled by viewModel.hapticsEnabled.collectAsStateWithLifecycle()
     val hard by viewModel.hard.collectAsStateWithLifecycle()
+    val wordsOpen by viewModel.wordsOpen.collectAsStateWithLifecycle()
     // Saveable, so turning the phone with the question open does not answer it.
     var askingToDrop by rememberSaveable { mutableStateOf(false) }
     // Out here rather than inside the grid, because the word strip in the footer spells it too.
@@ -191,6 +193,8 @@ fun LevelScreen(
     afterSolvedPause(completion)?.let {
         CompletedDialog(
             completion = it,
+            wordsOpen = wordsOpen,
+            onWordsOpen = viewModel::setWordsOpen,
             onNext = {
                 viewModel.dismissCompletion()
                 onNext(it.level + 1)
@@ -211,10 +215,14 @@ fun LevelScreen(
  * next level - so a menu button was the same move as the main one plus a tap, and anywhere else in
  * the game is one tap away on the tab bar or the rail. Staying on the board is offered instead; see
  * [CompletionDialog] and [NextLevelButton] for how the player carries on from there.
+ *
+ * The board's words come last, folded - see [WordList].
  */
 @Composable
 private fun CompletedDialog(
     completion: LevelCompletion,
+    wordsOpen: Boolean,
+    onWordsOpen: (Boolean) -> Unit,
     onNext: () -> Unit,
     onStay: () -> Unit,
 ) {
@@ -235,6 +243,7 @@ private fun CompletedDialog(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        WordList(words = completion.words, open = wordsOpen, onOpenChange = onWordsOpen)
     }
 }
 

@@ -18,6 +18,22 @@ android {
         // not happened. The version the first internal build carries should be the version its
         // crash reports carry, and "1.0" is a name to spend once.
         versionName = "0.1.0-alpha.7"
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Every test starts from a fresh install's data - see testOptions below.
+        testInstrumentationRunnerArguments["clearPackageData"] = "true"
+    }
+
+    /*
+     * The release smoke tests in src/androidTest, run by hand before a signed bundle - see CLAUDE.md,
+     * "Shipping a release". Not part of CI: they need an emulator, and they take minutes.
+     *
+     * Through the orchestrator, so each test runs in a process of its own with the app's data cleared
+     * first. The tests are about what a fresh install does - the tutorial, the starting balance, level
+     * one - and a second test inheriting the first one's coins and ladder would test neither.
+     */
+    testOptions {
+        execution = "ANDROIDX_TEST_ORCHESTRATOR"
     }
 
     buildFeatures {
@@ -79,6 +95,37 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+        }
+
+        /*
+         * A release build to measure on a phone: shrunk and optimized exactly like `release`, signed
+         * with the debug key, carrying the debug tools.
+         *
+         * For timing the generator where it matters - on a mid-range phone, on the big boards past
+         * level 126. A debug build is the wrong thing to time: ART runs a debuggable app markedly
+         * slower, so its numbers overstate the phone. And the build from Play cannot reach those
+         * levels, because the level jump is a debug-only tool (see `LevelJump.kt`).
+         *
+         * Its own application id, so it installs beside the game from Play instead of over it: a
+         * different signing key would otherwise mean uninstalling the player's game and its
+         * progress first. The debug source set supplies the jump and the shop's day controls; the
+         * release set's empty twins are not part of this variant, so nothing in either pair changes.
+         *
+         * Never uploaded. The AdMob ids are live and this package is not the one registered with
+         * them, so the shop is left alone on it.
+         */
+        create("measure") {
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            applicationIdSuffix = ".measure"
+            versionNameSuffix = "-measure"
+            matchingFallbacks += listOf("release")
+        }
+    }
+
+    sourceSets {
+        getByName("measure") {
+            kotlin.srcDir("src/debug/java")
         }
     }
     compileOptions {
@@ -177,13 +224,18 @@ dependencies {
     implementation(libs.user.messaging.platform)
     debugImplementation(libs.androidx.compose.ui.tooling)
     testImplementation(libs.junit)
-    // No androidTest source set, and therefore no instrumentation runner and no Espresso. There
-    // never was a test in it - the two files here were the ones Android Studio generates, one
-    // asserting that 2 + 2 is 4 and one asserting the package name - and a build file that keeps
-    // declaring the dependencies reads as a project with device coverage that is currently empty,
-    // which is a worse claim than an honest zero.
-    //
-    // The instrumented test worth writing is a smoke test that launches the release variant, since
-    // that is the build R8 can break and no unit test can see. Writing it means an emulator in CI;
-    // until then the release build is installed and opened by hand before every upload.
+    // The smoke tests in src/androidTest. They run against the debug variant, which is not shrunk,
+    // so they say nothing about what R8 does to a release - that is still the release build
+    // installed and two words dragged by hand. What they cover is everything no JVM test can reach:
+    // the five back stacks, a turn of the phone mid-generation, the wide layouts, and progress
+    // written to disk rather than held in memory.
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    // Named only for its version. Compose's test library pulls in an older Espresso, whose idling
+    // check calls InputManager.getInstance - gone from recent Android, so every test failed on its
+    // first wait with NoSuchMethodException before touching the app.
+    androidTestImplementation(libs.androidx.test.espresso.core)
+    androidTestUtil(libs.androidx.test.orchestrator)
+    androidTestUtil(libs.androidx.test.services)
 }

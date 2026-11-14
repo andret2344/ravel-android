@@ -124,6 +124,13 @@
     <!-- The count and its noun, which are separate everywhere else and one sentence here. -->
     <string name="done_exit">Done</string>
     <string name="done_view_board">View board</string>
+    <!-- The folded list of a finished board's words, in the completion dialogs and the calendar. -->
+    <string name="words_heading">Words on this board (%1$d)</string>
+    <string name="words_expanded">Expanded</string>
+    <string name="words_collapsed">Collapsed</string>
+    <string name="words_look_up">look up its meaning</string>
+    <!-- %1$s is the site's name, sjp.pl or Wiktionary, which is not translated. -->
+    <string name="words_source">Tap a word to open its meaning on %1$s.</string>
 
     <!--
         The streak. Amounts are never formatted in as bare numbers: they go through
@@ -295,7 +302,8 @@
     <string name="shop_ad_left_description">Ads left: %1$d of %2$d</string>
     <string name="shop_ad_loading">Finding an ad…</string>
     <string name="shop_ad_unavailable">No ad right now. Tap to try again.</string>
-    <string name="shop_ad_blocked">Ads are off, because of the privacy choice you made. You can change it under %1$s.</string>
+    <string name="shop_ad_consent">Ads need your privacy choice first, and asking for it needs a connection. Tap to try again.</string>
+    <string name="repair_ad_consent">Ads need your privacy choice first, and asking for it needs a connection. You can try again in the %1$s.</string>
 
     <string name="shop_buy">Coin packs</string>
     <string name="shop_coming_soon">Coming soon</string>
@@ -375,6 +383,7 @@
     <string name="settings_notify_time_set">Set</string>
     <string name="settings_notify_automatic_note">The time follows when you solve the daily. Now: %1$s.</string>
     <string name="settings_notify_note">At most once a day, and only while today\'s board is unsolved. After three in a row go by without a game, reminders switch themselves off.</string>
+    <string name="settings_notify_background_help">See what to do if the reminder does not come</string>
     <string name="settings_notify_blocked">Notifications from the game are blocked in your phone\'s settings.</string>
     <string name="settings_notify_open_system">Open phone settings</string>
     <string name="settings_tutorial">Tutorial</string>
@@ -468,4 +477,7 @@
     <string name="license_icons_source" translatable="false">Material Symbols</string>
     <!-- Translated for the reason license_ravel_notice is: this project's own wording, not a required one. -->
     <string name="license_icons_notice">The icons are Material Symbols and Material Icons by Google (https://fonts.google.com/icons), used under the Apache License, Version 2.0. They have been modified from the originals. The full license text follows.</string>
+    <!-- A required notice in its own wording, and a proper name: not translated, like the word sources'. -->
+    <string name="license_dkma_source" translatable="false">Don\'t kill my app!</string>
+    <string name="license_dkma_notice" translatable="false">The list of phone manufacturers behind the link under the reminder settings comes from Don\'t kill my app! (https://dontkillmyapp.com) by Urbandroid Team, licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Modified: only the manufacturer names and the addresses of their pages were taken, as a lookup table.</string>
 </resources>

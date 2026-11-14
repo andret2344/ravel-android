@@ -61,6 +61,9 @@ import eu.andret.ravel.ui.CoinAmount
 /** How wide a tile is allowed to get, so a phone screen is not one edge-to-edge slab per offer. */
 private val TILE_WIDTH = 280.dp
 
+/** The space between the two daily tiles. */
+private val TILE_GAP = 12.dp
+
 /** The glyph at the top of a daily tile, and the box the loading spinner takes its place in. */
 private val GLYPH_SIZE = 56.dp
 
@@ -144,15 +147,23 @@ fun ShopScreen(modifier: Modifier = Modifier, viewModel: ShopViewModel = viewMod
             // enough for two on a phone, and the same height so the pair reads as one row of offers
             // even when one of them is carrying a status line. The gift first: it is the one every
             // visit can take, and the ad beside it is the offer it brings the player to.
+            //
+            // The row is capped at two tiles' width before its height is measured, and each tile
+            // takes exactly half. IntrinsicSize.Min measures the tiles' text at the width the row
+            // offers, and uncapped that was the whole screen: on a phone on its side a status line
+            // laid out in two lines at that width took three in a 280dp tile, and the last one was
+            // cut off by a height computed for two.
             Row(
-                modifier = Modifier.height(IntrinsicSize.Min),
-                horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+                modifier = Modifier
+                    .widthIn(max = TILE_WIDTH * 2 + TILE_GAP)
+                    .height(IntrinsicSize.Min),
+                horizontalArrangement = Arrangement.spacedBy(TILE_GAP, Alignment.CenterHorizontally),
             ) {
                 GiftTile(
                     available = giftAvailable,
                     onClaim = viewModel::claimGift,
                     modifier = Modifier
-                        .weight(1f, fill = false)
+                        .weight(1f)
                         .fillMaxHeight(),
                 )
                 AdTile(
@@ -160,7 +171,7 @@ fun ShopScreen(modifier: Modifier = Modifier, viewModel: ShopViewModel = viewMod
                     watchesLeft = watchesLeft,
                     viewModel = viewModel,
                     modifier = Modifier
-                        .weight(1f, fill = false)
+                        .weight(1f)
                         .fillMaxHeight(),
                 )
             }
@@ -255,9 +266,10 @@ private fun CoinPacksHeading() {
  * The ad tile: what it pays, how many are left, and why it is dead when the reason is one the
  * player can act on. Drawn by [DailyTile]; this decides what goes into it.
  *
- * The two reasons that get a line are the ones a count cannot explain.
- * [RewardedAds.State.BLOCKED] is the player's own privacy choice, undone from the options tab, and
- * [RewardedAds.State.UNAVAILABLE] is worth a tap to retry. Neither is shown once the day is spent:
+ * The two reasons that get a line are the ones a count cannot explain, and both are a tap to retry.
+ * [RewardedAds.State.BLOCKED] is the consent question never answered - a launch with no connection -
+ * and the tap asks it again; it used to say "because of the privacy choice you made", which was
+ * false for nearly everyone who saw it. [RewardedAds.State.UNAVAILABLE] is nobody having an ad. Neither is shown once the day is spent:
  * somebody with nothing left does not care whether an ad could have been loaded, and 0/3 already
  * says why the tile is dead.
  */
@@ -283,15 +295,13 @@ private fun AdTile(
         watchesLeft <= 0 || activity == null -> null
         state == RewardedAds.State.READY -> ({ viewModel.watch(activity) })
         state == RewardedAds.State.UNAVAILABLE -> ({ viewModel.retry() })
+        state == RewardedAds.State.BLOCKED -> ({ viewModel.retryConsent(activity) })
         else -> null
     }
 
     val status = when {
         watchesLeft <= 0 -> null
-        state == RewardedAds.State.BLOCKED -> stringResource(
-            R.string.shop_ad_blocked,
-            stringResource(R.string.tab_settings),
-        )
+        state == RewardedAds.State.BLOCKED -> stringResource(R.string.shop_ad_consent)
 
         state == RewardedAds.State.UNAVAILABLE -> stringResource(R.string.shop_ad_unavailable)
         else -> null

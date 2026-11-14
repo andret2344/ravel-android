@@ -62,6 +62,7 @@ fun DailyMenuScreen(
     val balance by viewModel.balance.collectAsStateWithLifecycle()
     val selected by viewModel.selected.collectAsStateWithLifecycle()
     val today by viewModel.today.collectAsStateWithLifecycle()
+    val wordsOpen by viewModel.wordsOpen.collectAsStateWithLifecycle()
     val solvedToday = progress.isSolved(today)
 
     // Re-reads the date every time the menu comes back into view and at each midnight while it is
@@ -203,6 +204,8 @@ fun DailyMenuScreen(
             onPrevious = viewModel::showPreviousMonth,
             onNext = viewModel::showNextMonth,
             onDay = viewModel::select,
+            wordsOpen = wordsOpen,
+            onWordsOpen = viewModel::setWordsOpen,
             onOpenBoard = { ordinal ->
                 // The dialog closes on the way out, so coming back from the board lands on the
                 // menu rather than on a month grid the player has finished with.

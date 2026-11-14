@@ -1,5 +1,6 @@
 package eu.andret.ravel.ui.daily
 
+import eu.andret.ravel.game.SolvedWords
 import eu.andret.ravel.settings.ShareCard
 
 /**
@@ -20,6 +21,8 @@ import eu.andret.ravel.settings.ShareCard
  *   than read back out of the store for the same reason as everything else on this class: this is
  *   the moment, and the moment is the thing the dialog is about. The menu's copy of the button asks
  *   the store instead, because by then the moment is over and the store is what remembers it.
+ * @param words the words the board held, for the dialog's list. Beside [card] and never on it: the
+ *   card is what the share text is built from, and the answer must stay out of its reach.
  */
 data class Completion(
     val forBoard: Int,
@@ -28,6 +31,7 @@ data class Completion(
     val streak: Int,
     val seconds: Int,
     val card: ShareCard,
+    val words: SolvedWords,
 ) {
     val total: Int get() = forBoard + forStreak
 }

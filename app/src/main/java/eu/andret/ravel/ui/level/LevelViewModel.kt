@@ -11,6 +11,7 @@ import eu.andret.ravel.game.PuzzleCache
 import eu.andret.ravel.game.PuzzleId
 import eu.andret.ravel.game.PuzzleMode
 import eu.andret.ravel.game.Rewards
+import eu.andret.ravel.game.solvedWords
 import eu.andret.ravel.settings.LevelProgressState
 import eu.andret.ravel.settings.SavedBoard
 import eu.andret.ravel.ui.game.BoardState
@@ -62,6 +63,16 @@ class LevelViewModel(
     /** Whether the board may buzz. Straight through from the store, since nothing here decides it. */
     val hapticsEnabled: StateFlow<Boolean> =
         (application as RavelApplication).haptics.enabled
+
+    private val wordList = (application as RavelApplication).wordList
+
+    /**
+     * Whether the completion dialog's list of words comes up unfolded - one answer for every screen
+     * that shows the list, see [eu.andret.ravel.settings.WordListSettings].
+     */
+    val wordsOpen: StateFlow<Boolean> = wordList.open
+
+    fun setWordsOpen(open: Boolean) = wordList.setOpen(open)
 
     /**
      * The tally as it stood when the level was beaten, or null while it is still being played.
@@ -288,7 +299,7 @@ class LevelViewModel(
         // buying the last word both buys a hint and beats the level, and a purchase recorded
         // afterwards would land on the level after it.
         if (next.boughtOf(hint) > playing.puzzle.boughtOf(hint)) progress.recordHint(level, hint)
-        if (next.isComplete) reward(next.board.solution.size)
+        if (next.isComplete) reward(next)
         _state.value = BoardState.Playing(next)
         if (!next.isComplete) progress.saveBoard(saved(next))
         return true
@@ -348,7 +359,7 @@ class LevelViewModel(
     private inline fun play(move: (Puzzle) -> Puzzle) {
         val playing = _state.value as? BoardState.Playing ?: return
         val next = move(playing.puzzle)
-        if (next.isComplete && !playing.puzzle.isComplete) reward(next.board.solution.size)
+        if (next.isComplete && !playing.puzzle.isComplete) reward(next)
         _state.value = BoardState.Playing(next)
         // Written on every move rather than when the screen closes, because the screen is not
         // always told: a process killed in the background gets no chance to save on the way out.
@@ -363,7 +374,8 @@ class LevelViewModel(
      * streak is for the day. A level cannot: once it is behind the player there is no route back to
      * it, so a second finish is a board that outlived its level, not a level beaten.
      */
-    private fun reward(wordCount: Int) {
+    private fun reward(puzzle: Puzzle) {
+        val wordCount = puzzle.board.solution.size
         // Banked before the level is closed, or the last few seconds of the solve are lost with the
         // running clock - and the store stops accepting time for this level the moment it moves on.
         clock.stop()
@@ -381,7 +393,12 @@ class LevelViewModel(
         }
         if (coins > 0) wallet.earn(coins)
 
-        _completion.value = LevelCompletion(level = level, coins = coins, seconds = seconds)
+        _completion.value = LevelCompletion(
+            level = level,
+            coins = coins,
+            seconds = seconds,
+            words = puzzle.solvedWords(language.current.value),
+        )
     }
 
     private companion object {

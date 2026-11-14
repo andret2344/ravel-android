@@ -10,3 +10,6 @@
 # panel's state, neither of which says anything about this project.
 /caches/
 /appInsightsSettings.xml
+
+# Per-user state of the test results panel (column widths), written when instrumented tests run.
+/androidTestResultsUserPreferences.xml

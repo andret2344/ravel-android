@@ -76,4 +76,7 @@ class ShopViewModel(application: Application) : AndroidViewModel(application) {
 
     /** Asks for another ad after a failed fetch. Nothing else in the app would ever ask again. */
     fun retry() = ravel.ads.load()
+
+    /** Asks the consent service again, which is what an ad blocked for want of an answer needs. */
+    fun retryConsent(activity: Activity) = ravel.consent.retry(activity)
 }

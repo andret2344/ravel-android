@@ -74,6 +74,16 @@ class DailyMenuViewModel(application: Application) : AndroidViewModel(applicatio
 
     val balance: StateFlow<Int> = (application as RavelApplication).wallet.balance
 
+    private val wordList = (application as RavelApplication).wordList
+
+    /**
+     * Whether the day card's list of words comes up unfolded - the same answer the completion
+     * dialogs read, see [eu.andret.ravel.settings.WordListSettings].
+     */
+    val wordsOpen: StateFlow<Boolean> = wordList.open
+
+    fun setWordsOpen(open: Boolean) = wordList.setOpen(open)
+
     private val ravel = application as RavelApplication
 
     /** The ad the repair dialog can play, and why it cannot when it cannot. */

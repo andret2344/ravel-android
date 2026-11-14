@@ -1,5 +1,7 @@
 package eu.andret.ravel.ui.level
 
+import eu.andret.ravel.game.SolvedWords
+
 /**
  * What a level paid the moment it was finished, and what it cost to finish.
  *
@@ -11,11 +13,13 @@ package eu.andret.ravel.ui.level
  * @param coins what it paid, or zero for a level that was already behind the player - a board
  *   restored onto the screen after the fact can reach the end again, and that is not a level beaten.
  * @param seconds how long it took, summed over every sitting it took to finish it.
+ * @param words the words the board held, for the list the dialog offers to look them up from.
  */
 data class LevelCompletion(
     val level: Int,
     val coins: Int,
     val seconds: Int,
+    val words: SolvedWords,
 )
 
 /**

@@ -81,15 +81,16 @@ object Puzzles {
      * the search itself. Boards of the sizes [PuzzleSpec] hands out are found in milliseconds once
      * the trie is warm.
      *
-     * **That second sentence is false on a phone and the number is the wrong shape.** Measured on a
-     * Redmi Note 10 5G with the trie warm, the median 10x10 takes 7.7 seconds and 7 of the 24 10x10
-     * levels below 300 cannot be built inside this deadline at all - deterministically, since the
-     * seed fixes the search, so the retry the board screen offers fails identically every time.
+     * On a phone that second sentence was false for a while. On an older generator a Redmi Note 10
+     * 5G took a median 7.7 seconds per 10x10, and 7 of the 24 10x10 levels below 300 could not be
+     * built inside this deadline at all - deterministically, since the seed fixes the search. On the
+     * current one the same phone builds the slowest board of levels 126-300 in 0.67 seconds
+     * (2026-11-14, `docs/DECISIONS.md`, "Generation cost, measured").
      *
-     * Raising it is not the fix and would make things worse: the same measurement puts level 238 at
-     * roughly 68 seconds, and 68 seconds of spinner is a player who has left rather than a player
-     * who got a board. The deadline stays where a person's patience is; what changes is that the
-     * board should already exist by the time it is asked for - see [PREFETCH_TIMEOUT_MILLIS].
+     * Raising the deadline was never the fix: level 238 once took about 68 seconds, and 68 seconds
+     * of spinner is a player who has left rather than a player who got a board. The deadline stays
+     * where a person's patience is; the board should already exist by the time it is asked for -
+     * see [PREFETCH_TIMEOUT_MILLIS].
      *
      * Note also that this does not bound the wait. The generator checks it at the top of its layout
      * loop, so an attempt already running when it expires still finishes: the same device was
@@ -105,8 +106,9 @@ object Puzzles {
      * asks "when is this device hopeless enough that burning a core on it is waste". The player is
      * solving the previous board through all of it and sees none of it.
      *
-     * Three minutes rather than none at all: the worst level measured needs about 68 seconds on a
-     * Redmi Note 10 5G, so this leaves roughly 2.5x for something slower, and a prefetch still
+     * Three minutes rather than none at all: the worst level once needed about 68 seconds on a Redmi
+     * Note 10 5G, and needs under a second there now, so this leaves a wide margin for phones far
+     * slower than that one and for generator changes to come, and a prefetch still
      * running after it has found a device where this board size does not work - which is a finding
      * for the size ramp, not a reason to hold a core forever.
      */

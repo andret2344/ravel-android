@@ -134,7 +134,7 @@ internal fun StreakRepairDialog(
     }
 }
 
-/** Whether the ad is a way to pay today at all: watches left, and ads not refused. */
+/** Whether the ad is a way to pay today at all: watches left, and ads allowed by consent. */
 private fun adOffered(adState: RewardedAds.State, watchesLeft: Int): Boolean =
     watchesLeft > 0 && adState != RewardedAds.State.BLOCKED
 
@@ -181,15 +181,15 @@ private fun AdButton(
 /**
  * Why there is no ad button, when the reason is one the player can do something about.
  *
- * Refused ads are a choice made in the consent form and changeable from the options tab, so that
- * gets a line. A day with its watches spent gets none: the coins are still there, and a sentence
+ * Ads waiting on a consent question never answered - a launch with no connection - get a line, and
+ * it sends the player to the shop, whose ad tile asks the question again. A day with its watches spent gets none: the coins are still there, and a sentence
  * about tomorrow's allowance would be about a repair that cannot wait for tomorrow.
  */
 @Composable
 private fun AdNote(adState: RewardedAds.State, watchesLeft: Int) {
     if (watchesLeft > 0 && adState == RewardedAds.State.BLOCKED) {
         Text(
-            text = stringResource(R.string.shop_ad_blocked, stringResource(R.string.tab_settings)),
+            text = stringResource(R.string.repair_ad_consent, stringResource(R.string.tab_shop)),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

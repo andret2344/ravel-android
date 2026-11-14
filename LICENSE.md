@@ -87,8 +87,8 @@ app's icon, or to publish this game, or a work based on it, on any app store.
 
 ## What it does not cover
 
-The word lists, the license texts that ship with them and the Material icons are third-party
-material, under their own terms, and stay under them:
+The word lists, the license texts that ship with them, the Material icons and one table of phone
+manufacturers are third-party material, under their own terms, and stay under them:
 
 - `generator/src/main/resources/dictionary-pl-PL.txt` and `dictionary-en-US.txt` — built from
   SJP.PL and KWJP100 (CC BY 4.0), PoliMorf (BSD 2-clause), ENABLE (public domain), OANC (open
@@ -102,5 +102,9 @@ material, under their own terms, and stay under them:
   `android:tint` attribute removed, which names an AppCompat theme attribute this app does not have.
 - `app/src/main/res/drawable/ic_lock.xml` — the path of Material Icons' `lock` by Google, under the
   same Apache License 2.0, in a file of this project's own.
+- The manufacturer table in `app/src/main/java/eu/andret/ravel/notify/BackgroundRestrictions.kt` —
+  from Don't kill my app! (https://dontkillmyapp.com) by Urbandroid Team, under
+  [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Modified: only the manufacturer names
+  and page addresses were taken, as a lookup table. The rest of that file is this project's.
 
 `generator/DICTIONARY.md` is the record of where each source comes from and what it asks for.

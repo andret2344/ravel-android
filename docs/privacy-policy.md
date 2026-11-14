@@ -5,7 +5,7 @@ title: Privacy Policy – Ravel
 
 # Privacy Policy – Ravel
 
-**Effective date: November 11, 2026**
+**Effective date: November 14, 2026**
 
 ## 1. Data Controller
 
@@ -25,10 +25,10 @@ Ravel has no user accounts, no server of its own, and no analytics. The game, it
 
 The app keeps the following on your device only:
 
-- game progress: levels completed, daily puzzle results and streak (including missed days you chose to save, or chose not to), the board in progress, times, and hints used
+- game progress: levels completed, daily puzzle results and streak (including missed days you chose to save, or chose not to), the words of each solved daily puzzle, the board in progress, times, and hints used
 - boards built in advance, so the next puzzle opens without waiting
 - the coin balance, how many ads were watched today, whether today's free gift was claimed, and whether today's hint suggestion was shown
-- settings: language, theme, vibration, hard mode, whether to be reminded of an unsolved daily puzzle, whether the tutorial was completed, and your advertising consent choice
+- settings: language, theme, vibration, hard mode, whether to be reminded of an unsolved daily puzzle, whether the tutorial was completed, whether the list of a solved board's words is shown open, and your advertising consent choice
 - the daily puzzle notification: whether it is on, whether its time is chosen automatically or the time you picked, the time of day you last solved the daily puzzle (which the automatic time follows), the last day a notification was sent and how many in a row went unanswered, and whether you have been asked about turning it on. The notification is scheduled and shown by the app on your device; nothing about it is sent anywhere.
 
 This data is not sent to the publisher or to any server operated by the publisher. It is removed by clearing the app's data or uninstalling the app.
@@ -70,6 +70,8 @@ Consent given for personalized advertising can be withdrawn at any time in the a
 ## 6. Data Sharing and Transfers
 
 Personal data is not sold.
+
+Tapping a word in the list of a solved board's words opens its meaning on sjp.pl (Polish) or Wiktionary (English) in your browser, and the link under the reminder settings opens dontkillmyapp.com at the page for your phone's manufacturer. That site receives the request from your browser, as for any page you open, under its own privacy policy; the app itself sends nothing.
 
 The only data shared is the advertising data described in section 4, which is processed by Google (Google Ireland Limited and Google LLC) to deliver and measure ads. Google may process it outside the European Economic Area, including in the United States, on the basis of the European Commission's Standard Contractual Clauses, as set out in Google's terms.
 

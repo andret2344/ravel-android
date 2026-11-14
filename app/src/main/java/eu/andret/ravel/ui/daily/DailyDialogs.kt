@@ -39,6 +39,8 @@ internal fun CalendarDialog(
     onPrevious: () -> Unit,
     onNext: () -> Unit,
     onDay: (Long) -> Unit,
+    wordsOpen: Boolean,
+    onWordsOpen: (Boolean) -> Unit,
     onOpenBoard: (Long) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -57,6 +59,8 @@ internal fun CalendarDialog(
             result = selected?.let(progress::resultOf),
             share = selected?.let(progress::shareFor),
             today = today,
+            wordsOpen = wordsOpen,
+            onWordsOpen = onWordsOpen,
             onOpen = onOpenBoard,
         )
     }
