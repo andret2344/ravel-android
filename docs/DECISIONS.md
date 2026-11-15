@@ -257,6 +257,9 @@ shorter, was a different picture: about 19 times the desktop, a median 10x10 of 
 about 68 s, and 7 of the 24 10x10 levels below 300 failing the 20 s deadline every time. That run is
 why `PuzzleCache` exists, and its figures are history now.
 
+The table was read off a logcat line in `Puzzles.generate`, removed 2026-11-15. Phone timings now come
+from the `board_built` event, from every player's phone and model rather than one in a drawer.
+
 ### Building boards ahead
 
 `PuzzleCache` (on `RavelApplication`'s scope) builds the next boards while the player is busy with
@@ -1307,9 +1310,17 @@ testers decide nothing on their own; asking them does more.
 - **Crash reports do not wait on consent** (owner's choice): legitimate interest, Article 6(1)(f),
   with a switch to object. Behind consent they would arrive only from testers who said yes to an ad
   form, and a crash is exactly what must not be missed.
-- **Two switches in the options, both on by default**, each turning its SDK's collection off - not
-  filtering events - so off sends nothing, not even consent mode's pings. Stored in `ravel-settings`,
-  so the backup rules did not change.
+- **Two switches, both on by default**, each turning its SDK's collection off - not filtering
+  events - so off sends nothing, not even consent mode's pings. Stored in `ravel-settings`, so the
+  backup rules did not change.
+- **They live on a privacy page behind one row in the options** (`PrivacyScreen`, owner's choice),
+  with the ad privacy row and a link to the policy, as the licenses live behind theirs. Called
+  "Privacy", not "Consents" as first proposed: crash reports rest on legitimate interest, and a page
+  naming them a consent would contradict the policy. The row's note says only what kind of page it
+  is, not what is set on it (owner's choice). The policy link is there because Google Play wants the
+  policy reachable inside an app that handles personal data, and until this page it was only in
+  the store listing; it carries the external-link icon, and "(en)" in Polish, since the policy is
+  published in English only.
 - **Only release builds send anything** (`R.bool.telemetry`). Debug shares the release's application
   id, and the developer is the heaviest player there is: during the alpha the developer's own play
   would outweigh every tester. Events are watched on a release build with DebugView.
@@ -1330,6 +1341,19 @@ testers decide nothing on their own; asking them does more.
   and AGP 9's bundled Kotlin (2.2) cannot read that metadata - `compileDebugKotlin` failed with
   "binary version of its metadata is 2.4.0, expected version is 2.2.0". Moving to 35.x waits for the
   project's Kotlin to move.
+- **Checked on a release build, 2026-11-15** (Redmi Note 10 5G, Poland): the form came up, consent
+  reached Firebase once R8 was told to keep the path (see "What R8 already broke"), every event
+  tried arrived with its parameters, the statistics switch stopped them, a crash reached
+  Crashlytics. DebugView stayed empty throughout - with consent denied it has no identifier to show,
+  and it did not pick the phone up after consent either - so events were read with
+  `log.tag.FA-SVC VERBOSE` and Analytics' Realtime report.
+- **The Data safety form (2026-11-15).** Collected: approximate location, app interactions, crash
+  logs, diagnostics, device or other IDs; encrypted in transit; none ephemeral. AdMob's data is
+  *shared* - Google says its SDK "collects and shares", for its own advertising - and required.
+  Firebase's is collected, not shared: Google processes it for the publisher, which Play's
+  definition excludes from sharing. That stays true only while Analytics' data sharing settings
+  (Google products and services, and the rest) are off. Firebase's data is optional, behind the two
+  switches.
 - **Not built: the tap on the shop's "coming soon" coin packs.** The planned event assumed a tile to
   tap; the shop shows a heading and a pill, and nothing there takes a press. Making it tappable is a
   design question of its own (what does the tap answer?), left in `docs/TODO.md`.
@@ -1345,6 +1369,14 @@ testers decide nothing on their own; asking them does more.
 and the whole unit suite stayed green.
 
 The keep rule and the reasoning are in `app/proguard-rules.pro`, which is deliberately short.
+
+**The second time (2026-11-15): consent never reached analytics.** UMP passes the form's answer to
+Firebase by reflection - `FirebaseAnalytics.setConsent(Map)`, keyed by enums looked up by name -
+and R8 had inlined the method and renamed the enums. Every answer was dropped with a
+`NoSuchMethodException` in logcat, and analytics stayed denied for everyone in the EEA. Found by
+testing the release build with DebugView, which stayed empty after "Consent". The keep rules are in
+`app/proguard-rules.pro`. The lesson is the same as the first time: a new SDK that another SDK talks
+to is a release build installed and watched in logcat, not a green CI.
 Installing a release build and opening it is therefore a release-checklist step and not an optional
 one, and it is the step to repeat whenever the ads SDK moves.
 

@@ -85,7 +85,7 @@ ANDROID_SERIAL=emulator-5554 ./gradlew :app:connectedDebugAndroidTest
 # The generator directly: a width and a seed, for experiments with the difficulty dials
 ./gradlew :generator:run --args="--width 8 --language en-US --difficulty hard --count 5"
 
-# A release build for timing on a phone: R8 like release, debug key, the debug tools, its own id
+# A release build to play on a phone: R8 like release, debug key, the debug tools, its own id
 ./gradlew :app:assembleMeasure        # app/build/outputs/apk/measure/app-measure.apk
 
 # Rebuild the bundled dictionaries from the corpora in generator/data/
@@ -105,8 +105,10 @@ ANDROID_SERIAL=emulator-5554 ./gradlew :app:connectedDebugAndroidTest
   `DailyGift.setAvailable`, which nothing in `main` may call.
 - **The `measure` build type** (`eu.andret.ravel.measure`, "Ravel measure") is `release` signed with
   the debug key, compiled with `src/debug/java` for the two tools above. It installs beside the Play
-  game, and it is what generation is timed on: a debuggable build runs slower. **Never uploaded**, and
-  its shop is left alone - the AdMob ids are live and this package is not registered with them.
+  game and is how the late ladder is played on a phone at release speed: a debuggable build runs
+  slower. It sends no telemetry - generation times on phones come from `board_built`, from every
+  player. **Never uploaded**, and its shop is left alone - the AdMob ids are live and this package is
+  not registered with them.
 
 ## Architecture
 
@@ -356,6 +358,10 @@ the two names apart.
 - **`RewardedAds.State.BLOCKED` is a consent question never answered, not a refusal** - a player who
   says no has answered, and gets `UNAVAILABLE`. Never word it as the player's choice. The shop's ad
   tile asks again on a tap (`AdConsent.retry`); nothing else does.
+- **The consent form exists only because AdMob publishes a GDPR message for Ravel** (Privacy &
+  messaging > European regulations, Ravel's own message). The code cannot tell when it is missing:
+  UMP then shows nothing and says nothing. The form has "Consent" and "Manage options", no "Do not
+  consent" (owner's choice); the policy describes it that way.
 - **The AdMob ids in `res/values/ads.xml` are live.** Any device testing ads must have its hash in
   `ad_test_devices` in the same file — and that array is deliberately not debug-only.
 - `play-services-ads` merges in the `AD_ID` permission on its own; the Data safety form must say so.
@@ -365,15 +371,32 @@ the two names apart.
 - **Every event is an `AnalyticsEvent` (`analytics/AnalyticsEvent.kt`), sent through
   `Telemetry.log`; nothing else calls Firebase.** Each one answers an open decision - no event
   "in case". `AnalyticsEventTest` holds every event to Firebase's limits and must list each new one.
+- **Every significant new feature reports itself**: the change that adds it adds the
+  `AnalyticsEvent`s that say whether it is used and whether it works, each answering a decision about
+  the feature. An event per feature is not an event in case.
 - **Never rename an event, a parameter or a value code** (`codeOf`): it splits the data in two.
-- **Only release builds send anything** (`R.bool.telemetry`, per build type). Watch events on a
-  release build with DebugView, never by turning it on for debug.
+- **When a change needs something done in the Firebase, Google Cloud or AdMob console, say so in the
+  same answer, step by step** - a new event parameter to register as a custom dimension or metric,
+  a consent setting, a key restriction, an app to register. The owner does the consoles; nothing
+  in the code shows they are missing.
+- **Only release builds send anything** (`R.bool.telemetry`, per build type). Test on a release
+  build, never by turning telemetry on for debug.
+- **Watch events in logcat or in Analytics' Realtime report, not only DebugView**:
+  `adb shell setprop log.tag.FA-SVC VERBOSE` prints every event with its parameters. DebugView shows
+  nothing while consent is denied, and stayed empty in the first test even with it granted.
 - **The manifest starts both SDKs off and every consent type denied; `Telemetry.start` turns them
   on.** Never the other way round.
 - **Analytics consent is the UMP form's, through consent mode ("advanced"); crash reports run on
-  legitimate interest.** Both switches in the options turn collection off in the SDK, not by
-  filtering.
-- **`app/google-services.json` is committed**, and the build needs it.
+  legitimate interest.** Both switches turn collection off in the SDK, not by filtering.
+- **The switches, the ad privacy row and the policy link live on the privacy page
+  (`ui/settings/PrivacyScreen.kt`) behind one row in the options, called "Privacy", never
+  "Consents"** - crash reports are not a consent. **The in-app policy link stays**: Google Play
+  requires it.
+- **UMP reaches Firebase by reflection; `app/proguard-rules.pro` keeps that path** - see "Shipping a
+  release" for the check.
+- **`app/google-services.json` is committed**, and the build needs it. GitHub flags its API key as a
+  leaked secret; it is public by design and restricted in Google Cloud, so the alert is closed, not
+  the key rotated.
 - **Firebase BoM stays on 34.x until the project's Kotlin is 2.3 or later** - 35.x does not compile
   against AGP 9's bundled Kotlin.
 
@@ -467,6 +490,10 @@ equal `FOR_WATCHING_AD` and exceed `SEVENTH - DAY` - `StreakTest` holds both.
   see.** Keep rules live in `app/proguard-rules.pro`, deliberately short.
 - **Installing a release build and opening it is a release-checklist step, not an optional one** —
   and the step to repeat whenever the ads SDK moves.
+- **On that build, with the app's data cleared on a phone in Poland: the consent form comes up, and
+  "Consent" reaches Firebase** - logcat shows `analytics_storage=granted`, and no
+  `NoSuchMethodException` from `UserMessagingPlatform`. R8 broke this path once; repeat whenever UMP
+  or Firebase moves.
 - **Every signed bundle is built right after Build > Clean Project.** Release Kotlin compiled
   incrementally is not the same bytecode as a clean compile, and R8 turned the difference into a
   crash on the board.
@@ -494,6 +521,9 @@ that does it.
 
 - **The policy URL is in the Play listing: never rename the `ravel-android` repository.** GitHub
   redirects a renamed repository, but not its GitHub Pages site, so the link in Play would break.
+  The URL is `https://andret2344.github.io/ravel-android/privacy-policy` everywhere it is given (Play,
+  the AdMob consent message): the site's root is a 404, and `docs/_config.yml` keeps every other
+  document in `docs/` off the site.
 - **Ads are rewarded only.** No banners, no interstitials, nothing unsolicited.
 - **EEA/UK/CH consent before personalized ads**, through a Google-certified CMP (UMP SDK), changeable
   afterwards from settings. See "Ads and consent" above.
@@ -501,6 +531,8 @@ that does it.
   preference file or key family) goes into section 3 of the policy.
 - **The policy names what analytics sends.** A new `AnalyticsEvent` that reports a new kind of thing
   goes into the policy's analytics section in the same commit.
+- **Google Analytics' data sharing settings stay off.** The Data safety form says Firebase's data is
+  collected and not shared; letting Google use it for its own products makes that false.
 - **Firebase Analytics retention must be set to 14 months** in the console; the project default is 2.
   "Reset user data on new activity" is on, and the policy's retention sentence says so - switching
   it off, or changing the period, changes that sentence in the same breath.

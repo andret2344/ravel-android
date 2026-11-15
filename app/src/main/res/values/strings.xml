@@ -429,6 +429,12 @@
         the one part of these paragraphs that is about this game rather than about the source.
     -->
     <string name="settings_privacy">Privacy</string>
+    <!-- The row in the options that opens PrivacyScreen. Its note says what kind of page it is, not
+         what is set on it. -->
+    <string name="settings_privacy_open">Privacy settings</string>
+    <string name="settings_privacy_open_note">What the game may send, your consent choices and the privacy policy.</string>
+    <!-- The policy is published in English only; the Polish label says so with "(en)". -->
+    <string name="settings_privacy_policy">Privacy policy</string>
     <!--
         The two switches of Telemetry. The notes say what is sent and where to, in the words the
         privacy policy uses, and nothing it does not: no "anonymous", since the statistics carry

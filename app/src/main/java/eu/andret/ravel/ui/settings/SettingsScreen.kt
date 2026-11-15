@@ -2,7 +2,6 @@ package eu.andret.ravel.ui.settings
 
 import android.Manifest
 import android.os.Build
-import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -59,12 +58,9 @@ import java.util.Locale
  * reached here by players who already said yes to them after a solve, or who want them and were
  * never asked, so they sit with the other settings and not at the top.
  *
- * The privacy section holds the analytics and crash reports switches (see
- * [eu.andret.ravel.analytics.Telemetry]) and, on some devices, the ad privacy row. That row is
- * conditional because the consent SDK says whether this device was ever asked - a player outside the
- * regions that require a form has nothing to change, and a row that opens a form which reports
- * "nothing to show" is worse than no row. The section sits above the licenses row because it is
- * settings and they are a notice.
+ * The privacy section is one row opening [PrivacyScreen]: the analytics and crash reports switches,
+ * the ad privacy row where the consent SDK owes one, and the privacy policy. It sits above the
+ * licenses row because it is settings and they are a notice.
  *
  * The language row shows what is set and opens a picker, where it used to lay every option out on
  * the tab. Two changes at once, and they are the same change: "follow the phone" is gone, and with
@@ -87,22 +83,21 @@ import java.util.Locale
  * with the theme, the reminders and the progress reset, the notices were most of the tab's length
  * and the part a player scrolled past to reach nothing. Every source is still named, one page in.
  *
+ * @param onPrivacy opens the privacy page.
  * @param onLicenses opens the licenses page.
  */
 @Composable
 fun SettingsScreen(
+    onPrivacy: () -> Unit,
     onLicenses: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = viewModel(),
 ) {
     val language by viewModel.language.collectAsStateWithLifecycle()
     val unfinished by viewModel.unfinished.collectAsStateWithLifecycle()
-    val privacyOptions by viewModel.privacyOptions.collectAsStateWithLifecycle()
     val hapticsEnabled by viewModel.hapticsEnabled.collectAsStateWithLifecycle()
     val systemHaptics by viewModel.systemHaptics.collectAsStateWithLifecycle()
     val themeChoice by viewModel.themeChoice.collectAsStateWithLifecycle()
-    val analyticsEnabled by viewModel.analyticsEnabled.collectAsStateWithLifecycle()
-    val crashReportsEnabled by viewModel.crashReportsEnabled.collectAsStateWithLifecycle()
 
     val notificationPrefs by viewModel.notificationPrefs.collectAsStateWithLifecycle()
     val notificationsPermitted by viewModel.notificationsPermitted.collectAsStateWithLifecycle()
@@ -155,10 +150,6 @@ fun SettingsScreen(
 
     /** Whether the reset confirmation is open. */
     var resetting by remember { mutableStateOf(false) }
-
-    // Null under a preview, and the consent form has nowhere to open without one - so the row that
-    // opens it is not offered rather than offered and dead.
-    val activity = LocalActivity.current
 
     /** Whether the picker is open. */
     var picking by remember { mutableStateOf(false) }
@@ -355,9 +346,8 @@ fun SettingsScreen(
         }
     }
 
-    // The two switches always, the ad privacy row only where the consent SDK owes one. Each switch
-    // has its own note, because they are two different promises - see Telemetry for why crash
-    // reports do not wait on consent and analytics does.
+    // One row, like the licenses: what the game sends and the policy live on their own page - see
+    // PrivacyScreen. The note says only what kind of page it is.
     val privacySection: @Composable () -> Unit = {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
@@ -366,54 +356,24 @@ fun SettingsScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Card(modifier = Modifier.fillMaxWidth()) {
-                SwitchRow(
-                    label = stringResource(R.string.settings_analytics),
-                    checked = analyticsEnabled,
-                    enabled = true,
-                    onChange = viewModel::setAnalytics,
-                )
-            }
-            Text(
-                text = stringResource(R.string.settings_analytics_note),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Card(modifier = Modifier.fillMaxWidth()) {
-                SwitchRow(
-                    label = stringResource(R.string.settings_crash_reports),
-                    checked = crashReportsEnabled,
-                    enabled = true,
-                    onChange = viewModel::setCrashReports,
-                )
-            }
-            Text(
-                text = stringResource(R.string.settings_crash_reports_note),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            if (privacyOptions && activity != null) {
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Row(
-                        // The same full-width target the license rows use: a row that is a finger
-                        // tall should be tappable everywhere a finger lands on it.
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { viewModel.changePrivacyOptions(activity) }
-                            .padding(horizontal = 12.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = stringResource(R.string.settings_privacy_ads),
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
-                    }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(onClick = onPrivacy)
+                        .padding(horizontal = 12.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.settings_privacy_open),
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
                 }
-                Text(
-                    text = stringResource(R.string.settings_privacy_note),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
             }
+            Text(
+                text = stringResource(R.string.settings_privacy_open_note),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 
@@ -469,8 +429,6 @@ fun SettingsScreen(
                 // the licenses. The right column used to be the license cards alone; with those one
                 // page in, a split that kept them there would leave half the window holding one row.
                 //
-                // The ad privacy row is the part that is not always there, and a column that is
-                // sometimes a row shorter is a column - not a hole in a grid.
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(20.dp),

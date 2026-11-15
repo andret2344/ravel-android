@@ -44,6 +44,25 @@
 # rather than failing the build, and the symptom is the launch crash described above.
 -keep class * extends androidx.room.RoomDatabase { <init>(); }
 #
+# ## Firebase Analytics, which the consent SDK reaches by reflection
+#
+# The UMP SDK hands the player's answer to Google's consent mode by calling
+# `FirebaseAnalytics.setConsent(Map)` through reflection, keyed by the `ConsentType` and
+# `ConsentStatus` enums looked up by name - UMP does not depend on Firebase, so it cannot call it
+# directly. Neither SDK's consumer rules cover that edge. R8 inlined `setConsent` into the one call
+# in `Telemetry` and renamed both enums, and on 0.1.0-alpha.7 every answer to the form went nowhere:
+# the logcat said `NoSuchMethodException: ...FirebaseAnalytics.setConsent [interface java.util.Map]`
+# and analytics stayed at the manifest's "denied" whatever the player chose. No debug build and no
+# test could show it; DebugView staying empty after "Consent" was the only symptom.
+#
+# `getInstance` with it, since the reflection needs an instance to call `setConsent` on.
+-keep class com.google.firebase.analytics.FirebaseAnalytics {
+    public static com.google.firebase.analytics.FirebaseAnalytics getInstance(android.content.Context);
+    public void setConsent(java.util.Map);
+}
+-keep enum com.google.firebase.analytics.FirebaseAnalytics$ConsentType { *; }
+-keep enum com.google.firebase.analytics.FirebaseAnalytics$ConsentStatus { *; }
+#
 # ## What was checked and found to need nothing
 #
 # - **play-services-ads and user-messaging-platform themselves.** Both ship consumer rules covering

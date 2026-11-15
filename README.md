@@ -36,9 +36,9 @@ asks for one - from the shop or from that streak repair.
 A short interactive tutorial on a hand-made board opens on first launch - including one real word
 that lies on the board and still does not count; it can be skipped and
 replayed from the options tab. The options tab also holds the language, board haptics, the theme
-(system, light or dark), the daily notification, switches for usage statistics and crash reports
-(Firebase Analytics and Crashlytics, release builds only) and a progress reset that never pays the
-same level or day twice.
+(system, light or dark), the daily notification, a privacy page - switches for usage statistics and
+crash reports (Firebase Analytics and Crashlytics, release builds only), the ad consent choices and
+the privacy policy - and a progress reset that never pays the same level or day twice.
 
 ## Modules
 
@@ -93,6 +93,9 @@ ANDROID_SERIAL=emulator-5554 ./gradlew :app:connectedDebugAndroidTest
 
 # The generator directly: a width and a seed, for experiments with the difficulty dials
 ./gradlew :generator:run --args="--width 8 --language en-US --difficulty hard --count 5"
+
+# A release build (R8, not debuggable) with the debug tools, installed beside the Play game
+./gradlew :app:assembleMeasure
 
 # Rebuild the bundled dictionaries from the corpora in generator/data/
 ./gradlew :generator:buildDictionaries

@@ -121,13 +121,15 @@ android {
         }
 
         /*
-         * A release build to measure on a phone: shrunk and optimized exactly like `release`, signed
+         * A release build to play on a phone: shrunk and optimized exactly like `release`, signed
          * with the debug key, carrying the debug tools.
          *
-         * For timing the generator where it matters - on a mid-range phone, on the big boards past
-         * level 126. A debug build is the wrong thing to time: ART runs a debuggable app markedly
-         * slower, so its numbers overstate the phone. And the build from Play cannot reach those
-         * levels, because the level jump is a debug-only tool (see `LevelJump.kt`).
+         * For trying the late ladder where it matters - on a mid-range phone, on the big boards past
+         * level 126, at the speed a player gets. A debug build is the wrong thing to judge that on:
+         * ART runs a debuggable app markedly slower. And the build from Play cannot reach those
+         * levels, because the level jump is a debug-only tool (see `LevelJump.kt`). It used to be
+         * where generation was timed, through a logcat line since removed; phone timings now come
+         * from the `board_built` event, from release builds only - this one sends no telemetry.
          *
          * Its own application id, so it installs beside the game from Play instead of over it: a
          * different signing key would otherwise mean uninstalling the player's game and its

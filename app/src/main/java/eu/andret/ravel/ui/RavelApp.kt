@@ -69,6 +69,8 @@ import eu.andret.ravel.ui.daily.DailyScreen
 import eu.andret.ravel.ui.level.LevelMenuScreen
 import eu.andret.ravel.ui.level.LevelRoute
 import eu.andret.ravel.ui.level.LevelScreen
+import eu.andret.ravel.ui.settings.PrivacyRoute
+import eu.andret.ravel.ui.settings.PrivacyScreen
 import eu.andret.ravel.ui.settings.SettingsScreen
 import eu.andret.ravel.ui.shop.ShopScreen
 import eu.andret.ravel.ui.stats.StatsScreen
@@ -334,7 +336,14 @@ fun RavelApp(
                         composable(STATS_ROUTE) { StatsScreen(modifier = content) }
                         composable(SETTINGS_ROUTE) {
                             SettingsScreen(
+                                onPrivacy = { navController.navigate(PrivacyRoute.SCREEN) },
                                 onLicenses = { navController.navigate(LicenseRoute.LIST) },
+                                modifier = content,
+                            )
+                        }
+                        composable(PrivacyRoute.SCREEN) {
+                            PrivacyScreen(
+                                onBack = { navController.popBackStack() },
                                 modifier = content,
                             )
                         }

@@ -6,10 +6,11 @@ arguments in `docs/DECISIONS.md`; an item here points at them rather than repeat
 
 ## Before the beta
 
-1. **Telemetry checked on a release build**, with DebugView
-   (`adb shell setprop debug.firebase.analytics.app eu.andret.ravel`): events arrive; in Poland,
-   before the form is answered and after a refusal, without an identifier, and with one after
-   consent; each options switch stops its SDK; a crash reaches Crashlytics, deobfuscated.
+1. **Telemetry on the first build from Play** - checked on a locally signed release (2026-11-15):
+   consent reaches Firebase, events and parameters arrive, the statistics switch stops them, a crash
+   reaches Crashlytics. Left for the first Play build: events still arrive (the Play signing key's
+   SHA-1 in the API key restriction), and the first crash with the game's own frames reads
+   deobfuscated (the mapping file uploaded).
 
 ## Code
 
@@ -22,11 +23,13 @@ arguments in `docs/DECISIONS.md`; an item here points at them rather than repeat
 3. **Measure the leaner economy** (2026-11-11, `DECISIONS.md`, "Why playing pays less"): rewarded
    impressions per DAU from AdMob against DAU from the Play Console, before and after the release
    that ships it, read on new installs - existing testers are still spending their old balances.
+   Analytics came after that release, so it has no "before"; from here on `ad_watched` and
+   `hint_unaffordable` per active user say the same thing more directly.
    If the game reads as buyable, the next step is `ADS_PER_DAY` 2, not higher hint prices.
    **Until that measurement the economy gets no leaner.** Up to some ten thousand daily players the
    money is in whether a player comes back and how they rate the game, not in how scarce coins are:
-   a player who leaves frustrated watches no ads at all. Work that keeps players (a board that
-   builds on a slow phone, word meanings) goes before accounts and purchases.
+   a player who leaves frustrated watches no ads at all. Work that keeps players goes before
+   accounts and purchases.
 4. **Delete `LegacyLanguageKeys`** (and its call in `RavelApplication.onCreate` and its test)
    before 1.0.0, once every tester has launched a build that has it. Keep the bare `pl` / `en`
    alias in `LanguageSettings.byCode` for good - see `DECISIONS.md`, "Why the language codes carry

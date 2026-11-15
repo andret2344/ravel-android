@@ -296,6 +296,9 @@
     <string name="tutorial_step_done">Gotowe! Gdy utkniesz, podpowiedź odsłoni literę albo całe słowo za monety.</string>
 
     <string name="settings_privacy">Prywatność</string>
+    <string name="settings_privacy_open">Ustawienia prywatności</string>
+    <string name="settings_privacy_open_note">Co gra może wysyłać, Twoje zgody i polityka prywatności.</string>
+    <string name="settings_privacy_policy">Polityka prywatności (en)</string>
     <string name="settings_analytics">Statystyki użycia</string>
     <string name="settings_analytics_note">Dane o tym, jak przebiega gra - poziomy, podpowiedzi, czas budowania plansz - trafiają do Google Analytics for Firebase i pomagają ulepszać grę. Nigdy nie zawierają Twojego imienia ani adresu e-mail.</string>
     <string name="settings_crash_reports">Raporty awarii</string>
