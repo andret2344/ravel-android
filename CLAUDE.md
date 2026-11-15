@@ -216,9 +216,9 @@ This is the part most easily broken by an innocent-looking change.
 board — drag, tap, hint — funnels through `withPath`**. The whole rule set is testable with no device.
 
 `RavelApplication` holds the process-wide singletons — `wallet`, `language`, `haptics`, `modifiers`,
-`theme`, `reminder`, `tutorial`, `progress` (daily), `levels`, `puzzles`, `consent`, `ads`, `adAllowance`,
-`dailyGift`, `stuckOffer`, `notifications`, `wordList`. **Screens reach them through their
-`AndroidViewModel`, never by constructing their own.**
+`theme`, `reminder`, `tutorial`, `progress` (daily), `levels`, `puzzles`, `telemetry`, `consent`,
+`ads`, `adAllowance`, `dailyGift`, `stuckOffer`, `notifications`, `wordList`. **Screens reach them
+through their `AndroidViewModel`, never by constructing their own.**
 
 `RavelApp.kt` is the whole navigation graph: five tabs, each keeping its own back stack. Screens live
 under `ui/<area>/` as `XScreen.kt` + `XViewModel.kt`; board rendering splits across `ui/board/`
@@ -360,6 +360,23 @@ the two names apart.
   `ad_test_devices` in the same file — and that array is deliberately not debug-only.
 - `play-services-ads` merges in the `AD_ID` permission on its own; the Data safety form must say so.
 
+### Analytics and crash reports
+
+- **Every event is an `AnalyticsEvent` (`analytics/AnalyticsEvent.kt`), sent through
+  `Telemetry.log`; nothing else calls Firebase.** Each one answers an open decision - no event
+  "in case". `AnalyticsEventTest` holds every event to Firebase's limits and must list each new one.
+- **Never rename an event, a parameter or a value code** (`codeOf`): it splits the data in two.
+- **Only release builds send anything** (`R.bool.telemetry`, per build type). Watch events on a
+  release build with DebugView, never by turning it on for debug.
+- **The manifest starts both SDKs off and every consent type denied; `Telemetry.start` turns them
+  on.** Never the other way round.
+- **Analytics consent is the UMP form's, through consent mode ("advanced"); crash reports run on
+  legitimate interest.** Both switches in the options turn collection off in the SDK, not by
+  filtering.
+- **`app/google-services.json` is committed**, and the build needs it.
+- **Firebase BoM stays on 34.x until the project's Kotlin is 2.3 or later** - 35.x does not compile
+  against AGP 9's bundled Kotlin.
+
 ### Localization
 
 `LanguageSettings` drives **both** the dictionary and the UI locale. **From API 33 the choice is
@@ -469,10 +486,11 @@ equal `FOR_WATCHING_AD` and exceed `SEVENTH - DAY` - `StreakTest` holds both.
 
 ## Commitments made in the privacy policy
 
-`docs/privacy-policy.md` is the published policy (GitHub Pages, `main` + `/docs`). Since 2026-11-06 it
-describes only what ships: data on the device, rewarded AdMob ads and the UMP consent form - no
-accounts, no server, no analytics. Changing what the app collects or sends means changing the policy
-and the Play Console Data safety form in the same breath, **before** the release that does it.
+`docs/privacy-policy.md` is the published policy (GitHub Pages, `main` + `/docs`). It describes only
+what ships: data on the device, rewarded AdMob ads, the UMP consent form, Firebase Analytics and
+Crashlytics - no accounts, no server of our own. Changing what the app collects or sends means
+changing the policy and the Play Console Data safety form in the same breath, **before** the release
+that does it.
 
 - **The policy URL is in the Play listing: never rename the `ravel-android` repository.** GitHub
   redirects a renamed repository, but not its GitHub Pages site, so the link in Play would break.
@@ -481,6 +499,11 @@ and the Play Console Data safety form in the same breath, **before** the release
   afterwards from settings. See "Ads and consent" above.
 - **The policy names what is stored on the device.** A new kind of locally stored data (a new
   preference file or key family) goes into section 3 of the policy.
+- **The policy names what analytics sends.** A new `AnalyticsEvent` that reports a new kind of thing
+  goes into the policy's analytics section in the same commit.
+- **Firebase Analytics retention must be set to 14 months** in the console; the project default is 2.
+  "Reset user data on new activity" is on, and the policy's retention sentence says so - switching
+  it off, or changing the period, changes that sentence in the same breath.
 
 Planned, and taken out of the policy until it ships. These were published once, so a player may
 have read them; they remain the requirements for the feature that brings each back, and go back into
@@ -492,8 +515,6 @@ the policy with it:
   display name, the email local part, or the profile picture.
 - **The leaderboard needs an opt-out toggle in settings.** Ship it with the leaderboard, not after.
 - **Firestore security rules must scope a signed-in user to their own data.**
-- **Firebase Analytics retention must be set to 14 months** in the console; the project default is 2.
-  Analytics consent ships with analytics.
 - **Account deletion is by email only** (andret2344@gmail.com), within 30 days, removing the account,
   its game data and its leaderboard entries. If a Play review rejects the app over the missing in-app
   path, an in-app delete button is the fix — not a change to *what* gets deleted.

@@ -3,6 +3,7 @@ package eu.andret.ravel
 import android.app.Application
 import android.content.res.Configuration
 import eu.andret.ravel.ads.AdConsent
+import eu.andret.ravel.analytics.Telemetry
 import eu.andret.ravel.ads.RewardedAds
 import eu.andret.ravel.game.PuzzleCache
 import eu.andret.ravel.game.Puzzles
@@ -169,7 +170,18 @@ class RavelApplication : Application() {
      * here at all: a prefetch that died with the screen that asked for it would be exactly the work
      * this is meant to have finished by the time a screen wants it.
      */
-    val puzzles: PuzzleCache by lazy { PuzzleCache(scope, StoredBoards(this)) }
+    val puzzles: PuzzleCache by lazy {
+        PuzzleCache(scope, StoredBoards(this)) { id, language ->
+            Puzzles.generate(id, language, Puzzles.PREFETCH_TIMEOUT_MILLIS, telemetry::log)
+        }
+    }
+
+    /**
+     * Analytics and crash reports, and the player's two switches for them - see [Telemetry]. One for
+     * the process, because the switches are written in the options tab and read by every screen
+     * that reports something.
+     */
+    val telemetry: Telemetry by lazy { Telemetry(this, scope) }
 
     /**
      * Builds the dictionary before anything asks for a board.
@@ -191,6 +203,10 @@ class RavelApplication : Application() {
         super.onCreate()
         // Before anything reads a store: the keys it renames are the ones every store opens with.
         LegacyLanguageKeys.migrate(this)
+        // Early, so the switches are applied to the SDKs before anything is reported, and before the
+        // consent form: Google asks for Firebase to be up before the UMP SDK starts, which Firebase's
+        // own startup provider has already seen to by the time this runs.
+        telemetry.start(consent.outsideRegulation)
         scope.launch(Dispatchers.Default) {
             language.current.collect { Puzzles.preload(it) }
         }
@@ -200,7 +216,7 @@ class RavelApplication : Application() {
         notifications.reschedule()
     }
 
-    val ads: RewardedAds by lazy { RewardedAds(this, consent.canRequestAds, scope) }
+    val ads: RewardedAds by lazy { RewardedAds(this, consent.canRequestAds, scope, telemetry::log) }
 
     /** Today's three watches, counted here so every screen sees the same three. */
     val adAllowance: AdAllowance by lazy { AdAllowance(this) }

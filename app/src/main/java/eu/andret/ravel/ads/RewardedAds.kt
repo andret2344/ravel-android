@@ -11,6 +11,7 @@ import com.google.android.gms.ads.RequestConfiguration
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import eu.andret.ravel.R
+import eu.andret.ravel.analytics.AnalyticsEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,11 +49,16 @@ import kotlinx.coroutines.launch
  * rewarded ad goes stale after an hour anyway. The cost is a few seconds of "finding an ad" on the
  * first visit to the shop in a process. After that the next ad is fetched the moment one closes, as
  * before, because a player who has watched one is the player most likely to want another.
+ *
+ * @param report where requests, fills and failures go - the fill rate, which nothing else shows.
+ *   A watch is reported by the two callers of [show] instead, since only they know which of the two
+ *   places it was.
  */
 class RewardedAds(
     context: Context,
     allowed: StateFlow<Boolean>,
     private val scope: CoroutineScope,
+    private val report: (AnalyticsEvent) -> Unit = {},
 ) {
     private val application = context.applicationContext
 
@@ -179,6 +185,7 @@ class RewardedAds(
         if (!started || !wanted || fetching || loaded != null || _state.value == State.SHOWING) return
         fetching = true
         _state.value = State.LOADING
+        report(AnalyticsEvent.AdRequested)
         RewardedAd.load(
             application,
             unitId,
@@ -188,12 +195,14 @@ class RewardedAds(
                     fetching = false
                     loaded = ad
                     _state.value = State.READY
+                    report(AnalyticsEvent.AdFilled)
                 }
 
                 override fun onAdFailedToLoad(error: LoadAdError) {
                     fetching = false
                     loaded = null
                     _state.value = State.UNAVAILABLE
+                    report(AnalyticsEvent.AdFailed(error.code))
                 }
             },
         )

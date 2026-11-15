@@ -59,10 +59,12 @@ import java.util.Locale
  * reached here by players who already said yes to them after a solve, or who want them and were
  * never asked, so they sit with the other settings and not at the top.
  *
- * The third is the ad privacy row, and it is conditional because the consent SDK says whether this
- * device was ever asked - a player outside the regions that require a form has nothing to change,
- * and a row that opens a form which reports "nothing to show" is worse than no row. It sits above
- * the licenses row because it is a setting and they are a notice.
+ * The privacy section holds the analytics and crash reports switches (see
+ * [eu.andret.ravel.analytics.Telemetry]) and, on some devices, the ad privacy row. That row is
+ * conditional because the consent SDK says whether this device was ever asked - a player outside the
+ * regions that require a form has nothing to change, and a row that opens a form which reports
+ * "nothing to show" is worse than no row. The section sits above the licenses row because it is
+ * settings and they are a notice.
  *
  * The language row shows what is set and opens a picker, where it used to lay every option out on
  * the tab. Two changes at once, and they are the same change: "follow the phone" is gone, and with
@@ -99,6 +101,8 @@ fun SettingsScreen(
     val hapticsEnabled by viewModel.hapticsEnabled.collectAsStateWithLifecycle()
     val systemHaptics by viewModel.systemHaptics.collectAsStateWithLifecycle()
     val themeChoice by viewModel.themeChoice.collectAsStateWithLifecycle()
+    val analyticsEnabled by viewModel.analyticsEnabled.collectAsStateWithLifecycle()
+    val crashReportsEnabled by viewModel.crashReportsEnabled.collectAsStateWithLifecycle()
 
     val notificationPrefs by viewModel.notificationPrefs.collectAsStateWithLifecycle()
     val notificationsPermitted by viewModel.notificationsPermitted.collectAsStateWithLifecycle()
@@ -351,14 +355,43 @@ fun SettingsScreen(
         }
     }
 
+    // The two switches always, the ad privacy row only where the consent SDK owes one. Each switch
+    // has its own note, because they are two different promises - see Telemetry for why crash
+    // reports do not wait on consent and analytics does.
     val privacySection: @Composable () -> Unit = {
-        if (privacyOptions && activity != null) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = stringResource(R.string.settings_privacy),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = stringResource(R.string.settings_privacy),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Card(modifier = Modifier.fillMaxWidth()) {
+                SwitchRow(
+                    label = stringResource(R.string.settings_analytics),
+                    checked = analyticsEnabled,
+                    enabled = true,
+                    onChange = viewModel::setAnalytics,
                 )
+            }
+            Text(
+                text = stringResource(R.string.settings_analytics_note),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Card(modifier = Modifier.fillMaxWidth()) {
+                SwitchRow(
+                    label = stringResource(R.string.settings_crash_reports),
+                    checked = crashReportsEnabled,
+                    enabled = true,
+                    onChange = viewModel::setCrashReports,
+                )
+            }
+            Text(
+                text = stringResource(R.string.settings_crash_reports_note),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            if (privacyOptions && activity != null) {
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Row(
                         // The same full-width target the license rows use: a row that is a finger
@@ -436,8 +469,8 @@ fun SettingsScreen(
                 // the licenses. The right column used to be the license cards alone; with those one
                 // page in, a split that kept them there would leave half the window holding one row.
                 //
-                // The ad privacy row is the section that is not always there, and a column that
-                // sometimes has four sections and sometimes three is a column - not a hole in a grid.
+                // The ad privacy row is the part that is not always there, and a column that is
+                // sometimes a row shorter is a column - not a hole in a grid.
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(20.dp),

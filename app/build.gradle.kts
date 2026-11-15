@@ -1,6 +1,12 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    // Reads app/google-services.json, which is committed on purpose: what is in it identifies the
+    // Firebase project and is no secret - Firebase's own documentation says so - and the public
+    // repository has to build in CI without one. Access is guarded by the key's restrictions in the
+    // Google Cloud console (package name and signing certificate), not by hiding the file.
+    alias(libs.plugins.google.services)
+    alias(libs.plugins.firebase.crashlytics)
 }
 
 android {
@@ -38,6 +44,8 @@ android {
 
     buildFeatures {
         compose = true
+        // For the one `resValue` below, `telemetry`. Off by default from AGP 9.
+        resValues = true
     }
 
     /*
@@ -61,7 +69,22 @@ android {
     }
 
     buildTypes {
+        /*
+         * Whether this build may send analytics and crash reports at all - see
+         * eu.andret.ravel.analytics.Telemetry. Only `release` does.
+         *
+         * Debug shares the release's application id, so its events would land in the players' data,
+         * and the developer is the heaviest player there is: during the alpha the developer's own
+         * testing would outweigh every tester. `measure` is the developer timing boards. Neither is
+         * a player. To watch events arrive, install a release build and turn on DebugView
+         * (`adb shell setprop debug.firebase.analytics.app eu.andret.ravel`).
+         */
+        debug {
+            resValue("bool", "telemetry", "false")
+        }
+
         release {
+            resValue("bool", "telemetry", "true")
             /*
              * Shrinking is on, and it is on now rather than at release time on purpose.
              *
@@ -120,6 +143,11 @@ android {
             applicationIdSuffix = ".measure"
             versionNameSuffix = "-measure"
             matchingFallbacks += listOf("release")
+            resValue("bool", "telemetry", "false")
+            // It sends no crash reports, so there is nothing to read a mapping file against.
+            configure<com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension> {
+                mappingFileUploadEnabled = false
+            }
         }
     }
 
@@ -222,6 +250,11 @@ dependencies {
     // privacy policy names, and it is what decides whether a request may be personalized at all.
     implementation(libs.play.services.ads)
     implementation(libs.user.messaging.platform)
+    // Analytics and crash reports - see eu.andret.ravel.analytics.Telemetry, and the privacy policy
+    // for what they send. The BoM picks both versions, so the two cannot drift apart.
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.crashlytics)
     debugImplementation(libs.androidx.compose.ui.tooling)
     testImplementation(libs.junit)
     // The smoke tests in src/androidTest. They run against the debug variant, which is not shrunk,

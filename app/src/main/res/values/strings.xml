@@ -428,14 +428,24 @@
         carry the statement that the material was modified, which that license requires and which is
         the one part of these paragraphs that is about this game rather than about the source.
     -->
+    <string name="settings_privacy">Privacy</string>
+    <!--
+        The two switches of Telemetry. The notes say what is sent and where to, in the words the
+        privacy policy uses, and nothing it does not: no "anonymous", since the statistics carry
+        an app instance id.
+    -->
+    <string name="settings_analytics">Usage statistics</string>
+    <string name="settings_analytics_note">How the game is played - levels, hints, how long boards take to build - goes to Google Analytics for Firebase to help make the game better. It never includes your name or email address.</string>
+    <string name="settings_crash_reports">Crash reports</string>
+    <string name="settings_crash_reports_note">If the game crashes, a technical report of what went wrong goes to Firebase Crashlytics so the bug can be found and fixed.</string>
     <!--
         Only shown where the consent SDK says a form is required - see AdConsent. A player who was
         never asked has nothing to change, and a row that opens a form which reports "nothing to
-        show" is worse than no row at all.
+        show" is worse than no row at all. The form decides for the usage statistics too, through
+        Google's consent mode, so the note names both.
     -->
-    <string name="settings_privacy">Privacy</string>
     <string name="settings_privacy_ads">Ad privacy choices</string>
-    <string name="settings_privacy_note">Change what ads on this device are allowed to use. Ads are only ever shown when you ask for one in the shop.</string>
+    <string name="settings_privacy_note">Change what ads and usage statistics on this device are allowed to use. Ads are only ever shown when you ask for one in the shop.</string>
 
     <string name="settings_sources">Word sources</string>
     <string name="settings_sources_note">The dictionaries are built from public word lists and corpora. Tap a source to see its license.</string>

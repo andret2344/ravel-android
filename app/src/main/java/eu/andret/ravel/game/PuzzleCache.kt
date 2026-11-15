@@ -90,8 +90,9 @@ import kotlinx.coroutines.sync.withLock
  * and rejected: `TRIM_MEMORY_UI_HIDDEN` arrives every time the player leaves the app, often with a
  * build still running that the freezer will merely pause, and a finished board is a few kilobytes.
  *
- * @param build how a prefetch builds a board. A parameter only so the tests can hand it boards
- *   they control; the game never passes one.
+ * @param build how a prefetch builds a board. A parameter so the tests can hand it boards they
+ *   control, and so the game can pass [Puzzles.generate] the analytics sink this class has no
+ *   business holding.
  */
 class PuzzleCache(
     private val scope: CoroutineScope,

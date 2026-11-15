@@ -18,6 +18,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import eu.andret.ravel.R
 import eu.andret.ravel.RavelApplication
 import eu.andret.ravel.ads.RewardedAds
+import eu.andret.ravel.analytics.AnalyticsEvent
 import eu.andret.ravel.game.Puzzle
 import eu.andret.ravel.game.Rewards
 import eu.andret.ravel.ui.CoinAmount
@@ -56,7 +57,12 @@ class StuckOfferViewModel(application: Application) : AndroidViewModel(applicati
         ravel.adAllowance.refresh()
     }
 
-    fun shown() = ravel.stuckOffer.shown()
+    fun shown() {
+        ravel.stuckOffer.shown()
+        ravel.telemetry.log(AnalyticsEvent.StuckOfferShown)
+    }
+
+    fun taken() = ravel.telemetry.log(AnalyticsEvent.StuckOfferTaken)
 }
 
 /**
@@ -115,6 +121,7 @@ internal fun StuckOffer(
             primary = stringResource(R.string.stuck_go),
             onPrimary = {
                 open = false
+                viewModel.taken()
                 onShop()
             },
             secondary = stringResource(R.string.stuck_later),

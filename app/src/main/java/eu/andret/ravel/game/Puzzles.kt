@@ -1,5 +1,6 @@
 package eu.andret.ravel.game
 
+import eu.andret.ravel.analytics.AnalyticsEvent
 import eu.andret.ravel.generator.Language
 import eu.andret.ravel.generator.Ravel
 import kotlinx.coroutines.Dispatchers
@@ -25,18 +26,22 @@ object Puzzles {
      * the seam would quietly trade away the cancellation this method's whole contract is about; and
      * there is nothing to gain by moving the work elsewhere anyway, since a board is a fixed amount
      * of CPU and the seed already makes it deterministic.
+     *
+     * @param report where the build's time goes, as [AnalyticsEvent.BoardBuilt] - the phone
+     *   measurement, taken on every phone. Only a build that ran to an answer is reported: one
+     *   canceled midway never reaches it.
      */
     @Suppress("kotlin:S6310")
     suspend fun generate(
         id: PuzzleId,
         language: Language,
         timeoutMillis: Long = DEFAULT_TIMEOUT_MILLIS,
+        report: (AnalyticsEvent) -> Unit = {},
     ): Puzzle? {
         val spec = PuzzleSpec.of(id)
-        // TEMPORARY - measurement scaffolding, remove once the device numbers are recorded.
-        // The desktop sweep (:app:sweepLevels) has the breakdown; what no desktop can answer is how
-        // much slower this phone is, and that needs the real path: ART rather than a desktop JVM,
-        // the dictionary read from the APK, and the device's own heap.
+        // Timed here, on the real path, because that is what no desktop can answer: ART rather than
+        // a desktop JVM, the dictionary read from the APK, and the phone's own heap. The desktop
+        // sweep (:app:sweepLevels) has the breakdown; this has the phones.
         val startedAt = System.nanoTime()
         val board = runInterruptible(Dispatchers.Default) {
             Ravel.boardOrNull(
@@ -49,11 +54,16 @@ object Puzzles {
                 maxWordRank = spec.maxWordRank,
             )
         }
-        android.util.Log.i(
-            "RavelGen",
-            "${id.mode}/${id.ordinal} ${spec.size}x${spec.size} rank=${spec.maxWordRank} " +
-                "lang=${language.code} found=${board != null} " +
-                "millis=${(System.nanoTime() - startedAt) / 1_000_000}",
+        val millis = (System.nanoTime() - startedAt) / 1_000_000
+        report(
+            AnalyticsEvent.BoardBuilt(
+                mode = id.mode,
+                ordinal = id.ordinal,
+                size = spec.size,
+                millis = millis,
+                found = board != null,
+                timeoutMillis = timeoutMillis,
+            ),
         )
         return board?.let(::Puzzle)
     }

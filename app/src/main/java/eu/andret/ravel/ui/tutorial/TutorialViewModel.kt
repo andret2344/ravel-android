@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import eu.andret.ravel.RavelApplication
+import eu.andret.ravel.analytics.AnalyticsEvent
 import eu.andret.ravel.game.Puzzle
 import eu.andret.ravel.game.Tutorial
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -84,7 +85,12 @@ class TutorialViewModel(application: Application) : AndroidViewModel(application
 
     init {
         viewModelScope.launch {
-            tutorial.pending.collect { due -> if (due) _lesson.value = fresh() }
+            tutorial.pending.collect { due ->
+                if (due) {
+                    _lesson.value = fresh()
+                    ravel.telemetry.log(AnalyticsEvent.TutorialBegin)
+                }
+            }
         }
     }
 
@@ -98,8 +104,22 @@ class TutorialViewModel(application: Application) : AndroidViewModel(application
     /** The button under the decoy's explanation; see [dismissed]. */
     fun dismissDecoy() = _lesson.update(::dismissed)
 
-    /** Finishing and skipping are one answer: done, until asked for again. */
-    fun finish() = tutorial.markDone()
+    /**
+     * The last step's button. Finishing and skipping are one answer to the game - done, until asked
+     * for again - and two to the analytics, which is the only place they differ.
+     */
+    fun finish() {
+        ravel.telemetry.log(AnalyticsEvent.TutorialComplete)
+        tutorial.markDone()
+    }
+
+    /** The corner button, or the back gesture: [finish] on the last step, a skip before it. */
+    fun skip() {
+        val step = _lesson.value.step
+        if (step == TutorialStep.DONE) return finish()
+        ravel.telemetry.log(AnalyticsEvent.TutorialSkip(step.name.lowercase()))
+        tutorial.markDone()
+    }
 
     private fun move(change: (Puzzle) -> Puzzle) = _lesson.update { lesson ->
         val next = moved(lesson, change(lesson.puzzle))

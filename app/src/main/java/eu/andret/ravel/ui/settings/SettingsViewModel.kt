@@ -21,10 +21,11 @@ import kotlinx.coroutines.flow.stateIn
  *
  * Thin on purpose. Each setting is already held, published and acted on by a store of its own -
  * [eu.andret.ravel.settings.LanguageSettings], [eu.andret.ravel.settings.HapticSettings],
- * [eu.andret.ravel.ads.AdConsent] - so what is left for a view model is the one question no store
- * can answer alone: whether there is a half-finished board that a language switch will cost the
- * player. That question belongs to the language and to nothing else here, which is why the haptics
- * switch below is two lines and the language is the rest of the file.
+ * [eu.andret.ravel.ads.AdConsent], [eu.andret.ravel.analytics.Telemetry] - so what is left for a
+ * view model is the one question no store can answer alone: whether there is a half-finished board
+ * that a language switch will cost the player. That question belongs to the language and to nothing
+ * else here, which is why the haptics switch below is two lines and the language is the rest of the
+ * file.
  */
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
     private val settings = (application as RavelApplication).language
@@ -40,6 +41,19 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val tutorial = (application as RavelApplication).tutorial
 
     private val theme = (application as RavelApplication).theme
+
+    private val telemetry = (application as RavelApplication).telemetry
+
+    /** Whether usage statistics are sent. See [eu.andret.ravel.analytics.Telemetry]. */
+    val analyticsEnabled: StateFlow<Boolean> = telemetry.analyticsEnabled
+
+    /** Whether crash reports are sent. See [eu.andret.ravel.analytics.Telemetry]. */
+    val crashReportsEnabled: StateFlow<Boolean> = telemetry.crashReportsEnabled
+
+    /** No confirmation, like the haptics: undone by the same switch. */
+    fun setAnalytics(value: Boolean) = telemetry.setAnalyticsEnabled(value)
+
+    fun setCrashReports(value: Boolean) = telemetry.setCrashReportsEnabled(value)
 
     /** The colors the player picked. See [eu.andret.ravel.settings.ThemeSettings]. */
     val themeChoice: StateFlow<ThemeChoice> = theme.choice

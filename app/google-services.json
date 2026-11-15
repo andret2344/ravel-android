@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "999204732905",
+    "project_id": "ravel-android-app",
+    "storage_bucket": "ravel-android-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:999204732905:android:0e1c9318a61cc1a0a11578",
+        "android_client_info": {
+          "package_name": "eu.andret.ravel"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDSgMy9zzR91VOAsYYljNdSz1S1ig6VOfw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:999204732905:android:b3630e2afb0acb62a11578",
+        "android_client_info": {
+          "package_name": "eu.andret.ravel.measure"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDSgMy9zzR91VOAsYYljNdSz1S1ig6VOfw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

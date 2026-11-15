@@ -58,7 +58,7 @@ fun TutorialScreen(viewModel: TutorialViewModel = viewModel()) {
     val trace = rememberTraceState(puzzle.board, hapticsEnabled)
     val step = lesson.step
 
-    BackHandler(onBack = viewModel::finish)
+    BackHandler(onBack = viewModel::skip)
 
     Surface(modifier = Modifier.fillMaxSize()) {
         BoardLayout(
@@ -77,7 +77,7 @@ fun TutorialScreen(viewModel: TutorialViewModel = viewModel()) {
                     // Gone on the last step, where the button under the board says the same thing
                     // in the words of having finished rather than of giving up.
                     if (step != TutorialStep.DONE) {
-                        TextButton(onClick = viewModel::finish) {
+                        TextButton(onClick = viewModel::skip) {
                             Text(stringResource(R.string.tutorial_skip))
                         }
                     }

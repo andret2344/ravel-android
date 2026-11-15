@@ -3,6 +3,7 @@ package eu.andret.ravel.ui.level
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import eu.andret.ravel.RavelApplication
+import eu.andret.ravel.analytics.AnalyticsEvent
 import eu.andret.ravel.game.LevelModifier
 import eu.andret.ravel.settings.ModifierSettings
 import eu.andret.ravel.settings.LevelProgressState
@@ -24,5 +25,10 @@ class LevelMenuViewModel(application: Application) : AndroidViewModel(applicatio
     /** What the player has chosen for levels not yet opened - see [ModifierSettings]. */
     val chosen: StateFlow<Set<LevelModifier>> = modifiers.chosen
 
-    fun setModifier(modifier: LevelModifier, enabled: Boolean) = modifiers.set(modifier, enabled)
+    private val telemetry = (application as RavelApplication).telemetry
+
+    fun setModifier(modifier: LevelModifier, enabled: Boolean) {
+        modifiers.set(modifier, enabled)
+        telemetry.log(AnalyticsEvent.ModifierSet(modifier, enabled))
+    }
 }

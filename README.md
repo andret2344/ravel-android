@@ -36,8 +36,9 @@ asks for one - from the shop or from that streak repair.
 A short interactive tutorial on a hand-made board opens on first launch - including one real word
 that lies on the board and still does not count; it can be skipped and
 replayed from the options tab. The options tab also holds the language, board haptics, the theme
-(system, light or dark), the daily notification and a progress reset that never pays the same level
-or day twice.
+(system, light or dark), the daily notification, switches for usage statistics and crash reports
+(Firebase Analytics and Crashlytics, release builds only) and a progress reset that never pays the
+same level or day twice.
 
 ## Modules
 
@@ -53,6 +54,10 @@ The app keeps puzzle rules in `app/.../game/`, where `Puzzle` is immutable and e
 new puzzle. Screens live under `ui/<area>/` as `XScreen.kt` + `XViewModel.kt`. Persistence is
 SharedPreferences plus JSON. Boards are built ahead of the player and kept on the device until
 solved (`app/.../game/PuzzleCache.kt`), because a large board can take a minute on a phone.
+Everything the game reports is one class, `app/.../analytics/AnalyticsEvent.kt`.
+
+The build reads `app/google-services.json`, the Firebase project's configuration, which is
+committed: it identifies the project and holds no secret.
 
 ## Build and test
 

@@ -20,7 +20,8 @@
         levels this app still supports at the bottom - 24 to 27.
 
         The app makes no requests of its own. The board, the dictionaries and every preference are
-        local; the only traffic in the process belongs to play-services-ads and the UMP consent SDK.
+        local; the only traffic in the process belongs to play-services-ads, the UMP consent SDK and
+        Firebase (analytics and crash reports), and Firebase sends nothing over http.
         That is also the one thing to watch here, and the reason this is a decision rather than
         hygiene: an ad creative or a third-party impression tracker that still uses http is a
         creative that will not render, and a rewarded ad that does not render is coins the player was
@@ -64,11 +65,40 @@
             android:value="@string/admob_application_id" />
 
         <!--
-            The ads SDK starts collecting app measurement data as soon as it is loaded, which is
-            before the consent form has been answered. This holds that off until MobileAds.initialize
-            is called - and that call is made only once the consent flow says ads may be requested,
-            in AdConsent - so the first thing the SDK does is not something the player has yet been
-            asked about.
+            Analytics and crash reports start switched off, and Telemetry.start switches them on
+            when the build and the player's switches allow it - see analytics/Telemetry.kt. On here
+            and off there would send whatever the SDKs do in the moments before that call runs.
+        -->
+        <meta-data
+            android:name="firebase_analytics_collection_enabled"
+            android:value="false" />
+        <meta-data
+            android:name="firebase_crashlytics_collection_enabled"
+            android:value="false" />
+        <!--
+            Analytics never reads the advertising id. Nothing in the game's statistics needs it -
+            they answer how the game is played, not who saw which ad - and the privacy policy says
+            it is not collected, so this line is that sentence.
+        -->
+        <meta-data
+            android:name="google_analytics_adid_collection_enabled"
+            android:value="false" />
+
+        <!--
+            Google's consent mode, all four types denied until somebody says otherwise. In the EEA,
+            the UK and Switzerland that somebody is the UMP SDK, with the player's answer to the
+            form (consent mode is switched on for the message in the AdMob console); everywhere else
+            it is Telemetry, once the consent service says no form is owed. Denied is the right
+            default for both, because before the service has answered nobody knows which one this
+            device is.
+
+            This replaces com.google.android.gms.ads.DELAY_APP_MEASUREMENT_INIT, which held the ads
+            SDK's measurement off until MobileAds.initialize, itself called only once consent let ads
+            be requested. The ads SDK and Firebase Analytics share one measurement library, so the
+            delay would also have held analytics off until the first visit to the shop - for most
+            players, forever. Consent mode answers the question the delay was for, what may be
+            collected before the form is answered, and answers it for both: nothing with an
+            identifier in it.
 
             Worth knowing and invisible from here: play-services-ads merges in the
             com.google.android.gms.permission.AD_ID permission of its own accord. The app therefore
@@ -76,8 +106,17 @@
             this app itself does with it, which is nothing directly.
         -->
         <meta-data
-            android:name="com.google.android.gms.ads.DELAY_APP_MEASUREMENT_INIT"
-            android:value="true" />
+            android:name="google_analytics_default_allow_analytics_storage"
+            android:value="false" />
+        <meta-data
+            android:name="google_analytics_default_allow_ad_storage"
+            android:value="false" />
+        <meta-data
+            android:name="google_analytics_default_allow_ad_user_data"
+            android:value="false" />
+        <meta-data
+            android:name="google_analytics_default_allow_ad_personalization_signals"
+            android:value="false" />
 
         <!--
             All four orientations, and fullUser rather than nothing at all.

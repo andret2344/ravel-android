@@ -6,6 +6,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import eu.andret.ravel.RavelApplication
 import eu.andret.ravel.ads.RewardedAds
+import eu.andret.ravel.analytics.AnalyticsEvent
+import eu.andret.ravel.analytics.AnalyticsEvent.AdWatched.Placement
 import eu.andret.ravel.game.DailyDate
 import eu.andret.ravel.game.PuzzleId
 import eu.andret.ravel.game.PuzzleMode
@@ -122,7 +124,11 @@ class DailyMenuViewModel(application: Application) : AndroidViewModel(applicatio
      */
     fun repairWithCoins(ordinal: Long) {
         if (!ravel.wallet.spend(Streak.REPAIR_PRICE)) return
-        if (!progress.repair(ordinal)) ravel.wallet.earn(Streak.REPAIR_PRICE)
+        if (progress.repair(ordinal)) {
+            ravel.telemetry.log(AnalyticsEvent.StreakRepaired(withAd = false))
+        } else {
+            ravel.wallet.earn(Streak.REPAIR_PRICE)
+        }
     }
 
     /**
@@ -135,8 +141,13 @@ class DailyMenuViewModel(application: Application) : AndroidViewModel(applicatio
      * would be the one thing worse than no offer at all.
      */
     fun repairWithAd(activity: Activity, ordinal: Long) = ravel.ads.show(activity) {
+        ravel.telemetry.log(AnalyticsEvent.AdWatched(Placement.STREAK_REPAIR))
         if (!ravel.adAllowance.consume()) return@show
-        if (!progress.repair(ordinal)) ravel.wallet.earn(Rewards.FOR_WATCHING_AD)
+        if (progress.repair(ordinal)) {
+            ravel.telemetry.log(AnalyticsEvent.StreakRepaired(withAd = true))
+        } else {
+            ravel.wallet.earn(Rewards.FOR_WATCHING_AD)
+        }
     }
 
     private val _month = MutableStateFlow(MonthGrid.containing(_today.value))

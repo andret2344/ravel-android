@@ -14,6 +14,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import eu.andret.ravel.analytics.AnalyticsEvent
 import eu.andret.ravel.notify.DailyNotifications
 import eu.andret.ravel.settings.LanguageSettings
 import eu.andret.ravel.settings.ThemeChoice
@@ -143,6 +144,7 @@ class MainActivity : ComponentActivity() {
      */
     private fun openFrom(intent: Intent?) {
         if (intent?.action == DailyNotifications.ACTION_OPEN_DAILY) {
+            (application as RavelApplication).telemetry.log(AnalyticsEvent.DailyFromNotification)
             ViewModelProvider(this)[RavelAppViewModel::class.java].openDaily()
         }
     }

@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import eu.andret.ravel.RavelApplication
+import eu.andret.ravel.analytics.AnalyticsEvent
 import eu.andret.ravel.game.HiddenLetters
 import eu.andret.ravel.game.Hint
 import eu.andret.ravel.game.LevelModifier
@@ -51,6 +52,7 @@ class LevelViewModel(
     private val progress = (application as RavelApplication).levels
     private val puzzles = (application as RavelApplication).puzzles
     private val modifierSettings = (application as RavelApplication).modifiers
+    private val telemetry = (application as RavelApplication).telemetry
 
     /** The level this board is, counting from one. */
     val level: Int = checkNotNull(handle.get<Int>(LevelRoute.ARG_LEVEL)) {
@@ -162,6 +164,7 @@ class LevelViewModel(
         if (modifier in _modifiers.value && !playing.puzzle.isComplete) {
             progress.drop(level, modifier)
             _modifiers.value -= modifier
+            telemetry.log(AnalyticsEvent.ModifierDropped(modifier, level, alsoNext))
             when (modifier) {
                 LevelModifier.HIDDEN_LETTERS ->
                     _state.value = BoardState.Playing(playing.puzzle.copy(hidden = emptySet()))
@@ -335,7 +338,11 @@ class LevelViewModel(
         // marks, so it does not take the coins either. It is on screen at all only after a language
         // switch onto a ladder that is already past it - see [unreachable] for the opposite case.
         if (!progress.state.value.isCurrent(level)) return true
-        if (!wallet.spend(hint.cost)) return false
+        if (!wallet.spend(hint.cost)) {
+            val balance = wallet.balance.value
+            telemetry.log(AnalyticsEvent.HintUnaffordable(hint, PuzzleMode.ENDLESS, balance))
+            return false
+        }
 
         val next = playing.puzzle.hinted(hint)
         // Written to the level's record before the level can be finished by the move that follows:
@@ -428,7 +435,8 @@ class LevelViewModel(
         // running clock - and the store stops accepting time for this level the moment it moves on.
         clock.stop()
         val seconds = progress.state.value.secondsFor(level)
-        _sealed.value = progress.state.value.cost()
+        val cost = progress.state.value.cost()
+        _sealed.value = cost
         // Before the ladder moves, so [unreachable] never sees this level behind it without knowing
         // why: the store's move and this flag would otherwise arrive as two separate emissions.
         finishedHere.value = true
@@ -436,6 +444,18 @@ class LevelViewModel(
         puzzles.solved(id, language.current.value)
         val coins = if (counted) Rewards.forCompleting(_modifiers.value) else 0
         if (coins > 0) wallet.earn(coins)
+        if (counted) {
+            telemetry.log(
+                AnalyticsEvent.LevelFinished(
+                    level = level,
+                    seconds = seconds,
+                    lettersBought = cost.boughtLetters,
+                    wordsBought = cost.boughtWords,
+                    modifiers = _modifiers.value,
+                    paid = coins,
+                ),
+            )
+        }
 
         _completion.value = LevelCompletion(
             level = level,

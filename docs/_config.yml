@@ -5,5 +5,11 @@
 # document wants - the page has to be readable and unambiguous, not branded.
 theme: jekyll-theme-primer
 
+# Only the privacy policy is the site. The other documents here are the repository's own notes, and
+# GitHub Pages would otherwise publish every Markdown file in the directory beside the policy.
+exclude:
+  - DECISIONS.md
+  - TODO.md
+
 title: Ravel
 description: Privacy policy for the Ravel mobile app.

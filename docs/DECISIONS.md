@@ -1233,6 +1233,18 @@ form that comes up does so in answer to the tap, never unasked. Found by the smo
 offline. Rejected: retrying on every shop visit (a form could open on a player who came for the gift)
 and on network changes (a form over a board).
 
+**The form never appeared, because Ravel had no message** (found 2026-11-15, setting up consent
+mode). The AdMob console's European regulations tab held one GDPR message, made in 2023 for another
+app, and none for Ravel; a fresh install in Poland showed no form. The code was right - UMP shows a
+form only where the console publishes one - and nothing in it could have noticed. Every build up to
+then broke the policy's promise to ask in the EEA, the UK and Switzerland.
+
+**The form has no "Do not consent" button** (owner's choice, 2026-11-15): "Consent" and "Manage
+options", where every purpose can be refused one by one, and the policy says that is where. Known
+risk, accepted: European regulators read refusing as having to be as easy as consenting, and one
+click against several is the pattern they object to. The two alternatives turned down were the
+button itself and "Close (do not consent)", an X that counts as a refusal.
+
 ### Where an ad can start, and the dialog that only points
 
 **Two call sites start an ad: the shop's tile and the streak repair dialog** (since 2026-11-11). The
@@ -1270,10 +1282,57 @@ that is how you find out the reward arrived. Naming a device costs that one devi
 a list that stopped working in a signed build would put a developer in front of live inventory with
 nothing at all.
 
-### Why the analytics toggle is not built
+### Analytics and crash reports
 
-Firebase Analytics is not in the project. The toggle ships with analytics, not before it, since a
-switch wired to nothing is a lie told to the player.
+Built 2026-11-15, before the beta and not after accounts as first planned: the alpha is where the
+instrument is checked - events arriving, consent working, the switches really stopping it, R8 not
+breaking it - so the beta has data from its first install. The numbers from a handful of alpha
+testers decide nothing on their own; asking them does more.
+
+- **Firebase Analytics and Crashlytics.** `Telemetry` (`analytics/Telemetry.kt`) is the one door,
+  `AnalyticsEvent` the whole list. Every event answers an open decision, named in `AnalyticsEvent`'s
+  comment. The modifier events were added to the planned list on purpose (owner's choice): they
+  decide whether a fourth modifier is worth building.
+- **Consent through the UMP form, in Google's consent mode, "advanced"** (owner's choice). Android
+  has no system dialog for analytics consent, and the standard in games with Google ads is the one
+  form the game already shows: UMP turns its answer into consent mode by itself (UMP 3.2.0+, consent
+  mode switched on for the message in the AdMob console). A second dialog of our own was turned
+  down as unlike any professional app. "Basic" - nothing at all before consent - was the faithful
+  reading of the old plan ("off in the EEA until the player agrees") and was turned down: advanced
+  sends pings with no identifier even when denied, which keeps the alpha's mostly Polish testers
+  from being invisible. The privacy policy was changed to say so.
+- **Every consent type is denied in the manifest, and granted by `Telemetry` where no form is owed**
+  (`AdConsent.outsideRegulation`). Before the consent service has answered, nobody knows which kind
+  of device this is, and denied is right for both.
+- **Crash reports do not wait on consent** (owner's choice): legitimate interest, Article 6(1)(f),
+  with a switch to object. Behind consent they would arrive only from testers who said yes to an ad
+  form, and a crash is exactly what must not be missed.
+- **Two switches in the options, both on by default**, each turning its SDK's collection off - not
+  filtering events - so off sends nothing, not even consent mode's pings. Stored in `ravel-settings`,
+  so the backup rules did not change.
+- **Only release builds send anything** (`R.bool.telemetry`). Debug shares the release's application
+  id, and the developer is the heaviest player there is: during the alpha the developer's own play
+  would outweigh every tester. Events are watched on a release build with DebugView.
+- **`DELAY_APP_MEASUREMENT_INIT` was removed.** It held the ads SDK's measurement until
+  `MobileAds.initialize`, which runs only once the shop is opened - and the ads SDK and Firebase
+  share one measurement library, so it would have held analytics off for most players. Consent
+  mode's denied defaults answer what the delay was for.
+- **Retention: 14 months, with "Reset user data on new activity" on** (owner's choice). The period
+  bounds only per-user and per-event data, which explorations and funnels read; aggregated reports
+  keep everything regardless. 2 months would have emptied the before-and-after comparisons across
+  releases before the "after" was worth reading. The reset keeps an active player's identifier
+  alive past 14 months - it counts from the last activity, not from collection - so the policy says
+  "14 months after that installation was last used" rather than a flat 14 months. Switching it off
+  was the simpler reading of the old policy sentence, and turned down.
+- **`google-services.json` is committed.** Firebase's own documentation says its contents are not a
+  secret; the public repository has to build in CI; access is guarded by the key's restrictions.
+- **Firebase BoM 34.x, not 35.x.** From 35.0.0 the measurement libraries are compiled with Kotlin 2.4,
+  and AGP 9's bundled Kotlin (2.2) cannot read that metadata - `compileDebugKotlin` failed with
+  "binary version of its metadata is 2.4.0, expected version is 2.2.0". Moving to 35.x waits for the
+  project's Kotlin to move.
+- **Not built: the tap on the shop's "coming soon" coin packs.** The planned event assumed a tile to
+  tap; the shop shows a heading and a pill, and nothing there takes a press. Making it tappable is a
+  design question of its own (what does the tap answer?), left in `docs/TODO.md`.
 
 ---
 

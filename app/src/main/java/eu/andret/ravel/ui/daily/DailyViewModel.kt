@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import eu.andret.ravel.RavelApplication
+import eu.andret.ravel.analytics.AnalyticsEvent
 import eu.andret.ravel.game.DailyDate
 import eu.andret.ravel.game.Hint
 import eu.andret.ravel.game.Puzzle
@@ -56,6 +57,7 @@ class DailyViewModel(
     private val progress = (application as RavelApplication).progress
     private val puzzles = (application as RavelApplication).puzzles
     private val notifications = (application as RavelApplication).notifications
+    private val telemetry = (application as RavelApplication).telemetry
 
     /** The day this board belongs to, as a [DailyDate] ordinal. */
     val ordinal: Long = checkNotNull(handle.get<Long>(DailyRoute.ARG_ORDINAL)) {
@@ -190,7 +192,7 @@ class DailyViewModel(
                 // Written down only when it is going to be played: a finished day's board would take
                 // the daily's one slot from today's.
                 (puzzles.take(id, playing)
-                    ?: Puzzles.generate(id, playing)?.also {
+                    ?: Puzzles.generate(id, playing, report = telemetry::log)?.also {
                         if (!finished) puzzles.keep(id, playing, it)
                     })
                     ?.let { puzzle ->
@@ -249,7 +251,11 @@ class DailyViewModel(
         // for nothing, so it is refused here rather than relied on being refused by a disabled
         // button.
         if (playing.puzzle.isComplete) return true
-        if (!wallet.spend(hint.cost)) return false
+        if (!wallet.spend(hint.cost)) {
+            val balance = wallet.balance.value
+            telemetry.log(AnalyticsEvent.HintUnaffordable(hint, PuzzleMode.DAILY, balance))
+            return false
+        }
 
         val next = playing.puzzle.hinted(hint)
         // Written to the day's record before the day can be sealed by the move that follows: buying
@@ -379,6 +385,18 @@ class DailyViewModel(
         val streak = progress.state.value.streak
         val forStreak = if (counted && !repaid) Streak.rewardFor(Streak.dayInCycle(streak)) else 0
         if (forStreak > 0) wallet.earn(forStreak)
+        if (counted) {
+            val result = progress.state.value.costOf(ordinal)
+            telemetry.log(
+                AnalyticsEvent.DailySolved(
+                    size = card.size,
+                    seconds = result.seconds ?: 0,
+                    streak = streak,
+                    lettersBought = result.boughtLetters,
+                    wordsBought = result.boughtWords,
+                ),
+            )
+        }
 
         _completion.value = Completion(
             forBoard = forBoard,

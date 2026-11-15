@@ -67,6 +67,18 @@ class AdConsent(context: Context, private val scope: CoroutineScope) {
      */
     val privacyOptionsRequired: StateFlow<Boolean> = _privacyOptionsRequired.asStateFlow()
 
+    private val _outsideRegulation = MutableStateFlow(isOutsideRegulation())
+
+    /**
+     * Whether the consent service has said this device owes no form - outside the EEA, the UK and
+     * Switzerland. False while nobody knows yet, as on a first launch with no connection.
+     *
+     * Not used by anything about ads, which [canRequestAds] covers. It is for analytics: where a form
+     * is owed, the UMP SDK hands the player's answer to Google's consent mode by itself, and where
+     * none is, the app has to grant it - see [eu.andret.ravel.analytics.Telemetry.start].
+     */
+    val outsideRegulation: StateFlow<Boolean> = _outsideRegulation.asStateFlow()
+
     private val _settled = MutableStateFlow(false)
 
     /**
@@ -204,8 +216,12 @@ class AdConsent(context: Context, private val scope: CoroutineScope) {
     private fun publish() {
         _canRequestAds.value = information.canRequestAds()
         _privacyOptionsRequired.value = isPrivacyOptionsRequired()
+        _outsideRegulation.value = isOutsideRegulation()
         _settled.value = true
     }
+
+    private fun isOutsideRegulation(): Boolean =
+        information.consentStatus == ConsentInformation.ConsentStatus.NOT_REQUIRED
 
     private fun isPrivacyOptionsRequired(): Boolean =
         information.privacyOptionsRequirementStatus ==

@@ -5,6 +5,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import eu.andret.ravel.RavelApplication
 import eu.andret.ravel.ads.RewardedAds
+import eu.andret.ravel.analytics.AnalyticsEvent
 import eu.andret.ravel.game.Rewards
 import kotlinx.coroutines.flow.StateFlow
 
@@ -71,6 +72,7 @@ class ShopViewModel(application: Application) : AndroidViewModel(application) {
      * held: the view model outlives the activity, so it is passed in per press and never stored.
      */
     fun watch(activity: Activity) = ravel.ads.show(activity) {
+        ravel.telemetry.log(AnalyticsEvent.AdWatched(AnalyticsEvent.AdWatched.Placement.SHOP))
         if (ravel.adAllowance.consume()) ravel.wallet.earn(Rewards.FOR_WATCHING_AD)
     }
 

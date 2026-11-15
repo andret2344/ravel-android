@@ -296,8 +296,12 @@
     <string name="tutorial_step_done">Gotowe! Gdy utkniesz, podpowiedź odsłoni literę albo całe słowo za monety.</string>
 
     <string name="settings_privacy">Prywatność</string>
+    <string name="settings_analytics">Statystyki użycia</string>
+    <string name="settings_analytics_note">Dane o tym, jak przebiega gra - poziomy, podpowiedzi, czas budowania plansz - trafiają do Google Analytics for Firebase i pomagają ulepszać grę. Nigdy nie zawierają Twojego imienia ani adresu e-mail.</string>
+    <string name="settings_crash_reports">Raporty awarii</string>
+    <string name="settings_crash_reports_note">Gdy gra ulegnie awarii, techniczny raport o tym, co poszło nie tak, trafia do Firebase Crashlytics, żeby błąd można było znaleźć i naprawić.</string>
     <string name="settings_privacy_ads">Ustawienia prywatności reklam</string>
-    <string name="settings_privacy_note">Zmień, z czego mogą korzystać reklamy na tym urządzeniu. Reklama pojawia się wyłącznie wtedy, gdy sam poprosisz o nią w sklepie.</string>
+    <string name="settings_privacy_note">Zmień, z czego mogą korzystać reklamy i statystyki użycia na tym urządzeniu. Reklama pojawia się wyłącznie wtedy, gdy sam poprosisz o nią w sklepie.</string>
 
     <string name="settings_sources">Źródła słów</string>
     <string name="settings_sources_note">Słowniki powstają z publicznych list słów i korpusów. Dotknij źródła, aby zobaczyć jego licencję.</string>

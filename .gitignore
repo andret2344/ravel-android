@@ -5,6 +5,11 @@
 
 local.properties
 
+# Signing keys never live in the repository, which is public. The upload key is kept outside it;
+# these are here for the day a copy lands in the project by accident.
+*.jks
+*.keystore
+
 # The raw corpora the dictionaries are built from: 179 MB, and regenerable. What the build actually
 # reads is generator/src/main/resources/dictionary-*.txt, which is committed. See generator/DICTIONARY.md
 # for where each source comes from, and for the OANC checksum to compare a fresh download against.

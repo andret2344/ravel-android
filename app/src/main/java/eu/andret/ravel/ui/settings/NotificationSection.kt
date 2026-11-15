@@ -184,9 +184,12 @@ private fun BackgroundNote(modifier: Modifier = Modifier) {
     }
 }
 
-/** One switch, the whole row its target - see the haptics row for why. */
+/**
+ * One switch, the whole row its target - see the haptics row for why. Shared with the privacy
+ * section's two switches.
+ */
 @Composable
-private fun SwitchRow(label: String, checked: Boolean, enabled: Boolean, onChange: (Boolean) -> Unit) {
+internal fun SwitchRow(label: String, checked: Boolean, enabled: Boolean, onChange: (Boolean) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
