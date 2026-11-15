@@ -1,9 +1,7 @@
 package eu.andret.ravel.ui.daily
 
 import android.text.format.DateFormat
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -16,8 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -28,25 +24,28 @@ import eu.andret.ravel.game.Hint
 import eu.andret.ravel.game.Puzzle
 import eu.andret.ravel.settings.DayResult
 import eu.andret.ravel.settings.ShareCard
-import eu.andret.ravel.ui.CoinAmount
 import eu.andret.ravel.ui.board.TraceState
 import eu.andret.ravel.ui.board.rememberTraceState
 import eu.andret.ravel.ui.game.BoardLayout
 import eu.andret.ravel.ui.game.BoardState
 import eu.andret.ravel.ui.game.BoardTopBar
 import eu.andret.ravel.ui.game.BoughtLine
+import eu.andret.ravel.ui.game.CelebratedTotal
 import eu.andret.ravel.ui.game.CluesRow
 import eu.andret.ravel.ui.game.CompletionDialog
+import eu.andret.ravel.ui.game.EarnedPart
+import eu.andret.ravel.ui.game.EarnedParts
 import eu.andret.ravel.ui.game.FailedBoard
 import eu.andret.ravel.ui.game.GeneratingBoard
 import eu.andret.ravel.ui.game.HintRow
 import eu.andret.ravel.ui.game.PlayableBoard
 import eu.andret.ravel.ui.game.StuckOffer
+import eu.andret.ravel.ui.game.SummaryShown
 import eu.andret.ravel.ui.game.TracedWord
 import eu.andret.ravel.ui.game.WordList
-import eu.andret.ravel.ui.game.afterSolvedPause
+import eu.andret.ravel.ui.game.SummaryButton
+import eu.andret.ravel.ui.game.summaryToShow
 import eu.andret.ravel.ui.game.asClock
-import eu.andret.ravel.ui.theme.goldColors
 import java.util.Date
 
 /**
@@ -71,6 +70,7 @@ fun DailyScreen(
     val bought by viewModel.bought.collectAsStateWithLifecycle()
     val share by viewModel.share.collectAsStateWithLifecycle()
     val completion by viewModel.completion.collectAsStateWithLifecycle()
+    val summaryShown by viewModel.summaryShown.collectAsStateWithLifecycle()
     val wordsOpen by viewModel.wordsOpen.collectAsStateWithLifecycle()
     val elapsed by viewModel.elapsed.collectAsStateWithLifecycle()
     val hapticsEnabled by viewModel.hapticsEnabled.collectAsStateWithLifecycle()
@@ -148,6 +148,7 @@ fun DailyScreen(
                         // player wanted to spend and could not, which is the one moment the shop is
                         // worth showing.
                         onHint = { hint -> if (!viewModel.hint(hint)) onShop() },
+                        onSummary = if (completion != null) viewModel::showSummary else null,
                     )
                 }
             }
@@ -157,9 +158,10 @@ fun DailyScreen(
     // Not on a review: a day already over cannot be stuck on, and nothing on it can be bought.
     if (!viewModel.review) StuckOffer(puzzle = puzzle, elapsed = elapsed, onShop = onShop)
 
-    afterSolvedPause(completion)?.let {
+    summaryToShow(completion, summaryShown)?.let {
         CompletedDialog(
             completion = it,
+            celebrate = summaryShown == SummaryShown.AFTER_SOLVE,
             wordsOpen = wordsOpen,
             onWordsOpen = viewModel::setWordsOpen,
             onExit = {
@@ -193,6 +195,7 @@ fun DailyScreen(
 @Composable
 private fun CompletedDialog(
     completion: Completion,
+    celebrate: Boolean,
     wordsOpen: Boolean,
     onWordsOpen: (Boolean) -> Unit,
     onExit: () -> Unit,
@@ -203,27 +206,18 @@ private fun CompletedDialog(
         primary = stringResource(R.string.done_exit),
         onPrimary = onExit,
         onStay = onStay,
+        celebrate = celebrate,
     ) {
-        CoinAmount(
-            amount = completion.total,
-            text = stringResource(R.string.done_gained, completion.total),
-            style = MaterialTheme.typography.displaySmall,
-            color = goldColors.fill,
+        CelebratedTotal(total = completion.total, celebrate = celebrate)
+        // Chips, as on a level. The streak's only when it paid: zero when the day was already on the
+        // record - a board finished a second time still pays for the board and cannot pay for the
+        // day twice.
+        val board = stringResource(R.string.done_for_board)
+        val day = stringResource(R.string.streak_day, completion.cycleDay)
+        EarnedParts(
+            base = EarnedPart(board, completion.forBoard).takeIf { completion.forBoard > 0 },
+            extras = listOfNotNull(EarnedPart(day, completion.forStreak).takeIf { completion.forStreak > 0 }),
         )
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            Earned(stringResource(R.string.done_for_board), completion.forBoard)
-            // Zero when the day was already on the record - a board being finished a second time
-            // still pays for the board and cannot pay for the day twice.
-            if (completion.forStreak > 0) {
-                Earned(
-                    label = stringResource(R.string.streak_day, completion.cycleDay),
-                    amount = completion.forStreak,
-                )
-            }
-        }
         Text(
             text = buildString {
                 if (completion.streak > 0) {
@@ -242,30 +236,30 @@ private fun CompletedDialog(
     }
 }
 
-@Composable
-private fun Earned(label: String, amount: Int) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(text = label, style = MaterialTheme.typography.bodyMedium)
-        CoinAmount(
-            amount = amount,
-            text = stringResource(R.string.done_gained, amount),
-            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-        )
-    }
-}
-
 /**
  * The word being traced, the lengths still to find, the two ways to stop looking for one, and what
  * the day has cost. [Reviewed] has no word strip: a finished board has nothing left to trace.
+ *
+ * Once the board is finished the hints give way to [SummaryButton], in the same place - the grayed
+ * hints that stood there were buttons that did nothing.
+ *
+ * @param onSummary brings the day's summary back; null while there is none to bring back.
  */
 @Composable
-private fun Footer(puzzle: Puzzle, trace: TraceState, bought: DayResult, onHint: (Hint) -> Unit) {
+private fun Footer(
+    puzzle: Puzzle,
+    trace: TraceState,
+    bought: DayResult,
+    onHint: (Hint) -> Unit,
+    onSummary: (() -> Unit)?,
+) {
     TracedWord(puzzle, trace)
     CluesRow(puzzle.clues)
-    HintRow(complete = puzzle.isComplete, onHint = onHint)
+    if (puzzle.isComplete && onSummary != null) {
+        SummaryButton(onClick = onSummary)
+    } else {
+        HintRow(complete = puzzle.isComplete, onHint = onHint)
+    }
     // The day's tally and not the board's: the board is thrown away every time this screen closes
     // and the day is not, so counting the board would let a player buy a word, leave, and come back
     // to a counter at zero.

@@ -23,8 +23,9 @@ Two languages, Polish and English, each with its own bundled dictionary of base 
   and nothing else; its words stay listed in the calendar, each opening its meaning. An opt-in notification, at most once a day and only while the day's board is
   unsolved, comes around the time the player last solved one, or at a time they pick.
 - **Levels** — an endless ladder. Grid size ramps to 10×10 by level 250; how obscure the words may
-  be keeps climbing to level 2500. A hard-mode switch on the game tab hides the word lengths and
-  their count, for a larger reward; a level keeps the mode it was first opened in.
+  be keeps climbing to level 2500. Modifiers on the game tab trade something away for extra coins -
+  "No lengths" hides the word lengths and their count, "Hidden letters" covers some letters with a
+  star until their word is found; a level keeps the modifiers it was first opened with.
 
 Hints cost coins, earned by completing puzzles, by keeping a daily streak, and in the shop's daily
 rewards: rewarded ads and a small free gift once a day. A single missed day can be saved the next

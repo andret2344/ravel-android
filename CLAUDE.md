@@ -215,7 +215,7 @@ This is the part most easily broken by an innocent-looking change.
 `Puzzle` (game/Puzzle.kt) is immutable; every move returns a new puzzle and **every route into the
 board — drag, tap, hint — funnels through `withPath`**. The whole rule set is testable with no device.
 
-`RavelApplication` holds the process-wide singletons — `wallet`, `language`, `haptics`, `hardMode`,
+`RavelApplication` holds the process-wide singletons — `wallet`, `language`, `haptics`, `modifiers`,
 `theme`, `reminder`, `tutorial`, `progress` (daily), `levels`, `puzzles`, `consent`, `ads`, `adAllowance`,
 `dailyGift`, `stuckOffer`, `notifications`, `wordList`. **Screens reach them through their
 `AndroidViewModel`, never by constructing their own.**
@@ -259,10 +259,24 @@ Persistence is SharedPreferences plus JSON (`settings/SavedBoards.kt`, single-le
   unique against the shipped dictionary.** If a dictionary rebuild breaks that test, pick a new board.
 - **Each tutorial board has a decoy (`Tutorial.decoyFor`) listing every placement of its word**, and
   the four-letter word is taught first so the decoy's length is still open. `TutorialTest` holds both.
-- **Hard mode hides lengths in the UI only; the board and its identity are the same.** A level's mode
-  is frozen when its board first comes up (`LevelProgress.open`) and never read from the switch
-  again; the switch acts from the next unopened level. The one change is giving hard mode up on the
-  board (`LevelProgress.dropHard`), never the other way. Levels only - the daily has no hard mode.
+- **Level modifiers (`game/LevelModifier.kt`) change the UI only; the board and its identity are the
+  same.** A level's modifiers are frozen when its board first comes up (`LevelProgress.open`) and
+  never read from the choice again; the choice acts from the next unopened level. The one change is
+  taking one off on the board (`LevelProgress.drop`), never adding one. Levels only - the daily has
+  none. `NO_LENGTHS` ("Bez długości" / "No lengths") hides the lengths.
+- **Modifiers are chosen in a popup behind one tile on the levels tab (`ModifiersTile`), as a 2x2 grid
+  of toggle tiles (`ModifierToggle`)**, each description behind an (i). Its "coming soon" tiles are
+  UI only (`COMING_SOON_MODIFIERS`), not enum entries. The tile on the tab lists every modifier as a
+  soft chip; the red stamp is for the level card only.
+- **A modifier the board does not act on yet is `inEffect = false` and pays nothing**
+  (`Rewards.forCompleting`, `PuzzleTest`).
+- **`HIDDEN_LETTERS` ("Ukryte litery") stars are drawn from the level's id (`HiddenLetters`), never
+  stored and never from an unseeded random.** Its `SALT` and its own SplitMix stream must not change.
+  A star comes off only with its word; a hint marks the cell and leaves the star
+  (`Puzzle.concealedCells`). Every place that spells cells - the board and `TracedWord` - shows the
+  star.
+- **Every modifier has its stored keys in exhaustive `when`s (`ModifierSettings.keyOf`,
+  `StoredLevelProgress.openedKeyOf`). Never rename a stored key.**
 - **Past the first word, tutorial steps come from the lesson's state (`DecoyState`, `corrected`),
   never from how many words are found.** The correction step passes on a cut (`cutBack`), not on a
   word, and the refused decoy stays on the board for it.
@@ -274,11 +288,21 @@ Persistence is SharedPreferences plus JSON (`settings/SavedBoards.kt`, single-le
 - **`MenuHeader` (`ui/MenuHeader.kt`) is shared by both game menus**, and lines the balance up with
   the title by baseline, never by centering. Do not re-copy it.
 - **The board's half is a ceiling, `weight(5f)` against `4f`, not a share.**
+- **The board screen has 6dp margins and 6dp between its bands, and stacks its heading and board
+  from the top** (`BoardLayout`), in both modes.
+- **A level's footer runs: traced word, lengths, hints (or "Show summary"), hints bought, modifier
+  icons, "Modifiers" button.**
+- **A level's footer is one height whatever its modifiers**: the row of their icons over the lengths
+  (`ActiveModifiers`) and the "Modifiers" button (`ModifiersButton`) are always there, empty or grayed
+  out when none is on. Taking one off goes
+  through its dialog (`LevelViewModel.drop`), never a button per modifier.
 - **The board must never scroll**, in either arrangement. Every other overflowing screen may.
 - **A finished board's words (`ui/game/WordList.kt`) show in the completion dialogs and the
   calendar's day card only, never on a board being played.** Folded until opened, the choice kept
   in `WordListSettings`. The calendar reads them from `DayResult.words`, written at solve time and
-  never regenerated; they stay off `ShareCard`. Polish opens sjp.pl, English Wiktionary
+  never regenerated; they stay off `ShareCard`. **Closing a completion dialog keeps its summary**:
+  "Show summary" (`SummaryButton`) under the finished board, in the hints' place, brings the dialog
+  back in both modes (`SummaryShown`). Polish opens sjp.pl, English Wiktionary
   (`definitionUrl`, exhaustive over `Language`).
 - **No `android:configChanges` in the manifest**, deliberately — it would strip the forced locale.
 - **`android:screenOrientation="fullUser"`**; leaving the attribute off is not the same thing, and
@@ -368,8 +392,8 @@ share card's squares, and the `translatable="false"` license notices.
 
 **Four numbers, tuned as a set**: `Rewards.FOR_COMPLETING` (15), `Streak.DAY` (15, `SEVENTH` 50),
 `Rewards.FOR_WATCHING_AD` (100), against the `Hint` prices (40 / 100). Plus
-`Rewards.FOR_COMPLETING_HARD` (25), which must stay above `FOR_COMPLETING` by less than the cheapest
-hint - `PuzzleTest` holds it; that is what lets hints leave the hard bonus alone. And
+`Rewards.FOR_NO_LENGTHS` (+5), each `LevelModifier`'s bonus, which all together must stay under the
+cheapest hint - `PuzzleTest` holds the sum; that is what lets hints leave the bonus alone. And
 `Rewards.DAILY_GIFT` (10), the shop's one tap a day, which must stay under half the cheapest hint and
 under `FOR_COMPLETING` - `PuzzleTest` holds that too. And `Streak.REPAIR_PRICE` (100), which must
 equal `FOR_WATCHING_AD` and exceed `SEVENTH - DAY` - `StreakTest` holds both.

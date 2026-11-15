@@ -3,6 +3,7 @@ package eu.andret.ravel.settings
 import android.content.Context
 import androidx.core.content.edit
 import eu.andret.ravel.game.Hint
+import eu.andret.ravel.game.LevelModifier
 import eu.andret.ravel.generator.Language
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -158,19 +159,21 @@ class StoredLevelProgress(
         _totals.value = readTotals()
     }
 
-    override fun open(level: Int, hard: Boolean): Boolean {
+    override fun open(level: Int, chosen: Set<LevelModifier>): Set<LevelModifier> {
         val current = _state.value
-        if (level != current.current) return false
-        current.hardFor(level)?.let { return it }
-        val frozen = hard && current.boardFor(level) == null
+        if (level != current.current) return emptySet()
+        current.modifiersFor(level)?.let { return it }
+        val frozen = if (current.boardFor(level) == null) chosen else emptySet()
         write(current.copy(opened = OpenedLevel(level, frozen)))
         return frozen
     }
 
-    override fun dropHard(level: Int) {
+    override fun drop(level: Int, modifier: LevelModifier) {
         val current = _state.value
-        if (level != current.current || current.hardFor(level) != true) return
-        write(current.copy(opened = OpenedLevel(level, hard = false)))
+        if (level != current.current) return
+        val modifiers = current.modifiersFor(level)
+        if (modifiers == null || modifier !in modifiers) return
+        write(current.copy(opened = OpenedLevel(level, modifiers - modifier)))
     }
 
     override fun saveBoard(board: SavedBoard) {
@@ -225,10 +228,10 @@ class StoredLevelProgress(
             }
             if (next.opened == null) {
                 remove(key(KEY_OPENED))
-                remove(key(KEY_OPENED_HARD))
+                LevelModifier.entries.forEach { remove(key(openedKeyOf(it))) }
             } else {
                 putInt(key(KEY_OPENED), next.opened.level)
-                putBoolean(key(KEY_OPENED_HARD), next.opened.hard)
+                LevelModifier.entries.forEach { putBoolean(key(openedKeyOf(it)), it in next.opened.modifiers) }
             }
         }
         _state.value = next
@@ -272,7 +275,14 @@ class StoredLevelProgress(
             // already finished would freeze the next one in a mode nobody chose for it.
             opened = preferences.getInt(key(KEY_OPENED, language), 0)
                 .takeIf { it == completed + 1 }
-                ?.let { OpenedLevel(it, preferences.getBoolean(key(KEY_OPENED_HARD, language), false)) },
+                ?.let { level ->
+                    OpenedLevel(
+                        level,
+                        LevelModifier.entries
+                            .filter { preferences.getBoolean(key(openedKeyOf(it), language), false) }
+                            .toSet(),
+                    )
+                },
         )
     }
 
@@ -302,7 +312,6 @@ class StoredLevelProgress(
         const val KEY_WORDS = "words"
         const val KEY_SECONDS = "seconds"
         const val KEY_OPENED = "opened"
-        const val KEY_OPENED_HARD = "openedHard"
         const val KEY_TOTAL_FOUND = "totalFound"
         const val KEY_TOTAL_SECONDS = "totalSeconds"
         const val KEY_TOTAL_LETTERS = "totalLetters"
@@ -310,5 +319,14 @@ class StoredLevelProgress(
 
         /** The highest level ever beaten in a language, kept through a reset. */
         const val KEY_BEST = "best"
+
+        /**
+         * Whether the opened level has [modifier] on: one boolean per modifier, exhaustive so a new
+         * one cannot ship without a key.
+         */
+        fun openedKeyOf(modifier: LevelModifier): String = when (modifier) {
+            LevelModifier.NO_LENGTHS -> "openedNoLengths"
+            LevelModifier.HIDDEN_LETTERS -> "openedHiddenLetters"
+        }
     }
 }

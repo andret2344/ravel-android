@@ -10,16 +10,19 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
+import eu.andret.ravel.R
 import eu.andret.ravel.game.Puzzle
 import eu.andret.ravel.ui.board.BoardPalette
 import eu.andret.ravel.ui.board.BoardStyle
@@ -78,7 +81,9 @@ internal fun TracedWord(puzzle: Puzzle, trace: TraceState) {
             cells.forEachIndexed { index, cell ->
                 if (index > 0) Ribbon(tile, palette)
                 LetterTile(
-                    letter = letters[cell].uppercaseChar(),
+                    // The strip spells what the board shows: a covered letter stays covered here,
+                    // or tracing over a star would read it out.
+                    letter = letters[cell].uppercaseChar().takeIf { cell !in puzzle.concealedCells },
                     side = if (index == 0) tile else tile * BoardStyle.TAIL_SCALE,
                     leading = index == 0,
                     palette = palette,
@@ -88,15 +93,24 @@ internal fun TracedWord(puzzle: Puzzle, trace: TraceState) {
     }
 }
 
-/** One letter, drawn to the same proportions as a marked cell on the board. */
+/** One letter, drawn to the same proportions as a marked cell on the board; null for a star. */
 @Composable
-private fun LetterTile(letter: Char, side: Dp, leading: Boolean, palette: BoardPalette) {
+private fun LetterTile(letter: Char?, side: Dp, leading: Boolean, palette: BoardPalette) {
     Box(
         modifier = Modifier
             .size(side)
             .background(palette.marked, RoundedCornerShape(side * BoardStyle.CORNER_RATIO)),
         contentAlignment = Alignment.Center,
     ) {
+        if (letter == null) {
+            Icon(
+                painter = painterResource(R.drawable.ic_modifier_hidden_letters),
+                contentDescription = null,
+                tint = palette.markedLetter,
+                modifier = Modifier.size(side * 0.55f),
+            )
+            return@Box
+        }
         Text(
             text = letter.toString(),
             color = palette.markedLetter,

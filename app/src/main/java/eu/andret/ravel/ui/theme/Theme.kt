@@ -146,44 +146,46 @@ val goldColors: GoldColors
     @Composable get() = LocalGoldColors.current
 
 /**
- * The colors of hard mode: a deep red, on the badge that marks a level played without its lengths,
- * and an orange for the line under its switch saying a change waits for the next level.
+ * The colors of the no-lengths modifier: a deep red, on the badge that marks a level played without
+ * its lengths, and an orange for the line on the modifiers tile saying a change waits for the next
+ * level.
  *
  * Its own role rather than `error`, for the reason [GoldColors] is not `tertiary`: `error` means
- * something went wrong, and the dot on a level left part-way through already wears it. Hard mode is a
- * dare, not a fault - darker and more saturated than the error red, so the two never read as one.
+ * something went wrong, and the dot on a level left part-way through already wears it. Playing
+ * without lengths is a dare, not a fault - darker and more saturated than the error red, so the
+ * two never read as one.
  *
  * White text on both fills, each above 6:1, so the badge's small bold capitals stay legible on the
  * brown of the card in either theme.
  *
  * @param notice text on a card's surface: a caution, not an error - the player did nothing wrong,
- *   the switch just cannot reach a level already opened.
+ *   a modifier just cannot reach a level already opened.
  */
 @Immutable
-data class HardColors(
+data class NoLengthsColors(
     val fill: Color,
     val onFill: Color,
     val notice: Color,
 )
 
-private val LightHard = HardColors(
+private val LightNoLengths = NoLengthsColors(
     fill = Color(0xFFA3001E),
     onFill = Color(0xFFFFFFFF),
     notice = Color(0xFFA35200),
 )
 
-/** A shade brighter than [LightHard], or the red sinks into the dark card behind it. */
-private val DarkHard = HardColors(
+/** A shade brighter than [LightNoLengths], or the red sinks into the dark card behind it. */
+private val DarkNoLengths = NoLengthsColors(
     fill = Color(0xFFC41E3A),
     onFill = Color(0xFFFFFFFF),
     notice = Color(0xFFFFB46B),
 )
 
-private val LocalHardColors = staticCompositionLocalOf { LightHard }
+private val LocalNoLengthsColors = staticCompositionLocalOf { LightNoLengths }
 
-/** The hard-mode colors for the theme in force. */
-val hardColors: HardColors
-    @Composable get() = LocalHardColors.current
+/** The no-lengths colors for the theme in force. */
+val noLengthsColors: NoLengthsColors
+    @Composable get() = LocalNoLengthsColors.current
 
 @Composable
 fun RavelTheme(
@@ -193,7 +195,7 @@ fun RavelTheme(
     CompositionLocalProvider(
         LocalFoundColors provides if (darkTheme) DarkFound else LightFound,
         LocalGoldColors provides if (darkTheme) DarkGold else LightGold,
-        LocalHardColors provides if (darkTheme) DarkHard else LightHard,
+        LocalNoLengthsColors provides if (darkTheme) DarkNoLengths else LightNoLengths,
     ) {
         MaterialTheme(
             colorScheme = if (darkTheme) DarkColors else LightColors,

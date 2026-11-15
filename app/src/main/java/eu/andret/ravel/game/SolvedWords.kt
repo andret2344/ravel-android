@@ -20,11 +20,23 @@ import java.net.URLEncoder
  * @param words in the order the lengths are shown in, the order of [Puzzle.clues] - see
  *   [solvedWords].
  */
-data class SolvedWords(val language: Language, val words: List<String>) {
+data class SolvedWords(
+    val language: Language,
+    val words: List<String>,
+    val hidden: List<Set<Int>> = emptyList(),
+) {
     init {
         require(words.isNotEmpty()) { "A solved board holds at least one word" }
         require(words.none(String::isEmpty)) { "A word with no letters was never on the board" }
+        require(hidden.isEmpty() || hidden.size == words.size) { "Stars for ${hidden.size} of ${words.size} words" }
     }
+
+    /**
+     * The positions in word [index] that were under a star ([LevelModifier.HIDDEN_LETTERS]), for the
+     * list to mark as the board did. Empty for a board without stars - and always for the daily,
+     * whose stored words never carry them.
+     */
+    fun hiddenIn(index: Int): Set<Int> = hidden.getOrNull(index).orEmpty()
 }
 
 /**
@@ -34,12 +46,20 @@ data class SolvedWords(val language: Language, val words: List<String>) {
  * list under the board, the squares on the share card and these words are one sequence. The word is
  * the dictionary's, which is also how it was traced: a word is only accepted from its first letter.
  */
-fun Puzzle.solvedWords(language: Language): SolvedWords = SolvedWords(
-    language = language,
-    words = board.solution.indices
-        .sortedBy { board.solution[it].word.length }
-        .map { board.solution[it].word },
-)
+fun Puzzle.solvedWords(language: Language): SolvedWords {
+    val order = board.solution.indices.sortedBy { board.solution[it].word.length }
+    return SolvedWords(
+        language = language,
+        words = order.map { board.solution[it].word },
+        hidden = if (hidden.isEmpty()) {
+            emptyList()
+        } else {
+            order.map { word ->
+                board.solution[word].cells.indices.filterTo(HashSet()) { board.solution[word].cells[it] in hidden }
+            }
+        },
+    )
+}
 
 /**
  * The name of the site [definitionUrl] opens for [language], for the line under the list that says

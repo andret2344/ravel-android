@@ -87,7 +87,10 @@ internal fun BoardLayout(
     // on most - counts as off the board too.
     val screen = modifier
         .offBoardTaps(currentOnTapOffBoard)
-        .padding(horizontal = 20.dp, vertical = 12.dp)
+        // 6dp all round, not the 20dp of the menus, and 6dp between the bands below (owner's choice,
+        // 2026-11-15): whichever of the screen's width or height holds the board back, every dp of
+        // margin there is a dp off every cell.
+        .padding(horizontal = 6.dp, vertical = 6.dp)
     AdaptiveScreen(modifier = screen) { wide ->
         if (wide) {
             Wide(topBar = topBar, title = title, board = board, footer = footer)
@@ -107,17 +110,19 @@ private fun Tall(
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         topBar()
-        // The heading and the grid are one thing and are spaced as one, then the pair is centered in
-        // what is left over. The board is measured at weight(fill = false) so the box is the size of
+        // The heading and the grid are one thing and are spaced as one, then the pair sits at the top
+        // of what is left over. The board is measured at weight(fill = false) so the box is the size of
         // the grid rather than of the space it was offered - given the whole remaining height it
         // would center itself in that instead, and "under the heading" would stop meaning anything.
         Column(
             modifier = Modifier.fillMaxWidth().weight(1f),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
+            // From the top, not centered: the spare height goes under the board, so the board sits
+            // just under the bar and does not drift with how much the footer holds. Owner's choice.
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             title()
             Square(modifier = Modifier.weight(1f, fill = false), content = board)

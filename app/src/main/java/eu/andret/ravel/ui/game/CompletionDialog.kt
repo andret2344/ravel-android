@@ -1,5 +1,8 @@
 package eu.andret.ravel.ui.game
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -24,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -63,6 +67,52 @@ internal fun <T : Any> afterSolvedPause(value: T?): T? {
 }
 
 /**
+ * Whether a finished board's summary is up, and how it got there - the two ways differ in the
+ * pause only.
+ *
+ * The summary itself outlives the dialog: closing it puts the dialog away and keeps what it said, so
+ * [SummaryButton] under the finished board can bring it back - the words with their definitions, and
+ * on the daily the share button. Before, closing it threw the summary away, and a player who closed
+ * it to look at the board had no way back to the words.
+ */
+enum class SummaryShown {
+    /** Closed, or nothing finished yet. */
+    NO,
+
+    /** Just finished: shown after [SOLVED_PAUSE_MILLIS], so the board is seen first. */
+    AFTER_SOLVE,
+
+    /** Asked for again with [SummaryButton]: shown at once, since the board has been seen. */
+    ON_REQUEST,
+}
+
+/** [summary] when [shown] says it is up, held back by the pause only the first time. */
+@Composable
+internal fun <T : Any> summaryToShow(summary: T?, shown: SummaryShown): T? {
+    val paused = afterSolvedPause(summary.takeIf { shown == SummaryShown.AFTER_SOLVE })
+    return when (shown) {
+        SummaryShown.NO -> null
+        SummaryShown.AFTER_SOLVE -> paused
+        SummaryShown.ON_REQUEST -> summary
+    }
+}
+
+/**
+ * "Show summary", under a finished board in place of the hints, in either mode: brings the
+ * completion dialog back. The owner's choice over a separate button for the words: the dialog
+ * already holds them, the next level and the share button, so one way back reaches all three.
+ *
+ * In the hints' place rather than added under them, so the footer keeps its height and the board
+ * does not change size under the player at the moment they are looking at it.
+ */
+@Composable
+internal fun SummaryButton(onClick: () -> Unit) {
+    Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+        Text(stringResource(R.string.show_summary))
+    }
+}
+
+/**
  * The dialog a finished board shows, in either mode: a title, what the board paid, and the ways on.
  *
  * [onStay] is the bottom button, a tap on the scrim and the back button alike. All three leave the
@@ -70,6 +120,9 @@ internal fun <T : Any> afterSolvedPause(value: T?): T? {
  * choice on offer and not only something that happens to a player who missed the dialog.
  *
  * @param primary the label of the way on - the next level, or done for the day.
+ * @param celebrate the board was just finished, rather than its summary asked for again: the body
+ *   comes in with a short grow and fade, and the figures in it count up ([CelebratedTotal]). A
+ *   summary brought back with "Show summary" is already known, and simply appears.
  */
 @Composable
 internal fun CompletionDialog(
@@ -77,8 +130,13 @@ internal fun CompletionDialog(
     primary: String,
     onPrimary: () -> Unit,
     onStay: () -> Unit,
+    celebrate: Boolean = false,
     body: @Composable ColumnScope.() -> Unit,
 ) {
+    val entrance = remember { Animatable(if (celebrate) 0f else 1f) }
+    LaunchedEffect(Unit) {
+        if (celebrate) entrance.animateTo(1f, tween(ENTRANCE_MILLIS, easing = FastOutSlowInEasing))
+    }
     StackedDialog(
         title = title,
         primary = primary,
@@ -86,9 +144,27 @@ internal fun CompletionDialog(
         secondary = stringResource(R.string.done_view_board),
         onSecondary = onStay,
         onDismiss = onStay,
-        body = body,
-    )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .graphicsLayer {
+                    val scale = ENTRANCE_FROM + (1f - ENTRANCE_FROM) * entrance.value
+                    scaleX = scale
+                    scaleY = scale
+                    alpha = entrance.value
+                },
+            horizontalAlignment = Alignment.CenterHorizontally,
+            // The same rhythm as the column it sits in, which it now stands in for.
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            content = body,
+        )
+    }
 }
+
+/** How long the body takes to come in, and the size it grows from. */
+private const val ENTRANCE_MILLIS = 280
+private const val ENTRANCE_FROM = 0.92f
 
 /**
  * A dialog with its two buttons one above the other, full width.

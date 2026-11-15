@@ -1,0 +1,35 @@
+<!--
+    The no-lengths modifier's icon: a ruler struck through - the lengths, taken away. Drawn for this project, not
+    copied from an icon set: Material Symbols has a ruler ("straighten") but no struck-through one, and
+    the owner chose the ruler over the crossed-out eye, which says "hidden" but not what is.
+
+    Strokes rather than fills, so the ticks stay hairline-even at 32dp. White and untinted, like every
+    icon here: Compose's Icon paints it in the color it is given.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- The ruler's body. -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@android:color/white"
+        android:strokeWidth="1.75"
+        android:strokeLineJoin="round"
+        android:pathData="M2.5,8h19v8h-19z" />
+    <!-- Ticks from the top edge, long and short in turn. -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@android:color/white"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M6.5,8v3M10,8v4.5M13.5,8v3M17,8v4.5" />
+    <!-- The stroke through it, corner to corner, as Material draws its "off" icons. -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@android:color/white"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M3.5,3.5L20.5,20.5" />
+</vector>

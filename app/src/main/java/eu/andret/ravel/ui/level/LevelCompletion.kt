@@ -1,5 +1,6 @@
 package eu.andret.ravel.ui.level
 
+import eu.andret.ravel.game.LevelModifier
 import eu.andret.ravel.game.SolvedWords
 
 /**
@@ -14,12 +15,16 @@ import eu.andret.ravel.game.SolvedWords
  *   restored onto the screen after the fact can reach the end again, and that is not a level beaten.
  * @param seconds how long it took, summed over every sitting it took to finish it.
  * @param words the words the board held, for the list the dialog offers to look them up from.
+ *
+ * @param paidFor the modifiers whose bonus is in [coins], for the dialog to show what each paid -
+ *   empty when the finish paid nothing, or when none was on.
  */
 data class LevelCompletion(
     val level: Int,
     val coins: Int,
     val seconds: Int,
     val words: SolvedWords,
+    val paidFor: Set<LevelModifier> = emptySet(),
 )
 
 /**

@@ -31,7 +31,7 @@ object Rewards {
      * the intended trade: a player who is stuck is now one ad away from the word rather than one
      * evening of other boards, and an ad is worth watching because it is worth more of the game.
      * [eu.andret.ravel.game.Streak.DAY] moved with this number, as it always has, and
-     * [FOR_COMPLETING_HARD] and [DAILY_GIFT] with them.
+     * [FOR_NO_LENGTHS] and [DAILY_GIFT] with them.
      *
      * Raising the hint prices instead was considered and turned down. Counted in boards, cutting
      * this to fifteen already made a word two-thirds dearer; raising the prices on top would have
@@ -50,29 +50,44 @@ object Rewards {
     const val FOR_COMPLETING = 15
 
     /**
-     * Coins for finishing a level played in hard mode, with the word lengths and their count hidden.
+     * Coins on top of [FOR_COMPLETING] for a level finished with the word lengths and their count
+     * hidden - see [LevelModifier.NO_LENGTHS].
      *
      * The one exception to [FOR_COMPLETING] being flat, and an exception of a different kind from
-     * the ones that note refuses: size and mode are not the player's choice, while this is, and it
-     * is a choice to give something up. Paid for levels only - the daily has no hard mode, so a day
-     * stays a day for everyone and the streak's parity with playing holds.
+     * the ones that note refuses: size and mode are not the player's choice, while a modifier is, and
+     * it is a choice to give something up. Paid for levels only - the daily has no modifiers, so a
+     * day stays a day for everyone and the streak's parity with playing holds.
      *
-     * Twenty-five: ten on top of [FOR_COMPLETING], two-thirds more. Hard mode is a switch a player
-     * flips once, so its rate is in practice the rate for every level that player plays from then
-     * on. It was 45 against 25, the same shape at the old scale; it came down with
-     * [FOR_COMPLETING], by the owner's choice of a flat ten on top rather than the proportional
-     * twenty-seven. A larger bonus was once asked for, to make the switch more tempting, and turned
-     * down: it would make a [Hint.LETTER] cheaper than a level or two and an ad worth very little,
-     * which is the stuck player's way out getting cheap - and being stuck is meant to cost
-     * something. Nobody has measured how much harder a board is without its lengths - on a 5x5 with
-     * three words, barely - and raising the bonus later is a gift where lowering it is a nerf.
+     * Five: a level pays twenty instead of fifteen. It was ten on top while this was the only choice
+     * there was; it came down to five when it became the first of several [LevelModifier]s, by the
+     * owner's choice, because modifiers stack and every one of them together still has to stay under
+     * the cheapest hint (below). A larger bonus was once asked for,
+     * to make the switch more tempting, and turned down: a modifier is a switch a player flips once,
+     * so its rate is in practice the rate for every level that player plays from then on, and a big
+     * one would make a [Hint.LETTER] cheaper than a level or two and an ad worth very little - the
+     * stuck player's way out getting cheap. Nobody has measured how much harder a board is without
+     * its lengths - on a 5x5 with three words, barely.
      *
-     * **Hints do not forfeit it.** The extra ten is less than the cheapest hint, so buying a hint
-     * on a hard level is always a loss next to not buying one - there is no route to the bonus
+     * **Hints do not forfeit it.** The extra is less than the cheapest hint, so buying a hint on a
+     * level with no lengths is always a loss next to not buying one - there is no route to the bonus
      * through the shop, and a rule taking it away would be a rule to explain for nothing.
-     * `PuzzleTest` holds that inequality.
+     * `PuzzleTest` holds that for the sum of every modifier's bonus, which is what a player who turns
+     * them all on gets.
      */
-    const val FOR_COMPLETING_HARD = 25
+    const val FOR_NO_LENGTHS = 5
+
+    /**
+     * Coins on top of [FOR_COMPLETING] for a level finished with [LevelModifier.HIDDEN_LETTERS] on.
+     * The same as [FOR_NO_LENGTHS] until somebody has played both.
+     */
+    const val FOR_HIDDEN_LETTERS = 5
+
+    /**
+     * What finishing a level pays with [modifiers] on: the flat rate plus the bonus of each one the
+     * board actually acts on. One not yet [LevelModifier.inEffect] adds nothing.
+     */
+    fun forCompleting(modifiers: Set<LevelModifier>): Int =
+        FOR_COMPLETING + modifiers.filter { it.inEffect }.sumOf { it.bonus }
 
     /**
      * Coins for watching one rewarded ad through to the end.

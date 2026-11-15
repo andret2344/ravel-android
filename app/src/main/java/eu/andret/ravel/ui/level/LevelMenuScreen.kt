@@ -1,16 +1,21 @@
 package eu.andret.ravel.ui.level
 
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -20,17 +25,30 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TooltipAnchorPosition
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -48,6 +66,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import eu.andret.ravel.R
 import eu.andret.ravel.debug.LevelJump
+import eu.andret.ravel.game.LevelModifier
 import eu.andret.ravel.game.Rewards
 import eu.andret.ravel.settings.LevelProgressState
 import eu.andret.ravel.settings.SavedBoard
@@ -55,8 +74,9 @@ import eu.andret.ravel.ui.AdaptiveScreen
 import eu.andret.ravel.ui.CoinAmount
 import eu.andret.ravel.ui.MenuHeader
 import eu.andret.ravel.ui.game.asClock
+import eu.andret.ravel.ui.theme.noLengthsColors
 import eu.andret.ravel.ui.theme.foundColors
-import eu.andret.ravel.ui.theme.hardColors
+import kotlinx.coroutines.launch
 
 /**
  * The main mode's front page: the one level that can be played, and the run it belongs to.
@@ -93,8 +113,16 @@ fun LevelMenuScreen(
 ) {
     val progress by viewModel.state.collectAsStateWithLifecycle()
     val balance by viewModel.balance.collectAsStateWithLifecycle()
-    val hard by viewModel.hard.collectAsStateWithLifecycle()
-    val mode = MenuMode(progress = progress, chosen = hard, onChange = viewModel::setHard)
+    val chosen by viewModel.chosen.collectAsStateWithLifecycle()
+    // Here and not inside the tile, because the tile is drawn in a different place in each
+    // arrangement: turning the phone with the popup open would otherwise close it. Saveable, so a
+    // turn that keeps the arrangement does not close it either.
+    var choosing by rememberSaveable { mutableStateOf(false) }
+    val mode = MenuMode(progress = progress, chosen = chosen, onOpen = { choosing = true })
+
+    if (choosing) {
+        ModifiersDialog(mode = mode, onChange = viewModel::setModifier, onDismiss = { choosing = false })
+    }
 
     AdaptiveScreen(modifier = modifier) { wide ->
         if (wide) {
@@ -106,25 +134,26 @@ fun LevelMenuScreen(
 }
 
 /**
- * The hard-mode switch's state as the menu needs it: what the player chose, and what that means
- * for the level on the card.
+ * The modifiers' state as the menu needs it: what the player chose, and what that means for the
+ * level on the card.
  *
  * @param chosen the player's choice for levels not yet opened.
+ * @param onOpen opens the popup the choice is made in.
  */
 private class MenuMode(
     progress: LevelProgressState,
-    val chosen: Boolean,
-    val onChange: (Boolean) -> Unit,
+    val chosen: Set<LevelModifier>,
+    val onOpen: () -> Unit,
 ) {
-    /** The mode the current level is already frozen in, or null while it has not been opened. */
-    private val frozen: Boolean? = progress.hardFor(progress.current)
+    /** The modifiers the current level is already frozen with, or null while it has not been opened. */
+    private val frozen: Set<LevelModifier>? = progress.modifiersFor(progress.current)
 
-    /** Whether the level on the card will be played without lengths. */
-    val current: Boolean = frozen ?: chosen
+    /** The modifiers the level on the card will be played with. */
+    val current: Set<LevelModifier> = frozen ?: chosen
 
     /**
-     * Whether the switch says something the card's level will not do: that level has been opened
-     * and its mode is fixed, so the choice waits for the next one.
+     * Whether the choice says something the card's level will not do: that level has been opened
+     * and its modifiers are fixed, so the choice waits for the next one.
      */
     val pending: Boolean = frozen != null && frozen != chosen
 }
@@ -154,12 +183,12 @@ private fun TallMenu(
         ) {
             Header(balance = balance, onShop = onShop)
             // Three groups - the heading, the way in, the road - with the spare height between
-            // them rather than inside any of them. The card and its switch stay together, closer to
-            // each other than to anything else, because the switch is a choice about that card.
+            // them rather than inside any of them. The card and the modifiers stay together, closer
+            // to each other than to anything else, because the modifiers are a choice about that card.
             Spacer(modifier = Modifier.weight(1f))
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                PlayCard(progress = progress, hard = mode.current, onPlay = { onPlay(progress.current) })
-                HardModeSwitch(mode)
+                PlayCard(progress = progress, modifiers = mode.current, onPlay = { onPlay(progress.current) })
+                ModifiersTile(mode)
             }
             Spacer(modifier = Modifier.weight(1f))
             LadderStrip(progress.current)
@@ -208,7 +237,7 @@ private fun WideMenu(
         ) {
             PlayCard(
                 progress = progress,
-                hard = mode.current,
+                modifiers = mode.current,
                 onPlay = { onPlay(progress.current) },
                 modifier = Modifier.weight(1f).fillMaxHeight(),
             )
@@ -216,7 +245,7 @@ private fun WideMenu(
                 modifier = Modifier.weight(1f).fillMaxHeight(),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                HardModeSwitch(mode)
+                ModifiersTile(mode)
                 LadderGrid(current = progress.current, modifier = Modifier.weight(1f))
                 LevelJump()
             }
@@ -230,72 +259,340 @@ private fun Header(balance: Int, onShop: () -> Unit) {
 }
 
 /**
- * Hard mode, on the tab it belongs to rather than among the options.
+ * How many tiles the modifiers popup shows marked "coming soon", after the real ones.
  *
- * It changes what a level pays and what the player is shown, which makes it a choice about playing
- * and not a preference - and a choice that pays more is one a player has to be able to see to make.
- * Beside the card, so it is read as a choice about the level on it.
+ * Tiles and not [LevelModifier] entries: they have no name, no bonus and no stored key, so there is
+ * nothing for the rest of the game to read. They say the popup is a set that will grow. Each one is
+ * replaced by an entry as that modifier is added - "Ukryte litery" took the third - so the count
+ * only ever goes down, and with the entries it fills the 2x2 grid.
+ */
+private const val COMING_SOON_MODIFIERS = 2
+
+/** A modifier's name, icon and (i) text - exhaustive, so a new one cannot ship without them. */
+internal class ModifierLabels(
+    @param:StringRes val name: Int,
+    @param:DrawableRes val icon: Int,
+    @param:StringRes val description: Int,
+)
+
+internal fun labelsOf(modifier: LevelModifier): ModifierLabels = when (modifier) {
+    LevelModifier.NO_LENGTHS -> ModifierLabels(
+        name = R.string.no_lengths_mode,
+        icon = R.drawable.ic_modifier_no_lengths,
+        description = R.string.no_lengths_description,
+    )
+    LevelModifier.HIDDEN_LETTERS -> ModifierLabels(
+        name = R.string.hidden_letters_mode,
+        icon = R.drawable.ic_modifier_hidden_letters,
+        description = R.string.hidden_letters_description,
+    )
+}
+
+/**
+ * The modifiers, on the tab they belong to rather than among the options, as one tile that opens
+ * the popup they are chosen in ([ModifiersDialog]).
  *
- * Toggleable on the whole row, like the haptics switch in the options tab, for the same reason: a
- * finger that lands on the words means the switch. Under the name, three lines: what hard mode is
- * (count and lengths hidden), the fine print that it is for levels only, and - in orange, once the
- * level on the card has been opened and its mode is fixed - that the change waits for the next
- * level, which is the one thing about this switch a player could not guess. The coin figure is what
- * the mode adds to a level's pay.
+ * They change what a level pays and what the player is shown, which makes them a choice about
+ * playing and not a preference - and a choice that pays more is one a player has to be able to see
+ * to make. Beside the card, so it is read as a choice about the level on it.
  *
- * **The first line says what the mode is, never what the switch is set to.** It used to swap between
- * "hidden" and "shown" with the switch, which only repeated what the switch itself shows - and the
- * longer variant wrapped, growing the card and moving the switch from under the finger that flipped
- * it. One fixed sentence has neither problem.
+ * One tile rather than a switch per modifier: a row each would push the road off a short phone as
+ * the list grows, and the tile says what matters at a glance anyway - every modifier, the ones on in
+ * a soft fill and the ones off grayed out in an outline, and what those on add to a level's pay. Soft
+ * on purpose, by the owner's choice: the red stamp shouted from a tile that is a setting, and stays on
+ * the level card only, where it marks the level itself. Every modifier rather than only those on, so
+ * the tile also says what there is to choose. The extra, not the total: "+20" beside a modifier was
+ * read as twenty on top of the ordinary pay - and only what the board acts on, so the figure is what
+ * the level will really pay.
  *
- * **Its height never changes.** The orange line is laid out always and only drawn when it applies.
+ * In orange, once the level on the card has been opened and its modifiers are fixed, a line saying
+ * the change waits for the next level - the one thing about this choice a player could not guess.
+ *
+ * **Its height never changes.** Every chip is always there, the same size on or off, and the orange
+ * line is laid out always and only drawn when it applies, so a change made in the popup does not move
+ * the road under the card.
  */
 @Composable
-private fun HardModeSwitch(mode: MenuMode) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+private fun ModifiersTile(mode: MenuMode) {
+    Card(onClick = mode.onOpen, modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .toggleable(value = mode.chosen, onValueChange = mode.onChange, role = Role.Switch)
                 .padding(horizontal = 12.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(text = stringResource(R.string.hard_mode), style = MaterialTheme.typography.bodyLarge)
-                Text(
-                    text = stringResource(R.string.hard_mode_description),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                // A note on the note, and drawn as one: smaller, slanted and fainter, so it reads as
-                // the fine print under what the switch does rather than as a second thing it does.
-                Text(
-                    text = stringResource(R.string.hard_mode_scope),
-                    style = MaterialTheme.typography.labelSmall,
-                    fontStyle = FontStyle.Italic,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                )
-                Text(
-                    text = stringResource(R.string.hard_mode_pending),
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Medium,
-                    color = hardColors.notice,
-                    modifier = if (mode.pending) Modifier else Modifier.alpha(0f).clearAndSetSemantics {},
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(text = stringResource(R.string.modifiers_title), style = MaterialTheme.typography.bodyLarge)
+                // Wraps rather than squeezes: two names side by side already fill a phone's tile.
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    LevelModifier.entries.forEach { ModifierChip(it, on = it in mode.chosen) }
+                }
+                PendingLine(shown = mode.pending)
+            }
+            val bonus = Rewards.forCompleting(mode.chosen) - Rewards.FOR_COMPLETING
+            if (bonus > 0) {
+                CoinAmount(
+                    amount = bonus,
+                    text = stringResource(R.string.done_gained, bonus),
+                    style = MaterialTheme.typography.labelLarge,
                 )
             }
-            // The extra, not the total: "+45" beside a switch was read as forty-five on top of the
-            // ordinary pay. "+20" is what flipping it adds, which is the question a switch answers.
-            val extra = Rewards.FOR_COMPLETING_HARD - Rewards.FOR_COMPLETING
-            CoinAmount(
-                amount = extra,
-                text = stringResource(R.string.done_gained, extra),
-                style = MaterialTheme.typography.labelLarge,
+            // No description: the card is already announced as a button with the title in it.
+            Icon(
+                painter = painterResource(R.drawable.ic_chevron_right),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            // Drawn, not clicked: the row already took the press.
-            Switch(checked = mode.chosen, onCheckedChange = null)
         }
     }
+}
+
+/**
+ * Where the modifiers are switched on and off: a 2x2 grid of tiles, every real modifier first and
+ * then [COMING_SOON_MODIFIERS] locked ones.
+ *
+ * Tiles and not a row with a switch each, by the owner's choice: a grid reads as a set of things to
+ * pick from, and two columns are what a phone-wide dialog has room for - four across would leave a
+ * tile too narrow for its name and its bonus. The grid is filled in rows of [MODIFIER_COLUMNS], and a
+ * last row with one tile keeps the empty half rather than stretching the tile across it, so every
+ * tile is the same size whatever the count.
+ *
+ * A change applies the moment a tile is pressed, like every other setting in the app; the button only
+ * closes the popup, so there is no "cancel" that would have to mean something. The fine print that
+ * modifiers are for levels only, and the orange line about the level already opened, sit above the
+ * grid, laid out whether shown or not, so pressing a tile never moves the next one from under the
+ * finger.
+ */
+@Composable
+private fun ModifiersDialog(
+    mode: MenuMode,
+    onChange: (LevelModifier, Boolean) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.modifiers_ok)) }
+        },
+        title = { Text(stringResource(R.string.modifiers_title)) },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Column {
+                    // A note on the whole grid, and drawn as one: smaller, slanted and fainter, so it
+                    // reads as the fine print rather than as part of a tile.
+                    Text(
+                        text = stringResource(R.string.modifiers_scope),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontStyle = FontStyle.Italic,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    )
+                    PendingLine(shown = mode.pending)
+                }
+                // Null for a "coming soon" tile: it has no modifier behind it.
+                val tiles: List<LevelModifier?> =
+                    LevelModifier.entries + List(COMING_SOON_MODIFIERS) { null }
+                tiles.chunked(MODIFIER_COLUMNS).forEach { row ->
+                    // As tall as the tallest tile in it, so a tile with a bonus and one without line
+                    // up as one row of equal cards rather than a ragged edge.
+                    Row(
+                        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        row.forEach { modifier ->
+                            val layout = Modifier.weight(1f).fillMaxHeight()
+                            if (modifier == null) {
+                                ModifierToggle(
+                                    name = stringResource(R.string.modifier_coming_soon),
+                                    icon = R.drawable.ic_lock,
+                                    description = null,
+                                    bonus = null,
+                                    checked = false,
+                                    onCheckedChange = null,
+                                    modifier = layout,
+                                )
+                            } else {
+                                val labels = labelsOf(modifier)
+                                ModifierToggle(
+                                    name = stringResource(labels.name),
+                                    icon = labels.icon,
+                                    description = stringResource(labels.description),
+                                    bonus = modifier.bonus,
+                                    checked = modifier in mode.chosen,
+                                    onCheckedChange = { onChange(modifier, it) },
+                                    modifier = layout,
+                                )
+                            }
+                        }
+                        repeat(MODIFIER_COLUMNS - row.size) { Spacer(modifier = Modifier.weight(1f)) }
+                    }
+                }
+            }
+        },
+    )
+}
+
+/** How many modifier tiles sit side by side in the popup. */
+private const val MODIFIER_COLUMNS = 2
+
+/**
+ * One modifier in the popup's grid, pressed in or not: its own icon on top with the (i) level with it
+ * in the right corner, its name under the icon and what it adds to a level's pay under that, all
+ * centered - the owner's layout.
+ *
+ * Pressed in reads three ways at once, because the difference has to survive a glance and a player
+ * who does not see color: the tile is filled, its outline is the primary color and twice as thick,
+ * and a check sits on the icon's corner like a badge. Not pressed is an outline on the dialog's own
+ * surface. A "coming soon" tile is a padlock and a name at the disabled alpha, and pressing it does
+ * nothing.
+ *
+ * **The description is behind the (i), not on the tile.** A two-column tile has room for a name, an
+ * icon and a bonus, not for a sentence. The (i) opens it in a tooltip over the tile, and the tooltip
+ * stays until a tap elsewhere - a timed one would vanish while a slow reader was still on the second
+ * word. It is the one tap target inside another: the button keeps Material's 48dp, so a finger aimed
+ * at the (i) does not land on the tile and flip the modifier instead, and the tile's own semantics
+ * leave it out, so a screen reader reaches it as a button of its own.
+ *
+ * @param icon the modifier's own drawable, or the padlock for a "coming soon" tile.
+ * @param bonus what it adds to a level's pay, or null for a tile with no modifier behind it yet.
+ * @param description what the modifier does, or null for a "coming soon" tile, which has no (i).
+ * @param onCheckedChange null for a "coming soon" tile.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ModifierToggle(
+    name: String,
+    @DrawableRes icon: Int,
+    description: String?,
+    bonus: Int?,
+    checked: Boolean,
+    onCheckedChange: ((Boolean) -> Unit)?,
+    modifier: Modifier = Modifier,
+) {
+    val enabled = onCheckedChange != null
+    val colors = MaterialTheme.colorScheme
+    val shape = RoundedCornerShape(12.dp)
+    val content = if (checked) colors.onSecondaryContainer else colors.onSurface
+    Box(
+        modifier = modifier
+            .clip(shape)
+            .background(if (checked) colors.secondaryContainer else Color.Transparent)
+            .border(
+                width = if (checked) 2.dp else 1.dp,
+                color = if (checked) colors.primary else colors.outlineVariant,
+                shape = shape,
+            )
+            .toggleable(
+                value = checked,
+                enabled = enabled,
+                role = Role.Checkbox,
+                onValueChange = { onCheckedChange?.invoke(it) },
+            ),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 12.dp)
+                .alpha(if (enabled) 1f else 0.38f),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            // The icon is centered in a band as tall as the (i)'s 48dp touch target, which is pinned
+            // to the tile's top edge minus the same 8dp - so the two share a vertical center by
+            // construction. The icon is narrow, so the (i) in the corner beside it collides with
+            // nothing, and the name below gets the tile's whole width: with the name in the (i)'s row
+            // instead, its side margins left "Bez długości" about 60dp and broke it in two, with the
+            // (i) hanging between the lines. No descriptions on either icon: the name says what the
+            // modifier is, and the tile's checked state is announced by its role.
+            Box(
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(modifier = Modifier.size(40.dp)) {
+                    Icon(
+                        painter = painterResource(icon),
+                        contentDescription = null,
+                        tint = content,
+                        modifier = Modifier.size(32.dp).align(Alignment.Center),
+                    )
+                    if (checked) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_check),
+                            contentDescription = null,
+                            tint = colors.onPrimary,
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .size(18.dp)
+                                .background(colors.primary, CircleShape)
+                                .padding(2.dp),
+                        )
+                    }
+                }
+            }
+            Text(
+                text = name,
+                style = MaterialTheme.typography.titleSmall,
+                color = content,
+                textAlign = TextAlign.Center,
+            )
+            // A "coming soon" tile has no figure and keeps the line's height anyway, so the icons of
+            // both tiles in a row sit at the same depth.
+            Box(modifier = Modifier.heightIn(min = 20.dp), contentAlignment = Alignment.Center) {
+                if (bonus != null) {
+                    CoinAmount(
+                        amount = bonus,
+                        text = stringResource(R.string.done_gained, bonus),
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                }
+            }
+        }
+        if (description != null) {
+            val tooltip = rememberTooltipState(isPersistent = true)
+            val scope = rememberCoroutineScope()
+            // Aligned through a Box of its own: TooltipBox lays its anchor out inside its own
+            // layout, so an align passed as its modifier never reaches this tile's Box and the
+            // button landed in the top left corner, over the name.
+            // Down by the column's top padding, so it centers on the icon's band.
+            Box(modifier = Modifier.align(Alignment.TopEnd).padding(top = 8.dp)) {
+                TooltipBox(
+                    positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+                    tooltip = { PlainTooltip { Text(description) } },
+                    state = tooltip,
+                ) {
+                    IconButton(onClick = { scope.launch { tooltip.show() } }) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_info),
+                            contentDescription = stringResource(R.string.modifier_about, name),
+                            tint = colors.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * "Takes effect from the next level", in orange, laid out always and drawn only when [shown] - so
+ * the tile and the popup keep their height whichever way it goes.
+ */
+@Composable
+private fun PendingLine(shown: Boolean) {
+    Text(
+        text = stringResource(R.string.modifiers_pending),
+        style = MaterialTheme.typography.labelSmall,
+        fontWeight = FontWeight.Medium,
+        color = noLengthsColors.notice,
+        modifier = if (shown) Modifier else Modifier.alpha(0f).clearAndSetSemantics {},
+    )
 }
 
 /**
@@ -314,13 +611,13 @@ private fun HardModeSwitch(mode: MenuMode) {
 @Composable
 private fun PlayCard(
     progress: LevelProgressState,
-    hard: Boolean,
+    modifiers: Set<LevelModifier>,
     onPlay: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // Started once the board has been seen, not once something was traced on it: a player who
-    // opened the level and looked has begun it, the clock has run, and in hard mode its mode is
-    // already fixed. The board, when there is one, is only what the caption counts from.
+    // opened the level and looked has begun it, the clock has run, and its modifiers are already
+    // fixed. The board, when there is one, is only what the caption counts from.
     val started = progress.started
     val board = progress.boardFor(progress.current)
     // The three ways the card answers "has this been started" are read here, at the top, rather
@@ -338,6 +635,8 @@ private fun PlayCard(
         MaterialTheme.colorScheme.onPrimary
     }
     val label = if (!started) R.string.level_play else R.string.level_resume
+    val noLengths = LevelModifier.NO_LENGTHS in modifiers
+    val hiddenLetters = LevelModifier.HIDDEN_LETTERS in modifiers
     Card(
         onClick = onPlay,
         modifier = modifier.fillMaxWidth(),
@@ -368,20 +667,21 @@ private fun PlayCard(
                     text = stringResource(label),
                     style = MaterialTheme.typography.labelLarge,
                 )
-                // On the card as well as beside the switch, because the card is what the player
-                // presses: a level frozen hard while the switch now says otherwise still opens hard,
-                // and this is where that has to be visible. Always laid out and only shown when it
-                // applies, so flipping the switch does not grow the card and push the switch itself
-                // down from under the finger that flipped it.
-                HardBadge(
-                    modifier = Modifier
-                        .padding(top = 4.dp)
-                        .alpha(if (hard) 1f else 0f)
-                        .then(if (hard) Modifier else Modifier.clearAndSetSemantics {}),
-                )
+                // On the card as well as on the tile, because the card is what the player presses: a
+                // level frozen with a modifier while the tile now says otherwise still opens with it,
+                // and this is where that has to be visible. The line is always as tall as a badge -
+                // an invisible one holds it open when none is shown - so a change of modifiers does
+                // not grow the card and move the tile under it.
+                Box(modifier = Modifier.padding(top = 4.dp), contentAlignment = Alignment.Center) {
+                    NoLengthsBadge(modifier = Modifier.alpha(0f).clearAndSetSemantics {})
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        if (noLengths) NoLengthsBadge()
+                        if (hiddenLetters) HiddenLettersBadge()
+                    }
+                }
                 if (started) {
                     ResumeCaption(
-                        board = board.takeIf { !hard },
+                        board = board.takeIf { !noLengths },
                         seconds = progress.secondsFor(progress.current),
                     )
                 }
@@ -391,18 +691,79 @@ private fun PlayCard(
     }
 }
 
-/** The red stamp a hard level wears on its card - see [eu.andret.ravel.ui.theme.HardColors]. */
+/**
+ * The red stamp a level played without its lengths wears on its card - see
+ * [eu.andret.ravel.ui.theme.NoLengthsColors].
+ *
+ * Red because hiding the lengths changes the whole board's reading; [HiddenLettersBadge], beside it,
+ * is quieter.
+ */
 @Composable
-private fun HardBadge(modifier: Modifier = Modifier) {
+private fun NoLengthsBadge(modifier: Modifier = Modifier) {
     Text(
-        text = stringResource(R.string.hard_badge),
+        text = stringResource(R.string.no_lengths_badge),
         style = MaterialTheme.typography.labelMedium,
         fontWeight = FontWeight.Black,
         letterSpacing = 1.5.sp,
-        color = hardColors.onFill,
+        color = noLengthsColors.onFill,
         modifier = modifier
-            .background(hardColors.fill, RoundedCornerShape(6.dp))
+            .background(noLengthsColors.fill, RoundedCornerShape(6.dp))
             .padding(horizontal = 10.dp, vertical = 3.dp),
+    )
+}
+
+/**
+ * The stamp a level with [LevelModifier.HIDDEN_LETTERS] wears on its card, beside the red one: the
+ * same shape and lettering, in the soft tonal fill the modifiers tile uses for a modifier that is on.
+ * Quieter than red on purpose - covered letters change a few cells, not how the board is read - and
+ * still a stamp, so a level opened with stars says so before it is pressed.
+ */
+@Composable
+private fun HiddenLettersBadge(modifier: Modifier = Modifier) {
+    Text(
+        text = stringResource(R.string.hidden_letters_badge),
+        style = MaterialTheme.typography.labelMedium,
+        fontWeight = FontWeight.Black,
+        letterSpacing = 1.5.sp,
+        color = MaterialTheme.colorScheme.onSecondaryContainer,
+        modifier = modifier
+            .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(6.dp))
+            .padding(horizontal = 10.dp, vertical = 3.dp),
+    )
+}
+
+/**
+ * One modifier on the levels tab's tile: its name in a soft tonal fill when it is on, in a gray
+ * outline and grayed text when it is off. The same size either way - the outline is drawn over the
+ * edge, not added to it - so turning one on never moves the others.
+ *
+ * Read out as its name and its state ("Bez długości, włączony"): the tile is one button, and its
+ * merged description is the only way a screen reader hears which chips are filled.
+ */
+@Composable
+private fun ModifierChip(levelModifier: LevelModifier, on: Boolean) {
+    val colors = MaterialTheme.colorScheme
+    val shape = RoundedCornerShape(8.dp)
+    val name = stringResource(labelsOf(levelModifier).name)
+    val spoken = stringResource(
+        R.string.modifier_state,
+        name,
+        stringResource(if (on) R.string.modifier_on else R.string.modifier_off),
+    )
+    Text(
+        text = name,
+        style = MaterialTheme.typography.labelMedium,
+        color = if (on) colors.onSecondaryContainer else colors.onSurfaceVariant.copy(alpha = 0.6f),
+        modifier = Modifier
+            .clearAndSetSemantics { contentDescription = spoken }
+            .then(
+                if (on) {
+                    Modifier.background(colors.secondaryContainer, shape)
+                } else {
+                    Modifier.border(1.dp, colors.outlineVariant, shape)
+                },
+            )
+            .padding(horizontal = 10.dp, vertical = 4.dp),
     )
 }
 
@@ -410,8 +771,8 @@ private fun HardBadge(modifier: Modifier = Modifier) {
  * How far in, rather than a word: "2/5" is the reason to come back, and it is the only thing on the
  * card a player cannot already guess from the color.
  *
- * Without the count on a hard level, where "2/5" is exactly what the mode hides - the time alone is
- * left, and nothing at all for a level opened and not yet timed.
+ * Without the count on a level with no lengths, where "2/5" is exactly what the modifier hides - the
+ * time alone is left, and nothing at all for a level opened and not yet timed.
  *
  * The clock beside it is the other half of that reason. Two words out of five is a different
  * proposition after forty seconds than after nine minutes, and the time already spent is the part a

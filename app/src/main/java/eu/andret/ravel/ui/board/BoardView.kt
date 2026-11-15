@@ -12,12 +12,18 @@ import androidx.compose.ui.graphics.Color
  *
  * @param path the cells marked right now, which is the live gesture while one is under way and the
  *   puzzle's standing path otherwise.
+ * @param concealedCells cells showing a star instead of their letter - see
+ *   [eu.andret.ravel.game.Puzzle.concealedCells].
+ * @param unveiledCells cells whose star came off with their word, which keep a faint one behind the
+ *   letter.
  */
 internal class BoardView(
     val path: List<Int>,
     val solvedPaths: List<List<Int>>,
     private val solvedCells: Set<Int>,
     private val hintedCells: Set<Int>,
+    private val concealedCells: Set<Int> = emptySet(),
+    private val unveiledCells: Set<Int> = emptySet(),
 ) {
     /**
      * Where each marked word begins.
@@ -56,6 +62,8 @@ internal class BoardView(
             // A found word is drawn as found; repeating that a hint had a hand in it would only
             // clutter a cell the player is done with.
             hint = palette.hint.takeIf { cell in hintedCells && !solved },
+            concealed = cell in concealedCells,
+            unveiled = cell in unveiledCells,
         )
     }
 }
@@ -68,6 +76,8 @@ internal class BoardView(
  * @param leading adds weight to the letter a word begins at. Size alone would say it, but the two
  *   together survive a glance at a board where most cells are untouched and full-sized anyway.
  * @param hint the outline color when a hint gave this cell away, null when it did not.
+ * @param concealed a star is drawn instead of the letter.
+ * @param unveiled the letter is back, over a faint star saying it was hidden.
  */
 internal class CellStyle(
     val fill: Color,
@@ -75,4 +85,6 @@ internal class CellStyle(
     val scale: Float,
     val leading: Boolean,
     val hint: Color?,
+    val concealed: Boolean = false,
+    val unveiled: Boolean = false,
 )

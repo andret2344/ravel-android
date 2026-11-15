@@ -53,6 +53,30 @@ class PuzzleTest {
     }
 
     @Test
+    fun `a hidden letter stays covered until its word is found`() {
+        // The O of kot and the E of ser are under stars.
+        val starred = fresh.copy(hidden = setOf(1, 6))
+        assertEquals(setOf(1, 6), starred.concealedCells)
+        assertEquals(emptySet<Int>(), starred.unveiledCells)
+
+        // A hint says where the word runs; the star stays on.
+        val hinted = starred.copy(hints = mapOf(0 to 2))
+        assertTrue(1 in hinted.hintedCells)
+        assertEquals(setOf(1, 6), hinted.concealedCells)
+
+        val found = starred.withPath(listOf(0, 1, 2))
+        assertEquals(setOf(6), found.concealedCells)
+        assertEquals(setOf(1), found.unveiledCells)
+    }
+
+    @Test
+    fun `stars survive every move`() {
+        val starred = fresh.copy(hidden = setOf(1, 6))
+        val moved = starred.withPath(listOf(3, 7)).withPath(emptyList())
+        assertEquals(setOf(1, 6), moved.hidden)
+    }
+
+    @Test
     fun `an unfinished path stays marked`() {
         val state = fresh.withPath(listOf(0, 1))
         assertTrue(state.found.isEmpty())
@@ -242,13 +266,28 @@ class PuzzleTest {
     }
 
     @Test
-    fun `hard mode pays more but less than any hint is worth`() {
-        // The bonus is not taken away by a hint, and this is why that is safe: the extra a hard
-        // level pays is smaller than the cheapest hint, so no purchase on a hard level can come out
-        // ahead of not buying. Held as inequalities, like the rule above, so retuning the numbers
-        // does not need this rewritten - only breaking the rule does.
-        assertTrue(Rewards.FOR_COMPLETING_HARD > Rewards.FOR_COMPLETING)
-        assertTrue(Rewards.FOR_COMPLETING_HARD - Rewards.FOR_COMPLETING < Hint.LETTER.cost)
+    fun `every modifier pays more, and all of them together less than any hint is worth`() {
+        // The bonus is not taken away by a hint, and this is why that is safe: the extra a level
+        // pays with every modifier on is smaller than the cheapest hint, so no purchase on such a
+        // level can come out ahead of not buying. Summed over every entry, because modifiers stack:
+        // a new one with too big a bonus breaks this rather than the economy. Held as inequalities,
+        // like the rule above, so retuning the numbers does not need this rewritten.
+        // Summed over every entry, in effect or not: one that is not yet will be.
+        LevelModifier.entries.forEach { assertTrue("$it pays nothing extra", it.bonus > 0) }
+        assertTrue(LevelModifier.entries.sumOf { it.bonus } < Hint.LETTER.cost)
+        assertEquals(Rewards.FOR_COMPLETING, Rewards.forCompleting(emptySet()))
+    }
+
+    @Test
+    fun `a modifier the board does not act on yet pays nothing`() {
+        // Chosen and stored ahead of its rule, so a player who turns it on gives up nothing - and a
+        // bonus for that would be coins for a tap.
+        LevelModifier.entries.filter { !it.inEffect }.forEach {
+            assertEquals("$it", Rewards.FOR_COMPLETING, Rewards.forCompleting(setOf(it)))
+        }
+        LevelModifier.entries.filter { it.inEffect }.forEach {
+            assertEquals("$it", Rewards.FOR_COMPLETING + it.bonus, Rewards.forCompleting(setOf(it)))
+        }
     }
 
     @Test

@@ -3,7 +3,8 @@ package eu.andret.ravel.ui.level
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import eu.andret.ravel.RavelApplication
-import eu.andret.ravel.settings.HardModeSettings
+import eu.andret.ravel.game.LevelModifier
+import eu.andret.ravel.settings.ModifierSettings
 import eu.andret.ravel.settings.LevelProgressState
 import kotlinx.coroutines.flow.StateFlow
 
@@ -18,10 +19,10 @@ class LevelMenuViewModel(application: Application) : AndroidViewModel(applicatio
 
     val balance: StateFlow<Int> = (application as RavelApplication).wallet.balance
 
-    private val hardMode = (application as RavelApplication).hardMode
+    private val modifiers = (application as RavelApplication).modifiers
 
-    /** What the player has chosen for levels not yet opened - see [HardModeSettings]. */
-    val hard: StateFlow<Boolean> = hardMode.enabled
+    /** What the player has chosen for levels not yet opened - see [ModifierSettings]. */
+    val chosen: StateFlow<Set<LevelModifier>> = modifiers.chosen
 
-    fun setHard(value: Boolean) = hardMode.setEnabled(value)
+    fun setModifier(modifier: LevelModifier, enabled: Boolean) = modifiers.set(modifier, enabled)
 }

@@ -1,5 +1,6 @@
 package eu.andret.ravel.settings
 
+import eu.andret.ravel.game.LevelModifier
 import eu.andret.ravel.generator.Language
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -37,22 +38,23 @@ class LevelProgressStateTest {
     }
 
     @Test
-    fun `a level's mode belongs to the level it was frozen on`() {
-        val state = LevelProgressState(completed = 6, opened = OpenedLevel(level = 7, hard = true))
-        assertEquals(true, state.hardFor(7))
-        assertNull("level eight has not been opened", state.hardFor(8))
-        assertNull("level six is behind the player", state.hardFor(6))
+    fun `a level's modifiers belong to the level they were frozen on`() {
+        val noLengths = setOf(LevelModifier.NO_LENGTHS)
+        val state = LevelProgressState(completed = 6, opened = OpenedLevel(level = 7, modifiers = noLengths))
+        assertEquals(noLengths, state.modifiersFor(7))
+        assertNull("level eight has not been opened", state.modifiersFor(8))
+        assertNull("level six is behind the player", state.modifiersFor(6))
     }
 
     @Test
     fun `a level opened and not touched counts as started`() {
-        val state = LevelProgressState(completed = 6, opened = OpenedLevel(level = 7, hard = false))
+        val state = LevelProgressState(completed = 6, opened = OpenedLevel(level = 7, modifiers = emptySet()))
         assertTrue(state.started)
     }
 
     @Test
-    fun `an unopened level has no mode yet`() {
-        assertNull(LevelProgressState(completed = 6).hardFor(7))
+    fun `an unopened level has no modifiers decided yet`() {
+        assertNull(LevelProgressState(completed = 6).modifiersFor(7))
     }
 
     @Test

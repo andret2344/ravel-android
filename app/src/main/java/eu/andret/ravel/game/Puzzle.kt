@@ -25,6 +25,9 @@ data class Clue(val length: Int, val found: Boolean)
  * @param bought how many of each kind of hint were paid for, which [hints] cannot answer: five
  *   letters bought one at a time and one whole word bought outright leave the same five cells
  *   revealed, and they are not the same thing to a player looking back at how they did.
+ * @param hidden the cells whose letter [LevelModifier.HIDDEN_LETTERS] covers with a star, empty
+ *   without it - see [HiddenLetters]. Fixed for the board, carried through every move; the rules
+ *   never read it, only what the player is shown does ([concealedCells], [unveiledCells]).
  */
 data class Puzzle(
     val board: Board,
@@ -32,12 +35,25 @@ data class Puzzle(
     val path: List<Int> = emptyList(),
     val hints: Map<Int, Int> = emptyMap(),
     val bought: Map<Hint, Int> = emptyMap(),
+    val hidden: Set<Int> = emptySet(),
 ) {
     /** The paths of the words found so far, so the board can draw them as the words they are. */
     val solvedPaths: List<List<Int>> = found.sorted().map { board.solution[it].cells.toList() }
 
     /** Every cell already spoken for by a found word. */
     val solvedCells: Set<Int> = solvedPaths.flatMapTo(HashSet()) { it }
+
+    /**
+     * Cells still showing a star instead of their letter: hidden, in a word not found yet.
+     *
+     * A hint does not take a star off. It says where the word runs, which is what it always says;
+     * the letter comes back with the word, however the word was found - traced, or bought outright,
+     * which finds it.
+     */
+    val concealedCells: Set<Int> = hidden - solvedCells
+
+    /** Hidden cells whose word has been found: the letter is back, with a mark that it was hidden. */
+    val unveiledCells: Set<Int> = hidden intersect solvedCells
 
     /** Cells a hint has given away, minus those now covered by a word that has been found. */
     val hintedCells: Set<Int> = hints.entries

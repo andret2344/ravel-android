@@ -597,43 +597,135 @@ layer.
 
 ## Levels
 
-### Hard mode
+### Level modifiers, and "no lengths"
 
-Decided 2026-11-07. A switch on the levels tab hides the word lengths and their count; found words'
-lengths appear as they are found. Pays `FOR_COMPLETING_HARD` (25), ten over an ordinary board. Levels
-only - the daily has no hard mode, so a day stays a day for everyone.
+Decided 2026-11-07 as hard mode, a single switch; turned into modifiers on 2026-11-15, the switch
+becoming the first of them as "Bez długości" / "No lengths" (`NO_LENGTHS`; called blind in between,
+the same day). A tile on the levels tab under the card lists every modifier and what those on add to
+a level's pay; a tap opens a popup with a 2x2 grid of tiles, each pressed in or not, the real
+modifiers first and locked "coming soon" tiles after. Levels only - the daily has no modifiers, so a
+day stays a day for everyone.
 
+"No lengths" hides the word lengths and their count; found words' lengths appear as they are found.
+Pays `Rewards.FOR_NO_LENGTHS` (+5) on top of `FOR_COMPLETING`; `Rewards.forCompleting` sums the
+bonus of every modifier the board acts on.
+
+- **One tile and a popup, not a switch per modifier.** A row each would push the road off a short
+  phone as the list grows. The tile's height never changes: every chip is always there, the same size
+  on or off, as tall as one
+  whether any are on or not, and the "next level" line is always laid out.
+- **In the popup, tiles two across rather than a row with a switch each** (owner's choice). Four
+  across leaves a tile too narrow for its name and bonus on a phone; three across leaves a ragged
+  row at four. The description does not fit a tile, so it sits behind an (i) in the tile's corner and
+  opens as a persistent tooltip - the owner chose that over a fixed line under the grid. The (i) is
+  a tap target inside a tap target, which is why it keeps its full 48dp.
+- **Each tile: the modifier's own icon on top with the (i) level with it in the right corner, the
+  name under the icon, the bonus under that** (owner's layout). Pressed in shows as fill, a thick
+  primary outline and a check badged on the icon's corner. The "no lengths" icon is a ruler struck
+  through (`ic_modifier_no_lengths`), drawn for
+  the project: Material Symbols has a ruler but no struck-through one, and the owner chose the ruler
+  over the crossed-out eye, which says "hidden" but not what is hidden.
+- **The name says what the modifier takes away: "Bez długości" / "No lengths"** (owner's choice over
+  "Na ślepo", 2026-11-15). The choice is made before the board is seen and frozen for the level, so a
+  name that needs its (i) to be understood costs a wrong press; "na ślepo" could as well mean hidden
+  letters or no path highlight. A state, not an order ("Ukryj długości" was the first proposal), so it
+  reads right on the card's badge too. It does not mention the word count, which the (i) says.
+- **The icon, not the name, shares the top row with the (i)**, centered in a 48dp band - the (i)'s
+  touch target - so the two share a center by construction. The name was there first: placed on its
+  own the (i) sat a few dp below it, and in a shared row the margins the (i) needed left the name
+  about 60dp, which broke "Bez długości" in two with the (i) hanging between the lines. The icon is
+  narrow, so the corner beside it is free, and the name below gets the tile's whole width.
+- **"Ukryte litery" / "Hidden letters" (`HIDDEN_LETTERS`, 2026-11-15)** covers some letters with a
+  star until their word is found. It shipped for a few hours ahead of its rule as `inEffect = false`,
+  paying nothing - the owner's choice over paying for a modifier that gave nothing up; the flag stays
+  for the next one built that way. Its icon is an asterisk drawn as a vector, centered, because a
+  typed "*" sits high like a superscript; the board draws the same shape on a covered cell, and the
+  same again, large and faint, behind a letter that was uncovered - as three lines on the canvas, not
+  the drawable: a `VectorPainter` caches one bitmap at the last size asked for, and a board draws
+  stars at three sizes in a frame, which tore them into fragments. The +5 matches "no lengths" until
+  somebody has played both. The rules (`HiddenLetters`), all the owner's:
+  - **How many: from half the words, rounded up and at least three, to one per word.** The owner
+    first proposed three to one per word; on a fifteen-word board that draws three stars nobody
+    notices as often as fifteen, for the same bonus.
+  - **Never a word's first letter.** Words are traced from it and hints reveal from it; hiding it
+    turns "which word" into "where does it start".
+  - **Spread freely, at most one per three letters of a word, never two side by side in it.** One
+    per word was proposed and turned down by the owner as too even; uncapped was turned down by
+    both, since three stars in one word can only be guessed. Every word has room for one, so a count
+    of at most one per word always fits.
+  - **A hint marks a covered cell and leaves the star** (owner's choice over uncovering it): the
+    letter comes back with the word, which a bought word finds.
+  - **Drawn from the level's id, through its own salted SplitMix64 stream**, not `kotlin.random`,
+    whose algorithm is the library's to change: the stars must be the same cells on every visit, after
+    process death, and across updates. Nothing about them is stored.
+  - **The card wears a stamp for it**, in the tile's soft tonal fill beside the red one: covered
+    letters change a few cells, not how the whole board is read.
+- **The levels tab's tile lists every modifier, as soft chips** (owner's choice): on in the
+  secondary tonal fill, off in a gray outline with grayed text. The red stamps it showed first
+  shouted from what is a setting; red stays on the level card, which marks the level itself. Its
+  coin figure counts only what the board acts on, so it is what the level will pay.
+- **The placeholders are tiles, not enum entries.** A modifier exists once it has a rule, a bonus and
+  stored keys; until then there is nothing for the rest of the game to read. The three tiles say the
+  list will grow, which is what makes a popup worth it for one switch today. Generic "coming soon",
+  no names and no figures, by the owner's choice: a named one in a store build is a promise.
 - **UI only, knowing the cost.** Uniqueness is proved for the shown length multiset (`Solver`), so a
   board may admit a second tiling into real words once the lengths are hidden. Not measured. Accepted
   because the player's experience of it - a real word refused - is the one ordinary boards already
-  give; it can only no longer be reasoned out. Making hard boards unique without lengths would have
-  made the mode part of a board's identity.
+  give; it can only no longer be reasoned out. Making such boards unique without lengths would have
+  made the player's choice part of a board's identity, and that holds for every modifier.
 - **Frozen at first open, not first move.** A player who looked, backed out and switched would be paid
-  for lengths already read. A change made on the tab applies from the next level, and the switch says
-  so.
-- **Giving up is allowed, on the board, never on the tab.** Hard to ordinary mid-level is not an
-  exploit - the player pays with the bonus - and it is the one exit from a board chosen blind besides
-  paid hints. A "Show lengths" button under the clue row asks first (it cannot be undone and costs
-  coins). The tab's switch does not touch the open level, or setting the next level's mode would
-  silently cost the current one its bonus. The same dialog offers "Show and turn off hard mode"
-  (2026-11-08): this board as above, and the tab's switch off from the next level on - the board
-  reaching the switch, never the switch reaching the board. Outlined in `HardColors` red, the label
-  left in the text color for contrast on the dark theme.
-- **The bonus: +10.** It was 45 against 25 a board (40 first, 55 asked for and turned down), and came
-  down with the economy on 2026-11-11 to a flat +10, the owner's choice over a proportional +12. The
-  switch is flipped once and then sets the rate for every level after, so a large bonus would make a
-  letter hint cheaper than a level or two and an ad worth very little - the stuck player's way out
-  made cheap. How much harder a board is without lengths is unmeasured - on a 5x5, barely - and
-  raising a reward later is a gift where lowering it is a nerf. The switch shows the extra, not the
-  total: a total was read as on top.
-- **Hints do not forfeit the bonus.** The extra 10 is below the cheapest hint (40), so no purchase can
-  come out ahead; a forfeit rule would need explaining for nothing. `PuzzleTest` holds that.
-- **The card marks a hard level with a red badge** (`HardColors`, not `error`, which the "in progress"
-  dot already wears), on a line laid out whether shown or not, so flipping the switch does not grow
-  the card and move the switch from under the finger.
+  for lengths already read. A change made on the tab applies from the next level, and the tile and the
+  popup say so.
+- **Giving up is allowed, on the board, never on the tab.** Taking a modifier off mid-level is not
+  an exploit - the player pays with its bonus - and it is the one exit from a board chosen harder
+  besides paid hints. The tab does not touch the open level, or choosing the next level's modifiers
+  would silently cost the current one its bonus. `LevelProgress.drop` takes one modifier off, never
+  adds.
+  - **One "Modifiers" button under the hints, on every level, grayed out when nothing is left to take
+    off** (owner's choice, 2026-11-15). It replaced "Show lengths", which served one modifier, came
+    and went with it - growing the board when pressed - and left a player stuck under stars with no
+    way out. A button per modifier was turned down: each would take a row off the board. Always
+    there, so the footer is one height on every level and the board one size whatever was chosen.
+  - **It opens a dialog listing the level's modifiers**, each with its icon, what it pays ("+5", as
+    on the levels tab - the owner's choice over "-5") and "Turn off"; marking one strikes the name
+    and the figure through. **Nothing changes until "OK"** (owner's choice): "Turn off" strikes the row through
+    and reads "Turned off", pressed again it takes the mark back, "OK" appears once something is
+    marked and applies it all, and closing the dialog any other way changes nothing - so a player can
+    change their mind before a choice that cannot be undone and costs coins. A first version acted on
+    the tap. One checkbox, "Also turn off for the next levels", off by default, replaces the old
+    second button ("Show and turn off", 2026-11-08): the board reaching the choice, never the choice
+    reaching the board.
+  - **Taking hidden letters off uncovers every star at once, without the faint star behind**: that
+    mark means "found under a star", and these were shown, not found.
+- **The board says what it is played with as a row of icons, under it and over the lengths**
+  (`ActiveModifiers`, owner's choice, 2026-11-15), not in the heading. The heading said "· no
+  lengths" while that was the only modifier, to explain the empty row of lengths; with two it could
+  only list some, and listing all of them in words would break the line. Icons scale with the count
+  and are the ones the popup and the dialog already use. The row is always there on a level, empty
+  without modifiers, so the board's size does not depend on the choice - about 24dp on every level.
+  It sits over the "Modifiers" button, last in the footer, in the owner's order: traced word,
+  lengths, hints to buy, hints bought, modifiers.
+- **The bonus: +5.** It was 45 against 25 a board (40 first, 55 asked for and turned down), came down
+  with the economy on 2026-11-11 to a flat +10, and to +5 on 2026-11-15 by the owner's choice, when
+  modifiers began to stack. A modifier is flipped once and then sets the rate for every level after,
+  so a large bonus would make a letter hint cheaper than a level or two and an ad worth very little -
+  the stuck player's way out made cheap. How much harder a board is without lengths is unmeasured -
+  on a 5x5, barely - and raising a reward later is a gift where lowering it is a nerf. The tile and the
+  popup show the extra, not the total: a total was read as on top.
+- **Hints do not forfeit the bonus.** Every modifier's bonus added together stays below the cheapest
+  hint (40), so no purchase can come out ahead; a forfeit rule would need explaining for nothing.
+  `PuzzleTest` holds the sum over every `LevelModifier` entry, so a new modifier cannot break it
+  quietly.
+- **The card marks a level with no lengths with a red badge** (`NoLengthsColors`, not `error`, which the "in
+  progress" dot already wears), on a line laid out whether shown or not.
 - **The full clue row is still laid out, invisibly,** so the footer and the board keep the size they
   have in an ordinary level. It leaks how many lines the row wraps to, which only says a long list is
   long.
+- **The stored keys were renamed without a migration, twice on 2026-11-15** (`hardMode` to
+  `blindMode` to `noLengths`, `openedHard` to `openedBlind` to `openedNoLengths`), by the owner's
+  choice: an alpha tester who had hard mode on finds the modifier off, and a level opened hard before
+  the update opens ordinary. Accepted before 1.0.0 so the code says what the player sees; from 1.0.0
+  a stored key is never renamed.
 
 ### Why `LevelProgress` has no setter
 
@@ -833,6 +925,17 @@ description so screen readers still hear "100 coins" where the screen shows a fi
 `coins_balance` survives as an accessibility string only; back on screen beside a coin it would give
 Polish four forms of a noun the icon does not need.
 
+### The board screen's margins and the board's place
+
+The board screen keeps 6dp all round and 6dp between its bands, not the menus' 20dp and 12dp, and
+stacks the heading and the board from the top rather than centering them in the spare height
+(owner's choice, 2026-11-15). The board is held back by the screen's width or by its height,
+whichever runs out first - on a tall phone with an ordinary footer the width, and once the level's
+footer gained the modifiers' icons and button, the height - so both kinds of margin are taken
+straight off every cell. 12dp at the sides came first and did not help where the height was the
+limit. From the top, the board sits just under the bar and does not drift as
+the footer changes; the spare height goes under it. Both modes, since `BoardLayout` is shared.
+
 ### A finished board's words
 
 Both completion dialogs and the calendar's day card list the board's words, each opening its meaning
@@ -841,6 +944,28 @@ deeper still, and the daily down to 8 000. A player who traces a word they have 
 finishes the board still not knowing it is the player who writes "these are not real words" in a
 review.
 
+- **Closing the dialog does not lose the words** (2026-11-15). Closing it used to throw the summary
+  away, and a player who closed it to look at the board could not get back to the definitions - on a
+  level, ever, since nothing else keeps a level's words. The summary now outlives the dialog, and
+  "Show summary" under the finished board brings the same dialog back, at once rather than after the
+  solved pause. The owner's choice over a separate "Words" button: the dialog already holds the
+  words, the next level and, on the daily, the share button, so one way back reaches all three. It
+  takes the place of "Next level" on a level (two taps to the next level after closing the dialog,
+  accepted) and of the grayed-out hints on the daily, so the footer keeps its height. On a level the
+  direct "Next level" button stays only for a finished board with no summary behind it.
+- **Each word drawn as the board drew it once found** (2026-11-15, owner's choice - the plain list
+  read as a settings screen, not a reward): a row of small tiles in the found colors, capitals, a
+  faint star behind a letter that was under one (`SolvedWords.hidden`, levels only). **One tile size
+  for the whole list**, set by the longest word between 18 and 28dp, so the words line up like the
+  board; per-word sizing looked like mixed fonts, and breaking a long word over two rows read as a
+  bug. Only a word too long even for 18dp shrinks on its own. The calendar's day card shares the
+  list, so it shows tiles too.
+- **The completion dialogs celebrate a fresh finish, once** (`Celebration.kt`): the body grows in,
+  the total counts up from zero, and a ring of dots in the board's and the coin's colors bursts from
+  behind it. Not on "Show summary" - that summary is already known. No sound; the system's animation
+  scale applies. Under the total, **soft chips say what it was for**: the board, and on a level each
+  modifier that paid, by its icon - the one place a modifier's bonus is seen being earned. The
+  daily's "board" and "day N" rows became the same chips.
 - **Folded under one line, and the choice remembered** (`WordListSettings`). The dialog leads with
   what the board paid; a list above the buttons would push the way on below the fold on a short
   phone. A player who opened it once wants it on the next board too.
@@ -954,7 +1079,7 @@ before 1.0.0 while it is cheap.
 ### The numbers and the ratios
 
 `Rewards.FOR_COMPLETING` (15), `Streak.DAY` (15, `SEVENTH` 50), `Rewards.FOR_WATCHING_AD` (100), against
-the `Hint` prices (40 / 100). Around them: `FOR_COMPLETING_HARD` (25), `DAILY_GIFT` (10),
+the `Hint` prices (40 / 100). Around them: `FOR_NO_LENGTHS` (+5), `DAILY_GIFT` (10),
 `Streak.REPAIR_PRICE` (100), `ADS_PER_DAY` (3), `Wallet.STARTING_BALANCE` (250).
 
 The ratios are the design, and each is written down where it lives:
@@ -964,7 +1089,7 @@ The ratios are the design, and each is written down where it lives:
 - an ad pays what six and two-thirds solved boards pay, and exactly one `Hint.WORD`;
 - a word costs 2.5 letters, which puts the hint break-even at two letters — `PuzzleTest` guards that as
   a pair of inequalities, not as the ratio;
-- the hard bonus stays under the cheapest hint, the gift under half the cheapest hint and under a
+- every modifier's bonus together stays under the cheapest hint, the gift under half the cheapest hint and under a
   board (`PuzzleTest`), and the repair price equals the ad and exceeds `SEVENTH - DAY` (`StreakTest`).
 
 Moving one number alone silently answers a question those comments already answered. History: the
@@ -986,7 +1111,7 @@ What changed, together:
 | `FOR_COMPLETING` | 25 | 15 |
 | `Streak.DAY` | 25 | 15 |
 | `Streak.SEVENTH` | 125 (`5 * DAY`) | 50 |
-| `FOR_COMPLETING_HARD` | 45 | 25 |
+| level without lengths, in total (then hard mode) | 45 | 25 |
 | `DAILY_GIFT` | 15 | 10 |
 | `Wallet.STARTING_BALANCE` | 600 | 250 |
 
@@ -1003,7 +1128,8 @@ of other boards away. That is the trade, on purpose.
 - **`SEVENTH` stopped being `5 * DAY`.** 75 was the proportional figure; 50 makes the economy leaner
   still, keeps the week inside `StreakTest`'s band and caps a broken run at 35 coins, under the repair
   price.
-- **`FOR_COMPLETING_HARD` is a flat +10**, chosen over the proportional +12 (27).
+- **The hard-mode bonus became a flat +10**, chosen over the proportional +12 (27). Since 2026-11-15
+  it is the "no lengths" modifier's +5 - see "Level modifiers, and "no lengths"".
 - **`STARTING_BALANCE` 250** over the 150 recommended: two words and a letter, about seventeen boards.
 - **Existing balances are not touched.** Taking coins back from testers was rejected. The cost is a
   slow signal: players sitting on 600+ will not reach the shop for weeks, so new installs are the ones

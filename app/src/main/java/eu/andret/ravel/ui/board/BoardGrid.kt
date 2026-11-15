@@ -93,6 +93,8 @@ internal fun BoardGrid(
         solvedPaths = puzzle.solvedPaths,
         solvedCells = puzzle.solvedCells,
         hintedCells = puzzle.hintedCells,
+        concealedCells = puzzle.concealedCells,
+        unveiledCells = puzzle.unveiledCells,
     )
 
     Canvas(

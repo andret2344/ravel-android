@@ -20,6 +20,7 @@ import eu.andret.ravel.settings.SavedBoard
 import eu.andret.ravel.settings.ShareCard
 import eu.andret.ravel.ui.game.BoardState
 import eu.andret.ravel.ui.game.SolveClock
+import eu.andret.ravel.ui.game.SummaryShown
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -122,13 +123,19 @@ class DailyViewModel(
     private val _completion = MutableStateFlow<Completion?>(null)
 
     /**
-     * What the last finish paid, until the player dismisses it.
+     * What the last finish paid, kept after its dialog is closed so [showSummary] can bring it back.
+     * Whether the dialog is up is [summaryShown].
      *
      * Held here rather than raised as a one-off event so a rotation mid-celebration does not lose
      * the celebration - and so the screen can be rebuilt from state alone, like everything else on
      * it.
      */
     val completion: StateFlow<Completion?> = _completion.asStateFlow()
+
+    private val _summaryShown = MutableStateFlow(SummaryShown.NO)
+
+    /** Whether [completion]'s dialog is up - see [SummaryShown]. */
+    val summaryShown: StateFlow<SummaryShown> = _summaryShown.asStateFlow()
 
     /** The search currently running, kept only so a new one can call the old one off. */
     private var running: Job? = null
@@ -280,7 +287,12 @@ class DailyViewModel(
 
     /** Puts the celebration away, leaving the player on the finished board. */
     fun dismissCompletion() {
-        _completion.value = null
+        _summaryShown.value = SummaryShown.NO
+    }
+
+    /** Brings the finished board's summary back, from the button under it. */
+    fun showSummary() {
+        if (_completion.value != null) _summaryShown.value = SummaryShown.ON_REQUEST
     }
 
     override fun onCleared() {
@@ -380,6 +392,7 @@ class DailyViewModel(
             card = card,
             words = words,
         )
+        _summaryShown.value = SummaryShown.AFTER_SOLVE
     }
 
     /**

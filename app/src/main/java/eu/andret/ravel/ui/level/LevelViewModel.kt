@@ -5,7 +5,9 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import eu.andret.ravel.RavelApplication
+import eu.andret.ravel.game.HiddenLetters
 import eu.andret.ravel.game.Hint
+import eu.andret.ravel.game.LevelModifier
 import eu.andret.ravel.game.Puzzle
 import eu.andret.ravel.game.PuzzleCache
 import eu.andret.ravel.game.PuzzleId
@@ -16,6 +18,7 @@ import eu.andret.ravel.settings.LevelProgressState
 import eu.andret.ravel.settings.SavedBoard
 import eu.andret.ravel.ui.game.BoardState
 import eu.andret.ravel.ui.game.SolveClock
+import eu.andret.ravel.ui.game.SummaryShown
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -47,7 +50,7 @@ class LevelViewModel(
     private val wallet = (application as RavelApplication).wallet
     private val progress = (application as RavelApplication).levels
     private val puzzles = (application as RavelApplication).puzzles
-    private val hardMode = (application as RavelApplication).hardMode
+    private val modifierSettings = (application as RavelApplication).modifiers
 
     /** The level this board is, counting from one. */
     val level: Int = checkNotNull(handle.get<Int>(LevelRoute.ARG_LEVEL)) {
@@ -130,48 +133,53 @@ class LevelViewModel(
         level > ladder.current || (level < ladder.current && !finished)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
-    private val _hard = MutableStateFlow(false)
+    private val _modifiers = MutableStateFlow<Set<LevelModifier>>(emptySet())
 
     /**
-     * Whether this level is played without its lengths. Decided when the board comes up and never
-     * after - see [eu.andret.ravel.settings.LevelProgress.open] - so false until there is a board.
+     * The modifiers this level is played with. Decided when the board comes up and never after,
+     * except by [drop] - see [eu.andret.ravel.settings.LevelProgress.open] - so empty until
+     * there is a board.
      */
-    val hard: StateFlow<Boolean> = _hard.asStateFlow()
+    val modifiers: StateFlow<Set<LevelModifier>> = _modifiers.asStateFlow()
 
     /**
-     * Shows the lengths on a hard level and gives up its bonus - see
-     * [eu.andret.ravel.settings.LevelProgress.dropHard]. Asked for through a confirmation on the
-     * screen; a finished board has nothing left to give up.
-     */
-    fun dropHard() {
-        val playing = _state.value as? BoardState.Playing ?: return
-        if (!_hard.value || playing.puzzle.isComplete) return
-        progress.dropHard(level)
-        _hard.value = false
-    }
-
-    /**
-     * [dropHard], and the levels tab's switch turned off with it: the player who gives up on the
-     * board and does not want the next one blind either, in one press instead of a trip to the tab.
+     * Takes [modifier] off this level and gives up its bonus - see
+     * [eu.andret.ravel.settings.LevelProgress.drop] - and, with [alsoNext], off the levels tab's
+     * choice too, from the next level opened. Asked for through a dialog on the screen; a finished
+     * board has nothing left to give up.
      *
-     * The switch goes off whatever [dropHard] made of this board, because that is the half of the
-     * press that is about the future. It acts from the next level opened, as it always does - see
-     * [eu.andret.ravel.settings.LevelProgress.open] - so a level already opened as hard stays hard.
+     * Taking [LevelModifier.HIDDEN_LETTERS] off uncovers every star at once, with no faint star left
+     * behind: that mark says a letter was found under a star, and these were not found, only shown.
      */
-    fun dropHardAndTurnOff() {
-        dropHard()
-        hardMode.setEnabled(false)
+    fun drop(modifier: LevelModifier, alsoNext: Boolean) {
+        val playing = _state.value as? BoardState.Playing ?: return
+        if (modifier in _modifiers.value && !playing.puzzle.isComplete) {
+            progress.drop(level, modifier)
+            _modifiers.value -= modifier
+            if (modifier == LevelModifier.HIDDEN_LETTERS) {
+                _state.value = BoardState.Playing(playing.puzzle.copy(hidden = emptySet()))
+            }
+        }
+        // Whatever the board made of it: this half of the choice is about the future, and acts
+        // from the next level opened - a level already opened keeps what it was opened with.
+        if (alsoNext) modifierSettings.set(modifier, enabled = false)
     }
 
     private val _completion = MutableStateFlow<LevelCompletion?>(null)
 
     /**
-     * What the last finish paid, until the player picks one of the two ways on.
+     * What the last finish paid, kept after its dialog is closed so [showSummary] can bring it back.
+     * Whether the dialog is up is [summaryShown].
      *
      * Held here rather than raised as a one-off event so a rotation mid-celebration does not lose
      * the celebration - and so the screen can be rebuilt from state alone, like everything else.
      */
     val completion: StateFlow<LevelCompletion?> = _completion.asStateFlow()
+
+    private val _summaryShown = MutableStateFlow(SummaryShown.NO)
+
+    /** Whether [completion]'s dialog is up - see [SummaryShown]. */
+    val summaryShown: StateFlow<SummaryShown> = _summaryShown.asStateFlow()
 
     /** The search currently running, kept only so a new one can call the old one off. */
     private var running: Job? = null
@@ -195,6 +203,17 @@ class LevelViewModel(
     val elapsed: StateFlow<Int> = clock.elapsed
 
     private val id = PuzzleId(PuzzleMode.ENDLESS, level.toLong())
+
+    /**
+     * [state] with the level's stars on it, when it was frozen with
+     * [LevelModifier.HIDDEN_LETTERS]. Put on the board as it comes up rather than kept anywhere:
+     * [HiddenLetters] draws them from the id, so a board restored from disk gets the same ones back.
+     */
+    private fun withStars(state: BoardState): BoardState {
+        if (state !is BoardState.Playing || LevelModifier.HIDDEN_LETTERS !in _modifiers.value) return state
+        val puzzle = state.puzzle
+        return BoardState.Playing(puzzle.copy(hidden = HiddenLetters.chooseFor(puzzle.board, id)))
+    }
 
     init {
         // Collecting rather than calling once, because the first emission *is* the first generation
@@ -243,9 +262,12 @@ class LevelViewModel(
             warning.cancel()
             _slow.value = false
             // Frozen before the board is shown, so there is no frame in which the lengths are on
-            // screen for a level about to be counted as hard.
-            if (next is BoardState.Playing) _hard.value = progress.open(level, hardMode.enabled.value)
-            _state.value = next
+            // screen for a level about to be counted as one with no lengths - nor a letter that is
+            // about to be covered by a star.
+            if (next is BoardState.Playing) {
+                _modifiers.value = progress.open(level, modifierSettings.chosen.value)
+            }
+            _state.value = withStars(next)
             // There is a board now, or there is not. Either way the clock's answer just changed.
             syncClock()
             // Ordered once there is a board and not before, so the two searches never share the
@@ -313,7 +335,12 @@ class LevelViewModel(
 
     /** Puts the celebration away, leaving the player on the finished board. */
     fun dismissCompletion() {
-        _completion.value = null
+        _summaryShown.value = SummaryShown.NO
+    }
+
+    /** Brings the finished board's summary back, from the button under it. */
+    fun showSummary() {
+        if (_completion.value != null) _summaryShown.value = SummaryShown.ON_REQUEST
     }
 
     override fun onCleared() {
@@ -386,11 +413,7 @@ class LevelViewModel(
         finishedHere.value = true
         val counted = progress.complete(level, wordCount)
         puzzles.solved(id, language.current.value)
-        val coins = when {
-            !counted -> 0
-            _hard.value -> Rewards.FOR_COMPLETING_HARD
-            else -> Rewards.FOR_COMPLETING
-        }
+        val coins = if (counted) Rewards.forCompleting(_modifiers.value) else 0
         if (coins > 0) wallet.earn(coins)
 
         _completion.value = LevelCompletion(
@@ -398,7 +421,9 @@ class LevelViewModel(
             coins = coins,
             seconds = seconds,
             words = puzzle.solvedWords(language.current.value),
+            paidFor = if (coins > 0) _modifiers.value.filterTo(HashSet()) { it.inEffect } else emptySet(),
         )
+        _summaryShown.value = SummaryShown.AFTER_SOLVE
     }
 
     private companion object {

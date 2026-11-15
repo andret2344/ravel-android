@@ -1,0 +1,21 @@
+<!--
+    The "hidden letters" modifier's icon: an asterisk, the mark that stands in for a letter left out
+    (as in "s*o*o"). Drawn for this project as three strokes through the center, not taken from a font:
+    a typed "*" sits high on the line, like a superscript, and the owner wanted it centered and drawn
+    like the other icons. Strokes in the same weight as the struck-through ruler beside it.
+
+    White and untinted, like every icon here: Compose's Icon paints it in the color it is given.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Three arms of radius 7 around (12, 12): vertical, and the two at 60 degrees from it. -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@android:color/white"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M12,5V19M5.94,8.5L18.06,15.5M5.94,15.5L18.06,8.5" />
+</vector>

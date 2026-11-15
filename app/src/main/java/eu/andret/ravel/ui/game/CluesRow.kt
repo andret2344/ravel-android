@@ -23,7 +23,7 @@ import eu.andret.ravel.ui.theme.foundColors
  * The word lengths, which are the entire clue set: how many words are hidden and how long each one
  * is. Anything more would be the answer.
  *
- * @param hidden hard mode: only the lengths already found are shown, each appearing in its place in
+ * @param hidden no lengths: only the lengths already found are shown, each appearing in its place in
  *   the ascending order as its word is found, so the row says neither how many words are left nor
  *   how long they are. The full row is still laid out underneath, invisible and silent to screen
  *   readers, so the footer is the height it would be in an ordinary level - the board is sized from

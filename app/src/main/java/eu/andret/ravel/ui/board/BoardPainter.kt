@@ -4,6 +4,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextLayoutResult
@@ -50,7 +51,36 @@ internal class BoardPainter(
         // A hint is drawn as an outline rather than as another fill, so a cell can say both "you
         // were told this one" and whichever state it is in at the same time.
         style.hint?.let { color -> outlineTile(cell, side, color) }
-        drawLetter(cell, side, style)
+        when {
+            style.concealed -> drawStar(cell, side * STAR_RATIO, style.letter)
+            style.unveiled -> {
+                // Behind the letter, large and faint: a mark of what the cell was, not a second
+                // symbol competing with the letter for the eye.
+                drawStar(
+                    cell = cell,
+                    size = side * UNVEILED_STAR_RATIO,
+                    color = style.letter.copy(alpha = UNVEILED_STAR_ALPHA),
+                    stroke = UNVEILED_STAR_STROKE,
+                )
+                drawLetter(cell, side, style)
+            }
+            else -> drawLetter(cell, side, style)
+        }
+    }
+
+    /**
+     * The hidden-letters star, centered in [cell] in a square of [size]: the geometry of
+     * `ic_modifier_hidden_letters` - three strokes through the center, arms of 7/24 of the square,
+     * 2/24 thick, round caps - drawn as lines rather than a typed "*", which sits high on the line like
+     * a superscript.
+     *
+     * Lines and not the vector drawable through a `VectorPainter`: that painter renders into one
+     * cached bitmap at the size it was last asked for, and a board draws stars at three sizes in one
+     * frame - covered, behind an unveiled letter, shrunk in a marked word - so each one overwrote the
+     * cache mid-frame and the board showed torn fragments of a star near the top of the cell.
+     */
+    private fun drawStar(cell: Int, size: Float, color: Color, stroke: Float = STAR_STROKE) {
+        drawStarLines(metrics.centerOf(cell), size, color, stroke)
     }
 
     /** Fills a cell's tile and returns the side it was drawn at, which the letter is sized from. */
@@ -116,6 +146,48 @@ internal class BoardPainter(
         }
     }
 }
+
+/** A covering star's side against the tile's, about a letter's height. */
+private const val STAR_RATIO = 0.55f
+
+/** The faint star behind an unveiled letter: most of the tile, so it reads as a background. */
+internal const val UNVEILED_STAR_RATIO = 0.9f
+
+/**
+ * Faint enough that the letter in front of it reads first, and no fainter: 0.18 with the covering
+ * star's thin stroke all but vanished into the found word's green, and 0.35 with a 3/24 stroke
+ * crossed the letter out. Between the two, by eye.
+ */
+internal const val UNVEILED_STAR_ALPHA = 0.25f
+
+/** Heavier than the covering star's, for the same reason: thin and faint together disappear. */
+internal const val UNVEILED_STAR_STROKE = 2.5f / 24f
+
+/** A star's arm and stroke against its square, as in `ic_modifier_hidden_letters` (7 and 2 of 24). */
+private const val STAR_ARM = 7f / 24f
+internal const val STAR_STROKE = 2f / 24f
+
+/**
+ * The hidden-letters star, centered on [center] in a square of [size], [stroke] of that square
+ * thick - the board's cells and the completion list's tiles both draw it through here, so it is one
+ * shape wherever it appears.
+ */
+internal fun DrawScope.drawStarLines(center: Offset, size: Float, color: Color, stroke: Float = STAR_STROKE) {
+    val arm = size * STAR_ARM
+    val across = arm * COS_30
+    val width = size * stroke
+    val strokes = listOf(
+        Offset(0f, -arm) to Offset(0f, arm),
+        Offset(-across, -arm / 2) to Offset(across, arm / 2),
+        Offset(-across, arm / 2) to Offset(across, -arm / 2),
+    )
+    strokes.forEach { (from, to) ->
+        drawLine(color, center + from, center + to, strokeWidth = width, cap = StrokeCap.Round)
+    }
+}
+
+/** The two slanted strokes run at 60 degrees from the upright one. */
+private const val COS_30 = 0.8660254f
 
 /**
  * What a measured letter is cached under.
