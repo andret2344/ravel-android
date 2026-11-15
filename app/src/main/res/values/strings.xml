@@ -98,11 +98,11 @@
     <string name="no_lengths_description">Hides the word count and lengths.</string>
     <string name="hidden_letters_mode">Hidden letters</string>
     <string name="hidden_letters_description">Some letters are hidden.</string>
-    <string name="hidden_letters_badge">HIDDEN LETTERS</string>
+    <string name="reversed_words_mode">Reversed words</string>
+    <string name="reversed_words_description">Every word must be traced from its last letter.</string>
     <string name="modifier_state">%1$s, %2$s</string>
     <string name="modifier_on">on</string>
     <string name="modifier_off">off</string>
-    <string name="no_lengths_badge">NO LENGTHS</string>
     <string name="modifiers_drop_title">Too tough?</string>
     <string name="modifiers_drop_body">A modifier you turn off stops working on this board, and its bonus is lost. Words you\'ve found stay on the board.</string>
     <string name="modifiers_drop">Turn off</string>

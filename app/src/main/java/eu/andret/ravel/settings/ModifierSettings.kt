@@ -51,6 +51,7 @@ class ModifierSettings(context: Context) {
         fun keyOf(modifier: LevelModifier): String = when (modifier) {
             LevelModifier.NO_LENGTHS -> "noLengths"
             LevelModifier.HIDDEN_LETTERS -> "hiddenLetters"
+            LevelModifier.REVERSED_WORDS -> "reversedWords"
         }
     }
 }

@@ -74,11 +74,11 @@
     <string name="no_lengths_description">Ukrywa liczbę i długości słów.</string>
     <string name="hidden_letters_mode">Ukryte litery</string>
     <string name="hidden_letters_description">Niektóre litery są ukryte.</string>
-    <string name="hidden_letters_badge">UKRYTE LITERY</string>
+    <string name="reversed_words_mode">Słowa wspak</string>
+    <string name="reversed_words_description">Każde słowo trzeba ułożyć od ostatniej litery.</string>
     <string name="modifier_state">%1$s, %2$s</string>
     <string name="modifier_on">włączony</string>
     <string name="modifier_off">wyłączony</string>
-    <string name="no_lengths_badge">BEZ DŁUGOŚCI</string>
     <string name="modifiers_drop_title">Za trudno?</string>
     <string name="modifiers_drop_body">Wyłączony modyfikator przestaje działać na tej planszy, a jego premia przepada. Znalezione słowa zostają na planszy.</string>
     <string name="modifiers_drop">Wyłącz</string>

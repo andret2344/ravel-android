@@ -264,10 +264,15 @@ Persistence is SharedPreferences plus JSON (`settings/SavedBoards.kt`, single-le
   never read from the choice again; the choice acts from the next unopened level. The one change is
   taking one off on the board (`LevelProgress.drop`), never adding one. Levels only - the daily has
   none. `NO_LENGTHS` ("Bez długości" / "No lengths") hides the lengths.
+- **`REVERSED_WORDS` ("Słowa wspak" / "Reversed words") is `Puzzle.reversed`, read only through
+  `Puzzle.traceOf`.** Matching, hints, progress and the drawn head of a found word all follow it;
+  never reverse the player's path instead. Taking it off keeps the bought letters' count, from the
+  first letter, and clears the path.
 - **Modifiers are chosen in a popup behind one tile on the levels tab (`ModifiersTile`), as a 2x2 grid
   of toggle tiles (`ModifierToggle`)**, each description behind an (i). Its "coming soon" tiles are
   UI only (`COMING_SOON_MODIFIERS`), not enum entries. The tile on the tab lists every modifier as a
-  soft chip; the red stamp is for the level card only.
+  soft chip; the level card shows each frozen one as an icon stamp (`ModifierBadge`), red for
+  `NO_LENGTHS` only.
 - **A modifier the board does not act on yet is `inEffect = false` and pays nothing**
   (`Rewards.forCompleting`, `PuzzleTest`).
 - **`HIDDEN_LETTERS` ("Ukryte litery") stars are drawn from the level's id (`HiddenLetters`), never
@@ -281,7 +286,8 @@ Persistence is SharedPreferences plus JSON (`settings/SavedBoards.kt`, single-le
   never from how many words are found.** The correction step passes on a cut (`cutBack`), not on a
   word, and the refused decoy stays on the board for it.
 - **Skipping the tutorial counts as finishing it**; the options tab replays it in one tap.
-- **A word is accepted only traced from its first letter** (`matchesPlacement`), not from either end.
+- **A word is accepted only traced from its first letter** (`matchesPlacement`), not from either end -
+  from its last instead under `REVERSED_WORDS`, never from both.
 - **Every screen that lays out differently on its side asks `AdaptiveScreen { wide -> }`
   (`ui/Adaptive.kt`), never the device.** Material's window size classes are deliberately unused.
 - **`BoardLayout` is shared by both board screens.** Do not re-copy it.

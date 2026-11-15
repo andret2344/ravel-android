@@ -53,6 +53,54 @@ class PuzzleTest {
     }
 
     @Test
+    fun `with words reversed a word is found only from its last letter`() {
+        val reversed = fresh.copy(reversed = true)
+        assertEquals(setOf(0), reversed.withPath(listOf(2, 1, 0)).found)
+        val forwards = reversed.withPath(listOf(0, 1, 2))
+        assertTrue(forwards.found.isEmpty())
+        assertEquals(listOf(0, 1, 2), forwards.path)
+    }
+
+    @Test
+    fun `with words reversed a found word is drawn the way it was traced`() {
+        // The board puts the head of a found word on the first cell of its path, which has to be
+        // where the player started: the last letter.
+        val found = fresh.copy(reversed = true).withPath(listOf(2, 1, 0))
+        assertEquals(listOf(listOf(2, 1, 0)), found.solvedPaths)
+    }
+
+    @Test
+    fun `with words reversed hints reveal from the last letter`() {
+        val hinted = fresh.copy(reversed = true).hinted(Hint.LETTER)
+        assertEquals(listOf(2), hinted.path)
+        assertEquals(setOf(2), hinted.hintedCells)
+        assertEquals(listOf(2, 1), hinted.hinted(Hint.LETTER).path)
+    }
+
+    @Test
+    fun `with words reversed a hint continues a path traced from the last letter`() {
+        // Two cells of raki traced from its end; the hint picks that word and adds the next cell.
+        val state = fresh.copy(reversed = true).withPath(listOf(10, 11)).hinted(Hint.LETTER)
+        assertEquals(listOf(10, 11, 7), state.path)
+        assertEquals(3, state.hints[1])
+    }
+
+    @Test
+    fun `with words reversed a word hint finds the word`() {
+        val state = fresh.copy(reversed = true).hinted(Hint.WORD)
+        assertEquals(setOf(0), state.found)
+    }
+
+    @Test
+    fun `turning reversal off keeps the letters bought, counted from the first letter`() {
+        val bought = fresh.copy(reversed = true).hinted(Hint.LETTER).hinted(Hint.LETTER)
+        assertEquals(setOf(2, 1), bought.hintedCells)
+        val dropped = bought.copy(reversed = false).withPath(emptyList())
+        assertEquals(setOf(0, 1), dropped.hintedCells)
+        assertEquals(emptyList<Int>(), dropped.path)
+    }
+
+    @Test
     fun `a hidden letter stays covered until its word is found`() {
         // The O of kot and the E of ser are under stars.
         val starred = fresh.copy(hidden = setOf(1, 6))

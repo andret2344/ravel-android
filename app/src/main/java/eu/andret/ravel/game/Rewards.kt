@@ -83,6 +83,12 @@ object Rewards {
     const val FOR_HIDDEN_LETTERS = 5
 
     /**
+     * Coins on top of [FOR_COMPLETING] for a level finished with [LevelModifier.REVERSED_WORDS] on.
+     * The same as the other two, by the owner's choice, until somebody has played all three.
+     */
+    const val FOR_REVERSED_WORDS = 5
+
+    /**
      * What finishing a level pays with [modifiers] on: the flat rate plus the bonus of each one the
      * board actually acts on. One not yet [LevelModifier.inEffect] adds nothing.
      */

@@ -150,14 +150,24 @@ class LevelViewModel(
      *
      * Taking [LevelModifier.HIDDEN_LETTERS] off uncovers every star at once, with no faint star left
      * behind: that mark says a letter was found under a star, and these were not found, only shown.
+     *
+     * Taking [LevelModifier.REVERSED_WORDS] off turns every word back to be traced from its first
+     * letter. The path being traced goes, since it ran from the other end and is no longer the start
+     * of anything; bought letters stay bought, as many as were paid for, now counted from the first
+     * letter (owner's choice) - keeping the very cells would mean storing cells instead of counts,
+     * and losing them would take back what was paid for.
      */
     fun drop(modifier: LevelModifier, alsoNext: Boolean) {
         val playing = _state.value as? BoardState.Playing ?: return
         if (modifier in _modifiers.value && !playing.puzzle.isComplete) {
             progress.drop(level, modifier)
             _modifiers.value -= modifier
-            if (modifier == LevelModifier.HIDDEN_LETTERS) {
-                _state.value = BoardState.Playing(playing.puzzle.copy(hidden = emptySet()))
+            when (modifier) {
+                LevelModifier.HIDDEN_LETTERS ->
+                    _state.value = BoardState.Playing(playing.puzzle.copy(hidden = emptySet()))
+                // Through [play], unlike the stars: the cleared path has to be written down too.
+                LevelModifier.REVERSED_WORDS -> play { it.copy(reversed = false).withPath(emptyList()) }
+                LevelModifier.NO_LENGTHS -> Unit
             }
         }
         // Whatever the board made of it: this half of the choice is about the future, and acts
@@ -205,14 +215,25 @@ class LevelViewModel(
     private val id = PuzzleId(PuzzleMode.ENDLESS, level.toLong())
 
     /**
-     * [state] with the level's stars on it, when it was frozen with
-     * [LevelModifier.HIDDEN_LETTERS]. Put on the board as it comes up rather than kept anywhere:
-     * [HiddenLetters] draws them from the id, so a board restored from disk gets the same ones back.
+     * [state] with what the level's frozen modifiers do to the board: the stars of
+     * [LevelModifier.HIDDEN_LETTERS], and the direction of [LevelModifier.REVERSED_WORDS]. Put on the
+     * board as it comes up rather than kept anywhere: [HiddenLetters] draws the stars from the id and
+     * the direction is the frozen choice, so a board restored from disk gets the same ones back.
      */
-    private fun withStars(state: BoardState): BoardState {
-        if (state !is BoardState.Playing || LevelModifier.HIDDEN_LETTERS !in _modifiers.value) return state
+    private fun withModifiers(state: BoardState): BoardState {
+        if (state !is BoardState.Playing) return state
         val puzzle = state.puzzle
-        return BoardState.Playing(puzzle.copy(hidden = HiddenLetters.chooseFor(puzzle.board, id)))
+        val modifiers = _modifiers.value
+        return BoardState.Playing(
+            puzzle.copy(
+                hidden = if (LevelModifier.HIDDEN_LETTERS in modifiers) {
+                    HiddenLetters.chooseFor(puzzle.board, id)
+                } else {
+                    emptySet()
+                },
+                reversed = LevelModifier.REVERSED_WORDS in modifiers,
+            ),
+        )
     }
 
     init {
@@ -263,11 +284,11 @@ class LevelViewModel(
             _slow.value = false
             // Frozen before the board is shown, so there is no frame in which the lengths are on
             // screen for a level about to be counted as one with no lengths - nor a letter that is
-            // about to be covered by a star.
+            // about to be covered by a star, nor a word that is about to be turned round.
             if (next is BoardState.Playing) {
                 _modifiers.value = progress.open(level, modifierSettings.chosen.value)
             }
-            _state.value = withStars(next)
+            _state.value = withModifiers(next)
             // There is a board now, or there is not. Either way the clock's answer just changed.
             syncClock()
             // Ordered once there is a board and not before, so the two searches never share the

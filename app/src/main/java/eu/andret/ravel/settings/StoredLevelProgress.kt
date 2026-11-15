@@ -327,6 +327,7 @@ class StoredLevelProgress(
         fun openedKeyOf(modifier: LevelModifier): String = when (modifier) {
             LevelModifier.NO_LENGTHS -> "openedNoLengths"
             LevelModifier.HIDDEN_LETTERS -> "openedHiddenLetters"
+            LevelModifier.REVERSED_WORDS -> "openedReversedWords"
         }
     }
 }

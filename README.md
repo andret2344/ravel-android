@@ -25,7 +25,8 @@ Two languages, Polish and English, each with its own bundled dictionary of base 
 - **Levels** — an endless ladder. Grid size ramps to 10×10 by level 250; how obscure the words may
   be keeps climbing to level 2500. Modifiers on the game tab trade something away for extra coins -
   "No lengths" hides the word lengths and their count, "Hidden letters" covers some letters with a
-  star until their word is found; a level keeps the modifiers it was first opened with.
+  star until their word is found, "Reversed words" makes every word be traced from its last letter;
+  a level keeps the modifiers it was first opened with.
 
 Hints cost coins, earned by completing puzzles, by keeping a daily streak, and in the shop's daily
 rewards: rewarded ads and a small free gift once a day. A single missed day can be saved the next

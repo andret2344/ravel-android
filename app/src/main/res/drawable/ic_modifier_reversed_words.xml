@@ -1,0 +1,29 @@
+<!--
+    The "reversed words" modifier's icon: a U-turn - a path that runs one way, turns and comes back,
+    ending in an arrowhead. Drawn for this project, not copied from an icon set, in the stroke weight
+    of the asterisk and the ruler beside it, so the three read as one set on the card and the board.
+
+    White and untinted, like every icon here: Compose's Icon paints it in the color it is given.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Out along the top, round a half circle of radius 4 at the right, and back along the bottom. -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@android:color/white"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M4,7H15A4,4 0,0 1,15 15H5" />
+    <!-- The arrowhead at the end of the way back, pointing left. -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@android:color/white"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M8.5,11.5L5,15L8.5,18.5" />
+</vector>

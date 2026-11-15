@@ -18,8 +18,9 @@ data class Clue(val length: Int, val found: Boolean)
  * @param path the cells the player currently has marked, in order. It survives lifting a finger: a
  *   half-traced word stays on the board to be corrected or continued, which is what makes a long
  *   word tractable in more than one movement.
- * @param hints how many cells of a word a hint has revealed, counted from where the word begins -
- *   which is the only end it can be traced from. Kept separately from [path] so a revealed cell
+ * @param hints how many cells of a word a hint has revealed, counted from where the word is traced
+ *   from - its first letter, or its last with [reversed] - which is the only end it can be traced
+ *   from. Kept separately from [path] so a revealed cell
  *   stays revealed when the player clears what they were tracing: a hint, once paid for, is not
  *   lost by tidying up.
  * @param bought how many of each kind of hint were paid for, which [hints] cannot answer: five
@@ -28,6 +29,12 @@ data class Clue(val length: Int, val found: Boolean)
  * @param hidden the cells whose letter [LevelModifier.HIDDEN_LETTERS] covers with a star, empty
  *   without it - see [HiddenLetters]. Fixed for the board, carried through every move; the rules
  *   never read it, only what the player is shown does ([concealedCells], [unveiledCells]).
+ * @param reversed whether every word is traced from its last letter instead of its first -
+ *   [LevelModifier.REVERSED_WORDS]. Read through [traceOf] and nowhere else, so every rule below that
+ *   speaks of "where a word begins" - matching a path, revealing a hint, measuring how far along a
+ *   word the player is - means the end it is traced from, and the board draws a found word the way
+ *   it was traced. Fixed for the board, like [hidden]; taking the modifier off sets it back, and
+ *   [hints] then count from the first letter, as many cells as were bought.
  */
 data class Puzzle(
     val board: Board,
@@ -36,9 +43,13 @@ data class Puzzle(
     val hints: Map<Int, Int> = emptyMap(),
     val bought: Map<Hint, Int> = emptyMap(),
     val hidden: Set<Int> = emptySet(),
+    val reversed: Boolean = false,
 ) {
-    /** The paths of the words found so far, so the board can draw them as the words they are. */
-    val solvedPaths: List<List<Int>> = found.sorted().map { board.solution[it].cells.toList() }
+    /**
+     * The paths of the words found so far, in the order they are traced, so the board can draw them
+     * as the words they are - with [reversed], starting from the last letter, as the player drew them.
+     */
+    val solvedPaths: List<List<Int>> = found.sorted().map { traceOf(it).toList() }
 
     /** Every cell already spoken for by a found word. */
     val solvedCells: Set<Int> = solvedPaths.flatMapTo(HashSet()) { it }
@@ -58,7 +69,7 @@ data class Puzzle(
     /** Cells a hint has given away, minus those now covered by a word that has been found. */
     val hintedCells: Set<Int> = hints.entries
         .filter { (word, _) -> word !in found }
-        .flatMapTo(HashSet()) { (word, revealed) -> board.solution[word].cells.take(revealed) }
+        .flatMapTo(HashSet()) { (word, revealed) -> traceOf(word).take(revealed) }
 
     /** Words still to find, which is what a hint has to choose between. */
     val unfound: List<Int> = board.solution.indices.filter { it !in found }
@@ -85,7 +96,7 @@ data class Puzzle(
      * completing a word is checked in exactly one place rather than at each of them.
      */
     fun withPath(cells: List<Int>): Puzzle {
-        val index = board.solution.indexOfFirst { matchesPlacement(it.cells, cells) }
+        val index = board.solution.indices.indexOfFirst { matchesPlacement(traceOf(it), cells) }
         return if (index >= 0 && index !in found) {
             copy(found = found + index, path = emptyList())
         } else {
@@ -158,7 +169,7 @@ data class Puzzle(
      */
     fun hinted(hint: Hint): Puzzle {
         val target = target() ?: return this
-        val cells = board.solution[target].cells
+        val cells = traceOf(target)
         val revealed = when (hint) {
             // One past whatever the player already has, which is what makes a letter a nudge
             // rather than an answer.
@@ -182,18 +193,29 @@ data class Puzzle(
      * match is the only one.
      */
     private fun target(): Int? =
-        unfound.firstOrNull { commonPrefixLength(board.solution[it].cells.toList(), path) > 0 }
+        unfound.firstOrNull { commonPrefixLength(traceOf(it).toList(), path) > 0 }
             ?: unfound.minWithOrNull(compareBy({ -progressOn(it) }, { board.solution[it].cells.min() }))
 
     /**
      * How far along the word at [index] the player already is, by hint or by hand.
      *
-     * Both are counted from where the word begins, since that is the only end it can be traced
-     * from: a path that starts anywhere else is not a partly-right answer, it is a different path,
-     * and it scores nothing here.
+     * Both are counted from where the word is traced from, since that is the only end it can be
+     * traced from: a path that starts anywhere else is not a partly-right answer, it is a different
+     * path, and it scores nothing here.
      */
     private fun progressOn(index: Int): Int {
-        val cells = board.solution[index].cells.toList()
+        val cells = traceOf(index).toList()
         return maxOf(hints[index] ?: 0, commonPrefixLength(cells, path))
     }
+
+    /**
+     * The cells of the word at [index] in the order a player has to trace them: the way the word
+     * reads, or backwards with [reversed].
+     *
+     * The one place the direction is decided. Reversing the path a player traced instead, before
+     * matching it, would leave hints, progress and the drawn heads all still counting from the
+     * first letter, and the board would point at an end the player is not allowed to start from.
+     */
+    private fun traceOf(index: Int): IntArray =
+        board.solution[index].cells.let { if (reversed) it.reversedArray() else it }
 }

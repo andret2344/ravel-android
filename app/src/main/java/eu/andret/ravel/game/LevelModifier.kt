@@ -39,4 +39,13 @@ enum class LevelModifier(val bonus: Int, val inEffect: Boolean = true) {
      * [HiddenLetters].
      */
     HIDDEN_LETTERS(Rewards.FOR_HIDDEN_LETTERS),
+
+    /**
+     * Every word traced from its last letter instead of its first, and only that way - see
+     * [Puzzle.reversed]. Shown to the player as "Słowa wspak" / "Reversed words".
+     *
+     * The board needs nothing new for it: the generator proves a board unique with every word read
+     * in either direction, so a board unique forwards is unique backwards too.
+     */
+    REVERSED_WORDS(Rewards.FOR_REVERSED_WORDS),
 }

@@ -61,7 +61,6 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import eu.andret.ravel.R
@@ -263,10 +262,10 @@ private fun Header(balance: Int, onShop: () -> Unit) {
  *
  * Tiles and not [LevelModifier] entries: they have no name, no bonus and no stored key, so there is
  * nothing for the rest of the game to read. They say the popup is a set that will grow. Each one is
- * replaced by an entry as that modifier is added - "Ukryte litery" took the third - so the count
- * only ever goes down, and with the entries it fills the 2x2 grid.
+ * replaced by an entry as that modifier is added - "Ukryte litery" took the second, "Słowa wspak"
+ * the third - so the count only ever goes down, and with the entries it fills the 2x2 grid.
  */
-private const val COMING_SOON_MODIFIERS = 2
+private const val COMING_SOON_MODIFIERS = 1
 
 /** A modifier's name, icon and (i) text - exhaustive, so a new one cannot ship without them. */
 internal class ModifierLabels(
@@ -285,6 +284,11 @@ internal fun labelsOf(modifier: LevelModifier): ModifierLabels = when (modifier)
         name = R.string.hidden_letters_mode,
         icon = R.drawable.ic_modifier_hidden_letters,
         description = R.string.hidden_letters_description,
+    )
+    LevelModifier.REVERSED_WORDS -> ModifierLabels(
+        name = R.string.reversed_words_mode,
+        icon = R.drawable.ic_modifier_reversed_words,
+        description = R.string.reversed_words_description,
     )
 }
 
@@ -636,7 +640,6 @@ private fun PlayCard(
     }
     val label = if (!started) R.string.level_play else R.string.level_resume
     val noLengths = LevelModifier.NO_LENGTHS in modifiers
-    val hiddenLetters = LevelModifier.HIDDEN_LETTERS in modifiers
     Card(
         onClick = onPlay,
         modifier = modifier.fillMaxWidth(),
@@ -673,10 +676,13 @@ private fun PlayCard(
                 // an invisible one holds it open when none is shown - so a change of modifiers does
                 // not grow the card and move the tile under it.
                 Box(modifier = Modifier.padding(top = 4.dp), contentAlignment = Alignment.Center) {
-                    NoLengthsBadge(modifier = Modifier.alpha(0f).clearAndSetSemantics {})
+                    ModifierBadge(
+                        levelModifier = LevelModifier.NO_LENGTHS,
+                        modifier = Modifier.alpha(0f).clearAndSetSemantics {},
+                    )
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        if (noLengths) NoLengthsBadge()
-                        if (hiddenLetters) HiddenLettersBadge()
+                        // In the enum's order, as everywhere modifiers are listed.
+                        LevelModifier.entries.filter { it in modifiers }.forEach { ModifierBadge(it) }
                     }
                 }
                 if (started) {
@@ -692,43 +698,33 @@ private fun PlayCard(
 }
 
 /**
- * The red stamp a level played without its lengths wears on its card - see
- * [eu.andret.ravel.ui.theme.NoLengthsColors].
+ * The stamp a level frozen with [levelModifier] wears on its card: the modifier's icon, the same one
+ * the popup, the board and the completion dialog show, read out by its name.
  *
- * Red because hiding the lengths changes the whole board's reading; [HiddenLettersBadge], beside it,
- * is quieter.
+ * Icons rather than the words they were (owner's choice): with a third modifier, three stamps in
+ * capitals - "BEZ DŁUGOŚCI", "UKRYTE LITERY", "SŁOWA WSPAK" - no longer fit one line on a narrow
+ * phone, and a second line would either grow the card when the choice changes or hold an empty line
+ * open on every level. An icon is the same width whatever the language.
+ *
+ * Red for [LevelModifier.NO_LENGTHS] ([eu.andret.ravel.ui.theme.NoLengthsColors]), because hiding the
+ * lengths changes how the whole board is read; the soft tonal fill of the tab's chips for the rest,
+ * which change a few cells or the way a word is traced, not what the board is.
  */
 @Composable
-private fun NoLengthsBadge(modifier: Modifier = Modifier) {
-    Text(
-        text = stringResource(R.string.no_lengths_badge),
-        style = MaterialTheme.typography.labelMedium,
-        fontWeight = FontWeight.Black,
-        letterSpacing = 1.5.sp,
-        color = noLengthsColors.onFill,
+private fun ModifierBadge(levelModifier: LevelModifier, modifier: Modifier = Modifier) {
+    val red = levelModifier == LevelModifier.NO_LENGTHS
+    val labels = labelsOf(levelModifier)
+    Icon(
+        painter = painterResource(labels.icon),
+        contentDescription = stringResource(labels.name),
+        tint = if (red) noLengthsColors.onFill else MaterialTheme.colorScheme.onSecondaryContainer,
         modifier = modifier
-            .background(noLengthsColors.fill, RoundedCornerShape(6.dp))
-            .padding(horizontal = 10.dp, vertical = 3.dp),
-    )
-}
-
-/**
- * The stamp a level with [LevelModifier.HIDDEN_LETTERS] wears on its card, beside the red one: the
- * same shape and lettering, in the soft tonal fill the modifiers tile uses for a modifier that is on.
- * Quieter than red on purpose - covered letters change a few cells, not how the board is read - and
- * still a stamp, so a level opened with stars says so before it is pressed.
- */
-@Composable
-private fun HiddenLettersBadge(modifier: Modifier = Modifier) {
-    Text(
-        text = stringResource(R.string.hidden_letters_badge),
-        style = MaterialTheme.typography.labelMedium,
-        fontWeight = FontWeight.Black,
-        letterSpacing = 1.5.sp,
-        color = MaterialTheme.colorScheme.onSecondaryContainer,
-        modifier = modifier
-            .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(6.dp))
-            .padding(horizontal = 10.dp, vertical = 3.dp),
+            .background(
+                if (red) noLengthsColors.fill else MaterialTheme.colorScheme.secondaryContainer,
+                RoundedCornerShape(6.dp),
+            )
+            .padding(horizontal = 10.dp, vertical = 3.dp)
+            .size(18.dp),
     )
 }
 

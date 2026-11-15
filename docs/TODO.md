@@ -50,7 +50,7 @@ arguments in `docs/DECISIONS.md`; an item here points at them rather than repeat
    before 1.0.0, once every tester has launched a build that has it. Keep the bare `pl` / `en`
    alias in `LanguageSettings.byCode` for good - see `DECISIONS.md`, "Why the language codes carry
    a region".
-5. **The two "coming soon" modifiers** (`COMING_SOON_MODIFIERS` in `LevelMenuScreen`): each needs
+5. **The last "coming soon" modifier** (`COMING_SOON_MODIFIERS` in `LevelMenuScreen`): it needs
    a name, a bonus inside the sum `PuzzleTest` holds, and its stored keys before it replaces a tile.
    Not chosen yet.
 

@@ -660,6 +660,28 @@ bonus of every modifier the board acts on.
     process death, and across updates. Nothing about them is stored.
   - **The card wears a stamp for it**, in the tile's soft tonal fill beside the red one: covered
     letters change a few cells, not how the whole board is read.
+- **"Słowa wspak" / "Reversed words" (`REVERSED_WORDS`, 2026-11-15)** makes every word traceable
+  from its last letter only, for +5 like the other two (owner's choice). The board needs nothing:
+  the generator proves uniqueness with every word read in either direction. The direction lives in
+  one place, `Puzzle.traceOf`, and everything that counts from "where a word begins" counts from
+  there; reversing the player's path before matching was the alternative, and would have left
+  hints and the drawn heads pointing at the end the player may not start from. The rest, all the
+  owner's choices:
+  - **Hints reveal from the last letter**, since a hint's cells become the path to continue.
+  - **The traced word under the board shows the letters in the order traced**, so it reads
+    backwards - that is the difficulty. Turning it round for the player was turned down: it would
+    hand back the reading the modifier takes away.
+  - **A found word is drawn with its head on the last letter**, where it was traced from, so found
+    words and the path under way point the same way.
+  - **Taking it off keeps the bought letters, as many, counted from the first letter**, and clears
+    the path. Keeping the very cells would mean storing cells instead of counts and migrating saved
+    boards; dropping them would take back what was paid for. It shows a few more letters than were
+    bought, to a player who has just given up the bonus.
+  - **Its icon is a U-turn drawn as a vector**, in the stroke weight of the other two.
+- **The level card shows its modifiers as icon stamps, not words** (`ModifierBadge`, owner's choice,
+  2026-11-15). Three stamps in capitals no longer fit one line on a narrow phone, and a second line
+  would either grow the card when the choice changes or hold an empty line open on every level. Red
+  stays for "no lengths"; the others take the tonal fill.
 - **The levels tab's tile lists every modifier, as soft chips** (owner's choice): on in the
   secondary tonal fill, off in a gray outline with grayed text. The red stamps it showed first
   shouted from what is a setting; red stays on the level card, which marks the level itself. Its
