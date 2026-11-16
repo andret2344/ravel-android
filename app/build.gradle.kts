@@ -19,11 +19,11 @@ android {
         applicationId = "eu.andret.ravel"
         minSdk = 24
         targetSdk = 37
-        versionCode = 8
+        versionCode = 9
         // Not 1.0: nothing has shipped, so claiming a first release is claiming something that has
         // not happened. The version the first internal build carries should be the version its
         // crash reports carry, and "1.0" is a name to spend once.
-        versionName = "0.1.0-alpha.7"
+        versionName = "0.1.0-alpha.8"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // Every test starts from a fresh install's data - see testOptions below.
